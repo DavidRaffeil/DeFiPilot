@@ -1,83 +1,92 @@
-# # DeFiPilot
+# 🧠 DeFiPilot
 
 [![Made with Python](https://img.shields.io/badge/Made%20with-Python-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![Status](https://img.shields.io/badge/status-in%20development-yellow)]()
+[![Status](https://img.shields.io/badge/status-stable-brightgreen)]()
 [![License: Personal Use](https://img.shields.io/badge/license-Personal--Use-lightgrey)]()
 [![Built with ChatGPT](https://img.shields.io/badge/built%20with-ChatGPT-10a37f?logo=openai&logoColor=white)](https://openai.com/chatgpt)
 
 ---
 
-## Présentation / Overview
-
-DeFiPilot est un bot crypto personnel qui analyse les opportunités de yield farming sur plusieurs DEX et sélectionne automatiquement les meilleures pools selon un score de rentabilité.  
-DeFiPilot is a personal crypto bot that scans yield farming opportunities across multiple DEXes and automatically selects the best pools based on a profitability score.
-
-Il peut fonctionner en mode simulation ou réel, s’adapte à différents profils de risque, et sera bientôt piloté depuis une interface graphique et un centre de commande appelé ControlPilot.  
-It can run in simulation or real mode, adapts to different risk profiles, and will soon be controlled via a graphical interface and a command center called ControlPilot.
+> Bot personnel d’analyse automatisée de pools DeFi – Projet autodidacte non commercial  
+> Personal bot for automated DeFi pool analysis – Non-commercial self-taught project
 
 ---
 
-## Fonctionnalités / Features
+## 📌 Présentation / Overview
 
-- Analyse automatique des pools sur plusieurs DEX  
-  → Automatic analysis of liquidity pools across multiple DEXes
-- Calcul de score de rentabilité  
-  → Profitability scoring system
-- Auto-compounding configurable  
-  → Configurable auto-compounding
-- Gestion multi-wallet  
-  → Multi-wallet management
-- Blacklist temporaire  
-  → Temporary pool blacklist
-- Interface graphique (à venir)  
-  → Graphical interface (coming soon)
-- Mode simulation  
-  → Simulation mode
+**FR :**  
+DeFiPilot est un bot crypto personnel conçu pour analyser automatiquement les pools de liquidité sur les plateformes DeFi.  
+Le projet est développé par un autodidacte sans formation technique, à l’aide de l’intelligence artificielle ChatGPT.
+
+**EN :**  
+DeFiPilot is a personal crypto bot designed to automatically analyze liquidity pools on DeFi platforms.  
+It is built by a self-taught developer using the ChatGPT AI, with no formal technical background.
 
 ---
 
-## Technologies utilisées / Tech Stack
+## 🚀 Versions disponibles / Available Versions
 
+| Version | Description (FR / EN) | Lien |
+|--------|------------------------|------|
+| `v1.0` | Version de simulation uniquement / Simulation only | [Lien GitHub v1.0](https://github.com/DavidRaffeil/DeFiPilot/releases/tag/v1.0) |
+| `v1.1` | Version stable avec structure propre et modules organisés / Stable version with clean structure | [Lien GitHub v1.1](https://github.com/DavidRaffeil/DeFiPilot/releases/tag/v1.1) |
+
+---
+
+## 🛠️ Technologies utilisées / Technologies Used
+
+**FR :**  
 - Python 3  
-- Web3.py  
-- APIs DeFi  
+- Web3.py (prévu)  
 - Tkinter (interface graphique à venir)  
-  → Tkinter (GUI coming soon)  
-- Orange Pi 5 Pro (prévu pour l'exécution)  
-  → Orange Pi 5 Pro (planned execution target)
+- Fichiers JSON pour la configuration  
+- Logs automatisés  
+- Exécution prévue sur : Orange Pi 5 Pro
+
+**EN :**  
+- Python 3  
+- Web3.py (planned)  
+- Tkinter (GUI coming soon)  
+- JSON files for configuration  
+- Automated logging  
+- Target execution: Orange Pi 5 Pro
 
 ---
 
-## À propos du développeur / About the Developer
+## 📂 Structure générale / Project Structure
 
-Ce projet est développé par un autodidacte sans formation ni expérience professionnelle en développement ou en finance décentralisée (DeFi).  
-This project is developed by a self-taught individual with no formal training or professional experience in software development or decentralized finance (DeFi).
-
-L’idée est simple : apprendre en construisant, avec l’aide de ChatGPT, une IA qui m’accompagne à chaque étape.  
-The idea is simple: learn by building, with the help of ChatGPT, an AI guiding me through each step.
-
-DeFiPilot est un projet personnel né de la curiosité, de la persévérance, et d’une envie d’automatiser des stratégies simples.  
-DeFiPilot is a personal project born from curiosity, perseverance, and the desire to automate simple strategies.
-
-Tout est fait maison, avec des moyens modestes, mais beaucoup de passion.  
-Everything is handcrafted, with modest resources — but a lot of passion.
+- `main.py` → Lancement principal / Main entry
+- `settings.py` → Paramètres simples / Basic settings
+- `modules/*.py` → Logique, scoring, exécution, etc.
+- `logs/`, `daily_reports/`, etc. → Fichiers générés / Generated files
+- `v1/`, `v1.1/`, etc. → Versions organisées du projet / Organized versions
 
 ---
 
-## État du projet / Project Status
+## 👤 Auteur / Author
 
-✅ En développement actif — mode simulation fonctionnel  
-✅ Actively in development — simulation mode operational
+**FR :**  
+Projet développé par un autodidacte passionné par la DeFi, l’automatisation et l’apprentissage par la pratique.  
+Tout est construit progressivement, avec curiosité et sans formation classique.
 
----
-
-## Licence / License
-
-Projet personnel, non destiné à un usage commercial pour le moment.  
-This is a personal project, not intended for commercial use at this stage.
+**EN :**  
+Project developed by a self-taught builder passionate about DeFi, automation, and learning-by-doing.  
+Everything is built gradually, with curiosity and no formal training.
 
 ---
 
-Développé avec passion et l'aide de ChatGPT.  
-Built with passion and the help of ChatGPT.
+## 🧠 Intelligence artificielle utilisée / Artificial Intelligence Used
 
+- Aide, génération de code, réflexion et structuration assurées par ChatGPT (OpenAI)
+
+---
+
+## 📜 Licence / License
+
+Projet personnel à usage non commercial.  
+This is a personal, non-commercial project.
+
+---
+
+📫 Merci de votre visite, ce dépôt est aussi là pour encourager d'autres débutants à se lancer.  
+📫 Thanks for visiting – this repository also aims to inspire other beginners to get started.
