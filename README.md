@@ -5,12 +5,11 @@
 [![License: Personal Use](https://img.shields.io/badge/license-Personal--Use-lightgrey)]()
 [![Built with ChatGPT](https://img.shields.io/badge/built%20with-ChatGPT-10a37f?logo=openai&logoColor=white)](https://openai.com/chatgpt)
 
-**FR :** Bot DeFi personnel pour automatiser les investissements sur des pools de liquidité.  
-**EN :** Personal DeFi bot to automate investments in liquidity pools.
-
 ---
 
 ## Présentation (FR)
+
+### DeFiPilot
 
 DeFiPilot est un bot crypto personnel qui analyse les opportunités de yield farming sur plusieurs DEX et sélectionne automatiquement les meilleures pools selon un score de rentabilité.
 
@@ -18,37 +17,29 @@ Il peut fonctionner en **mode simulation** ou en **mode réel**, s'adapte à dif
 
 ---
 
-## Overview (EN)
+### Fonctionnalités principales
 
-DeFiPilot is a personal crypto bot that scans yield farming opportunities across multiple DEXes and automatically selects the best pools based on a profitability score.
-
-It can run in **simulation** or **real mode**, adapts to different risk profiles, and will soon include a **graphical interface** and a control center named **ControlPilot**.
-
----
-
-## Fonctionnalités principales / Key Features
-
-- Analyse automatique des pools sur plusieurs DEX  
-- Calcul de score de rentabilité  
-- Auto-compounding configurable  
-- Gestion multi-wallet  
-- Blacklist temporaire  
-- Interface graphique (à venir)  
+- Analyse automatique des pools sur plusieurs DEX
+- Calcul de score de rentabilité
+- Auto-compounding configurable
+- Gestion multi-wallet
+- Blacklist temporaire
+- Interface graphique (à venir)
 - Mode simulation
 
 ---
 
-## Technologies utilisées / Tech stack
+### Technologies utilisées
 
-- Python 3  
-- Web3.py  
-- APIs DeFi  
-- Tkinter (GUI à venir)  
+- Python 3
+- Web3.py
+- APIs DeFi
+- Tkinter (interface graphique à venir)
 - Orange Pi 5 Pro (prévu pour l'exécution)
 
 ---
 
-## À propos du développeur (FR)
+### À propos du développeur
 
 Ce projet est développé par un autodidacte sans formation ni expérience professionnelle en programmation ou en finance décentralisée (DeFi).
 
@@ -60,11 +51,43 @@ Tout est fait maison, avec des moyens modestes, mais beaucoup de passion.
 
 ---
 
-## About the Developer (EN)
+## Overview (EN)
+
+### DeFiPilot
+
+DeFiPilot is a personal crypto bot that scans yield farming opportunities across multiple DEXes and automatically selects the best pools based on a profitability score.
+
+It can run in **simulation** or **real mode**, adapts to different risk profiles, and will soon include a **graphical interface** and a command center called **ControlPilot**.
+
+---
+
+### Key Features
+
+- Automatic analysis of liquidity pools across multiple DEXes
+- Profitability scoring system
+- Configurable auto-compounding
+- Multi-wallet management
+- Temporary pool blacklist
+- Graphical interface (coming soon)
+- Simulation mode
+
+---
+
+### Tech Stack
+
+- Python 3
+- Web3.py
+- DeFi APIs
+- Tkinter (GUI coming soon)
+- Orange Pi 5 Pro (planned execution target)
+
+---
+
+### About the Developer
 
 This project is developed by a self-taught individual with no formal training or professional experience in programming or decentralized finance (DeFi).
 
-The idea is simple: learn by building. With the help of ChatGPT (an AI developed by OpenAI), I design, code, and improve this bot step by step during my free time.
+The goal is to learn by building. With the help of ChatGPT (an AI developed by OpenAI), I design, code, and improve this bot step by step in my free time.
 
 DeFiPilot is a personal project born from curiosity, perseverance, and a desire to automate simple strategies on the blockchain.
 
@@ -72,19 +95,19 @@ Everything is handcrafted with modest resources — but with a lot of passion.
 
 ---
 
-## État du projet / Project status
+## Project Status
 
 > ✅ En développement actif — mode simulation fonctionnel.  
 > ✅ Actively in development — simulation mode operational.
 
 ---
 
-## Licence / License
+## License
 
 Projet personnel, non destiné à un usage commercial pour le moment.  
 This is a personal project, not intended for commercial use at this stage.
 
 ---
 
-**Développé avec passion et l'aide de ChatGPT.**  
-**Built with passion and the help of ChatGPT.**
+Développé avec passion et l'aide de ChatGPT.  
+Built with passion and the help of ChatGPT.
