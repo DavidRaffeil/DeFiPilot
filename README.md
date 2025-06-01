@@ -62,14 +62,24 @@ It is built by a self-taught developer using ChatGPT AI, with no formal technica
 
 ## 🛣️ Roadmap des prochaines versions / Upcoming roadmap
 
-| Version | FR : Contenu prévu | EN: Planned content |
-|--------|---------------------|---------------------|
-| `v1.3` | Interface graphique (Tkinter), mode interactif, meilleur affichage des résultats | Graphical interface (Tkinter), interactive mode, improved result display |
-| `v1.4` | Simulation d’investissement multi-profils + journalisation enrichie | Multi-profile investment simulation + enriched logging |
-| `v1.5` | Connexion réelle à un portefeuille test (read-only) + analyse de wallet | Real test wallet connection (read-only) + wallet analysis |
-| `v1.6` | Support multi-blockchains (Polygon, Fantom...) + filtres dynamiques | Multi-chain support (Polygon, Fantom...) + dynamic filters |
-| `v2.0` | Passage au mode réel (hors simulation) avec montants de test | Switch to real (non-simulated) mode with small test funds |
-| `v2.1+` | Ajout d’une IA embarquée, intégration à ControlPilot, décisions autonomes | Embedded AI assistant, ControlPilot integration, autonomous decisions |
+| Version | Contenu prévu (FR)                                                                 | Planned content (EN)                                                         |
+|---------|--------------------------------------------------------------------------------------|-------------------------------------------------------------------------------|
+| `v1.3`  | Simulateur de wallet, rendement simulé, historique des positions, préparation au mode réel | Wallet simulator, simulated yield logging, position history, prep for real mode |
+| `v1.4`  | Interface graphique de base (Tkinter), affichage dynamique des scores et logs       | Basic GUI (Tkinter), dynamic score and log display                           |
+| `v1.5`  | Mode interactif + possibilité de lancer manuellement ou automatiquement un cycle    | Interactive mode + manual or automatic launch                                |
+| `v1.6`  | Simulation d’investissement multi-profils + journalisation enrichie                 | Multi-profile investment simulation + enriched logging                       |
+| `v1.7`  | Connexion réelle à un portefeuille (read-only) + analyse de wallet                  | Real wallet connection (read-only) + wallet analysis                         |
+| `v1.8`  | Support multi-blockchains (Polygon, Fantom...) + filtres dynamiques                 | Multi-chain support (Polygon, Fantom...) + dynamic filters                   |
+| `v2.0`  | Passage au mode réel (hors simulation) avec montants de test                        | Switch to real (non-simulated) mode with small test funds                    |
+| `v2.1+` | Ajout d’une IA embarquée, intégration à ControlPilot, décisions autonomes           | Embedded AI, ControlPilot integration, autonomous decisions                  |
+
+## ✅ Historique des versions précédentes / Previous version history
+
+| Version | Contenu (FR)                                                                                   | Content (EN)                                                                   |
+|---------|------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------|
+| `v1.0`  | Structure initiale du projet, récupération des pools via DefiLlama, calcul de scores de base   | Initial project structure, pool fetching from DefiLlama, basic score calculation |
+| `v1.1`  | Ajout des profils d’investisseur (prudent, modéré, agressif), tri dynamique                    | Investor profiles added (conservative, moderate, aggressive), dynamic sorting  |
+| `v1.2`  | Mode simulation (dryrun) complet, historique CSV, journalisation par cycle, gestion de blacklist | Full dryrun mode, CSV history, per-cycle logging, blacklist management         |
 
 ---
 
