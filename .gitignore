@@ -1,0 +1,27 @@
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# Dossiers de logs
+logs/
+*.log
+
+# Dossiers de sauvegarde / fichiers temporaires
+*.tmp
+*.bak
+
+# Dossiers Python
+__pycache__/
+*.py[cod]
+
+# Environnement virtuel (si tu en utilises un)
+env/
+venv/
+
+# Fichiers spécifiques aux éditeurs
+.vscode/
+.idea/
+
+# Fichiers générés
+historique_cycles.csv
+resultats_top3.json

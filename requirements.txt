@@ -1,0 +1,3 @@
+# requirements.txt
+
+# Aucun package externe requis pour la V1.2 (standard Python)
