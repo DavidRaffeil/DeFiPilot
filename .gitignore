@@ -25,3 +25,5 @@ venv/
 # Fichiers générés
 historique_cycles.csv
 resultats_top3.json
+
+snapshots/
