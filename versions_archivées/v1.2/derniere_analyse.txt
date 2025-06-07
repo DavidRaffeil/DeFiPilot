@@ -1,0 +1,9 @@
+Profil : modéré
+Solde simulé : $100.00
+Gain estimé : $108.93
+
+TOP 1 - spectra-v2 | STUSD
+  TVL: $132448.00 | APR: 54046.60% | Score: 108927.58
+
+TOP 2 - beefy | NOICE-WETH
+  TVL: $30528.00 | APR: 138013.21% | Score: 62773.56

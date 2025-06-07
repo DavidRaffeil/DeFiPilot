@@ -1,0 +1,17 @@
+{
+  "profil_actif": "prudent",
+  "profils": {
+    "prudent": {
+      "pondération_risque": 0.3,
+      "seuil_score": 65
+    },
+    "modéré": {
+      "pondération_risque": 0.5,
+      "seuil_score": 55
+    },
+    "agressif": {
+      "pondération_risque": 0.8,
+      "seuil_score": 45
+    }
+  }
+}

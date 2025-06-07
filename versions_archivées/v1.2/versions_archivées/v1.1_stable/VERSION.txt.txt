@@ -1,0 +1,19 @@
+DeFiPilot v1.1
+Date : 2025-05-14
+
+Statut : ✅ Stable
+Type : Version nettoyée manuellement après résolution d’erreurs critiques.
+
+Contenu archivé :
+- main.py (structure propre, dryrun, clavier)
+- strategy.py (profil dynamique depuis JSON)
+- profil_invest.json (profil modéré validé)
+- startup_check.py (vérification au lancement)
+- + tous les modules utilisés
+
+Remarques :
+- Compatible dryrun et simulation
+- Prête pour intégration d'une interface graphique
+- Aucune erreur active dans errors.log
+
+Prochaine étape prévue : interface graphique (v1.2)
