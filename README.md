@@ -36,7 +36,8 @@ Le projet s’adresse à tous les autodidactes souhaitant progresser dans la cry
 
 > _(EN: This repo is part of a progressive ecosystem of bots and agents (DeFiPilot, ControlPilot, LabPilot, ArbiPilot…). The aim is to learn, experiment and automate DeFi investment analysis and management, documenting every step transparently. The project is for all self-taught people wanting to progress in crypto, blockchain, automation and AI – no elitism, no technical prerequisites.)_
 
-Pour la vision détaillée : [Voir la page dédiée / See dedicated page](lien_à_completer)
+Pour la vision détaillée : [Voir la page dédiée / See dedicated page](https://github.com/DavidRaffeil/DeFiPilot/blob/main/VISION.md)
+
 
 ---
 
