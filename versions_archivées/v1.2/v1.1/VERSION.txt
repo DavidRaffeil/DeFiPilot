@@ -1,0 +1,9 @@
+Version 1.1 – Version stable du 16 mai 2025
+
+FR : Cette version apporte un nettoyage du code, une meilleure organisation, 
+et des correctifs mineurs en prévision des futures fonctionnalités. 
+Pas encore de DEX réel ou d’interface graphique.
+
+EN: This version includes code cleanup, improved structure, 
+and minor fixes in preparation for future features. 
+No real DEX integration or graphical interface yet.

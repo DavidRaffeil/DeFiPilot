@@ -1,0 +1,38 @@
+{
+  "mode_simulation": true,
+  "profil_defaut": "modéré",
+  "interval_secondes": 30,
+  "activer_logs_journaliers": true,
+  "nb_cycles_blacklist": 3,
+
+  "tvl_min": 10000,
+  "apr_min": 10,
+
+  "prudent": {
+    "apy": 0.2,
+    "volume": 0.2,
+    "tvl": 0.3,
+    "stability": 0.2,
+    "risk": -0.1,
+    "seuil_score": 0.7,
+    "max_pools": 2
+  },
+  "modéré": {
+    "apy": 0.3,
+    "volume": 0.25,
+    "tvl": 0.2,
+    "stability": 0.2,
+    "risk": -0.05,
+    "seuil_score": 0.6,
+    "max_pools": 3
+  },
+  "agressif": {
+    "apy": 0.4,
+    "volume": 0.3,
+    "tvl": 0.1,
+    "stability": 0.1,
+    "risk": 0,
+    "seuil_score": 0.5,
+    "max_pools": 5
+  }
+}
