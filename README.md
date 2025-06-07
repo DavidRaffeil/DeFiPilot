@@ -28,27 +28,53 @@ It is built by a self-taught developer using ChatGPT AI, with no formal technica
 
 ---
 
+## 🟦 Vision du projet / Project vision
+
+Ce dépôt fait partie d’un écosystème progressif de bots et d’agents (DeFiPilot, ControlPilot, LabPilot, ArbiPilot…)  
+L’objectif est d’apprendre, d’expérimenter et d’automatiser l’analyse et la gestion d’investissements DeFi en toute autonomie, avec une documentation transparente à chaque étape.  
+Le projet s’adresse à tous les autodidactes souhaitant progresser dans la crypto, la blockchain, l’automatisation et l’IA – sans élitisme, sans prérequis technique.
+
+> _(EN: This repo is part of a progressive ecosystem of bots and agents (DeFiPilot, ControlPilot, LabPilot, ArbiPilot…). The aim is to learn, experiment and automate DeFi investment analysis and management, documenting every step transparently. The project is for all self-taught people wanting to progress in crypto, blockchain, automation and AI – no elitism, no technical prerequisites.)_
+
+Pour la vision détaillée : [Voir la page dédiée / See dedicated page](lien_à_completer)
+
+---
+
+## 🆕 Nouveautés V1.3 / What’s new in V1.3
+
+- Simulateur de wallet (solde virtuel, simulation d’investissements, retraits)
+- Journalisation avancée (résultats, rendements simulés, historique CSV, log résumé quotidien)
+- Gestion automatique du seuil d’investissement (ajustement intelligent selon le score/risque)
+- Préparation à l’intégration de fonctions réelles
+- Interface et README enrichis, toujours bilingue
+
+**EN :**
+- Wallet simulator (virtual balance, simulated investments and withdrawals)
+- Advanced logging (results, simulated returns, CSV history, daily summary log)
+- Automatic investment threshold management (smart adjustment based on score/risk)
+- Preparing for integration of real features
+- Enhanced interface and README, always bilingual
 ## ⚙️ Fonctionnement du bot / How the bot works
 
 **FR :**  
-- Scanne automatiquement une liste de pools de liquidité simulées (connexion réelle prévue plus tard)  
-- Applique des filtres (APR, TVL) et blacklist dynamique  
-- Calcule un score de rentabilité selon plusieurs critères (rendement, volatilité, durée, risque…)  
-- Sélectionne les meilleures opportunités selon un profil (prudent, modéré, agressif)  
-- Simule des investissements et ajustements du portefeuille à chaque cycle  
-- Génère des logs détaillés, résumés quotidiens et historiques d’erreurs  
-- Fonctionne pour l’instant en mode simulation uniquement  
+- Scanne automatiquement une liste de pools de liquidité simulées (connexion réelle prévue plus tard)
+- Applique des filtres (APR, TVL) et blacklist dynamique
+- Calcule un score de rentabilité selon plusieurs critères (rendement, volatilité, durée, risque…)
+- Sélectionne les meilleures opportunités selon un profil (prudent, modéré, agressif)
+- **Simule des investissements** : gestion de wallet virtuel, investissements/retraits simulés, affichage des gains/pertes estimés à chaque cycle
+- **Journalisation avancée** : enregistre l’historique complet (CSV), écrit un log résumé quotidien, traque les erreurs
+- Génère des logs détaillés, résumés quotidiens et historiques d’erreurs
+- Fonctionne pour l’instant en mode simulation uniquement
 
 **EN :**  
-- Automatically scans a list of simulated liquidity pools (real DEX connection planned for the future)  
-- Applies filters (APR, TVL) and dynamic blacklist  
-- Calculates a profitability score using several criteria (yield, volatility, duration, risk, etc.)  
-- Selects best opportunities based on profile (conservative, moderate, aggressive)  
-- Simulates investments and portfolio adjustments on each cycle  
-- Generates detailed logs, daily summaries, and error history  
-- Runs in simulation mode only for now  
-
----
+- Automatically scans a list of simulated liquidity pools (real DEX connection planned for the future)
+- Applies filters (APR, TVL) and dynamic blacklist
+- Calculates a profitability score using several criteria (yield, volatility, duration, risk, etc.)
+- Selects best opportunities based on profile (conservative, moderate, aggressive)
+- **Simulates investments**: manages a virtual wallet, simulated investments/withdrawals, shows estimated gains/losses each cycle
+- **Advanced logging**: saves complete history (CSV), writes daily summary log, tracks errors
+- Generates detailed logs, daily summaries, and error history
+- Runs in simulation mode only for now
 
 ## 🚀 Versions disponibles / Available Versions
 
@@ -57,21 +83,21 @@ It is built by a self-taught developer using ChatGPT AI, with no formal technica
 | `v1.0` | Version de simulation uniquement / Simulation only | [GitHub v1.0](https://github.com/DavidRaffeil/DeFiPilot/releases/tag/v1.0) |
 | `v1.1` | Version stable, structure améliorée / Stable version, improved structure | [GitHub v1.1](https://github.com/DavidRaffeil/DeFiPilot/releases/tag/v1.1) |
 | `v1.2` | Filtres, logs enrichis, blacklist, profils pondérés / Filters, enhanced logs, weighted profiles | [GitHub v1.2](https://github.com/DavidRaffeil/DeFiPilot/releases/tag/v1.2) |
+| `v1.3` | Simulateur de wallet, journalisation avancée, seuil automatique, prépa mode réel / Wallet simulator, advanced logging, auto threshold, real mode prep | [GitHub v1.3](https://github.com/DavidRaffeil/DeFiPilot/releases/tag/v1.3) |
 
 ---
 
 ## 🛣️ Roadmap des prochaines versions / Upcoming roadmap
 
-| Version | Contenu prévu (FR)                                                                 | Planned content (EN)                                                         |
-|---------|--------------------------------------------------------------------------------------|-------------------------------------------------------------------------------|
-| `v1.3`  | Simulateur de wallet, rendement simulé, historique des positions, préparation au mode réel | Wallet simulator, simulated yield logging, position history, prep for real mode |
-| `v1.4`  | Interface graphique de base (Tkinter), affichage dynamique des scores et logs       | Basic GUI (Tkinter), dynamic score and log display                           |
-| `v1.5`  | Mode interactif + possibilité de lancer manuellement ou automatiquement un cycle    | Interactive mode + manual or automatic launch                                |
-| `v1.6`  | Simulation d’investissement multi-profils + journalisation enrichie                 | Multi-profile investment simulation + enriched logging                       |
-| `v1.7`  | Connexion réelle à un portefeuille (read-only) + analyse de wallet                  | Real wallet connection (read-only) + wallet analysis                         |
-| `v1.8`  | Support multi-blockchains (Polygon, Fantom...) + filtres dynamiques                 | Multi-chain support (Polygon, Fantom...) + dynamic filters                   |
-| `v2.0`  | Passage au mode réel (hors simulation) avec montants de test                        | Switch to real (non-simulated) mode with small test funds                    |
-| `v2.1+` | Ajout d’une IA embarquée, intégration à ControlPilot, décisions autonomes           | Embedded AI, ControlPilot integration, autonomous decisions                  |
+| Version | Contenu prévu (FR)                                                            | Planned content (EN)                                                    |
+|---------|-------------------------------------------------------------------------------|-------------------------------------------------------------------------|
+| `v1.4`  | Interface graphique de base (Tkinter), affichage dynamique des scores et logs | Basic GUI (Tkinter), dynamic score and log display                      |
+| `v1.5`  | Mode interactif + possibilité de lancer manuellement ou automatiquement un cycle | Interactive mode + manual or automatic launch                        |
+| `v1.6`  | Simulation d’investissement multi-profils + journalisation enrichie           | Multi-profile investment simulation + enriched logging                   |
+| `v1.7`  | Connexion réelle à un portefeuille (read-only) + analyse de wallet            | Real wallet connection (read-only) + wallet analysis                     |
+| `v1.8`  | Support multi-blockchains (Polygon, Fantom...) + filtres dynamiques           | Multi-chain support (Polygon, Fantom...) + dynamic filters               |
+| `v2.0`  | Passage au mode réel (hors simulation) avec montants de test                  | Switch to real (non-simulated) mode with small test funds                |
+| `v2.1+` | Ajout d’une IA embarquée, intégration à ControlPilot, décisions autonomes      | Embedded AI, ControlPilot integration, autonomous decisions              |
 
 ## ✅ Historique des versions précédentes / Previous version history
 
@@ -80,6 +106,7 @@ It is built by a self-taught developer using ChatGPT AI, with no formal technica
 | `v1.0`  | Structure initiale du projet, récupération des pools via DefiLlama, calcul de scores de base   | Initial project structure, pool fetching from DefiLlama, basic score calculation |
 | `v1.1`  | Ajout des profils d’investisseur (prudent, modéré, agressif), tri dynamique                    | Investor profiles added (conservative, moderate, aggressive), dynamic sorting  |
 | `v1.2`  | Mode simulation (dryrun) complet, historique CSV, journalisation par cycle, gestion de blacklist | Full dryrun mode, CSV history, per-cycle logging, blacklist management         |
+| `v1.3`  | Simulateur de wallet, journalisation avancée, seuil automatique, prépa mode réel               | Wallet simulator, advanced logging, auto threshold, real mode prep             |
 
 ---
 
@@ -107,8 +134,6 @@ You are free to:
 🚫 Strictly no commercial use without prior written consent  
 
 🔗 [Texte complet / Full license text](https://creativecommons.org/licenses/by-nc/4.0/legalcode)
-
----
 
 ## 👤 À propos de l’auteur / About the Author
 
