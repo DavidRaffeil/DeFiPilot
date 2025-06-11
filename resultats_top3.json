@@ -1,0 +1,26 @@
+[
+    {
+        "id": "spectra-stusd",
+        "plateforme": "spectra-v2",
+        "nom": "STUSD",
+        "tvl_usd": 132448.0,
+        "apr": 54046.6,
+        "score": 108927.58
+    },
+    {
+        "id": "beefy-noice-weth",
+        "plateforme": "beefy",
+        "nom": "NOICE-WETH",
+        "tvl_usd": 30528.0,
+        "apr": 138013.21,
+        "score": 62773.56
+    },
+    {
+        "id": "berapaw-bullishv2",
+        "plateforme": "berapaw",
+        "nom": "BULLISHV2",
+        "tvl_usd": 28784.0,
+        "apr": 28862.79,
+        "score": 28807.64
+    }
+]
