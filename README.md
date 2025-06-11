@@ -38,7 +38,6 @@ Le projet s’adresse à tous les autodidactes souhaitant progresser dans la cry
 
 Pour la vision détaillée : [Voir la page dédiée / See dedicated page](https://github.com/DavidRaffeil/DeFiPilot/blob/main/VISION.md)
 
-
 ---
 
 ## 🆕 Nouveautés V1.3 / What’s new in V1.3
@@ -55,6 +54,9 @@ Pour la vision détaillée : [Voir la page dédiée / See dedicated page](http
 - Automatic investment threshold management (smart adjustment based on score/risk)
 - Preparing for integration of real features
 - Enhanced interface and README, always bilingual
+
+---
+
 ## ⚙️ Fonctionnement du bot / How the bot works
 
 **FR :**  
@@ -77,14 +79,16 @@ Pour la vision détaillée : [Voir la page dédiée / See dedicated page](http
 - Generates detailed logs, daily summaries, and error history
 - Runs in simulation mode only for now
 
+---
+
 ## 🚀 Versions disponibles / Available Versions
 
 | Version | Description (FR / EN) | Lien |
 |--------|------------------------|------|
-| `v1.0` | Version de simulation uniquement / Simulation only | [GitHub v1.0](https://github.com/DavidRaffeil/DeFiPilot/releases/tag/v1.0) |
-| `v1.1` | Version stable, structure améliorée / Stable version, improved structure | [GitHub v1.1](https://github.com/DavidRaffeil/DeFiPilot/releases/tag/v1.1) |
+| `v1.3` | Simulateur de wallet, rendement simulé, historique des positions, préparation au mode réel / Wallet simulator, simulated yield logging, position history, prep for real mode | [GitHub v1.3](https://github.com/DavidRaffeil/DeFiPilot/releases/tag/v1.3) |
 | `v1.2` | Filtres, logs enrichis, blacklist, profils pondérés / Filters, enhanced logs, weighted profiles | [GitHub v1.2](https://github.com/DavidRaffeil/DeFiPilot/releases/tag/v1.2) |
-| `v1.3` | Simulateur de wallet, journalisation avancée, seuil automatique, prépa mode réel / Wallet simulator, advanced logging, auto threshold, real mode prep | [GitHub v1.3](https://github.com/DavidRaffeil/DeFiPilot/releases/tag/v1.3) |
+| `v1.1` | Version stable, structure améliorée / Stable version, improved structure | [GitHub v1.1](https://github.com/DavidRaffeil/DeFiPilot/releases/tag/v1.1) |
+| `v1.0` | Version de simulation uniquement / Simulation only | [GitHub v1.0](https://github.com/DavidRaffeil/DeFiPilot/releases/tag/v1.0) |
 
 ---
 
@@ -100,14 +104,16 @@ Pour la vision détaillée : [Voir la page dédiée / See dedicated page](http
 | `v2.0`  | Passage au mode réel (hors simulation) avec montants de test                  | Switch to real (non-simulated) mode with small test funds                |
 | `v2.1+` | Ajout d’une IA embarquée, intégration à ControlPilot, décisions autonomes      | Embedded AI, ControlPilot integration, autonomous decisions              |
 
+---
+
 ## ✅ Historique des versions précédentes / Previous version history
 
 | Version | Contenu (FR)                                                                                   | Content (EN)                                                                   |
 |---------|------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------|
-| `v1.0`  | Structure initiale du projet, récupération des pools via DefiLlama, calcul de scores de base   | Initial project structure, pool fetching from DefiLlama, basic score calculation |
-| `v1.1`  | Ajout des profils d’investisseur (prudent, modéré, agressif), tri dynamique                    | Investor profiles added (conservative, moderate, aggressive), dynamic sorting  |
+| `v1.3`  | Simulateur de wallet, rendement simulé, historique des positions, préparation au mode réel     | Wallet simulator, simulated yield logging, position history, prep for real mode |
 | `v1.2`  | Mode simulation (dryrun) complet, historique CSV, journalisation par cycle, gestion de blacklist | Full dryrun mode, CSV history, per-cycle logging, blacklist management         |
-| `v1.3`  | Simulateur de wallet, journalisation avancée, seuil automatique, prépa mode réel               | Wallet simulator, advanced logging, auto threshold, real mode prep             |
+| `v1.1`  | Ajout des profils d’investisseur (prudent, modéré, agressif), tri dynamique                    | Investor profiles added (conservative, moderate, aggressive), dynamic sorting  |
+| `v1.0`  | Structure initiale du projet, récupération des pools via DefiLlama, calcul de scores de base   | Initial project structure, pool fetching from DefiLlama, basic score calculation |
 
 ---
 
@@ -135,6 +141,8 @@ You are free to:
 🚫 Strictly no commercial use without prior written consent  
 
 🔗 [Texte complet / Full license text](https://creativecommons.org/licenses/by-nc/4.0/legalcode)
+
+---
 
 ## 👤 À propos de l’auteur / About the Author
 
@@ -169,3 +177,6 @@ Curiosity and persistence are what matter most. Just go for it!
 📫 Merci de votre visite – ce dépôt est aussi là pour inspirer d'autres autodidactes.  
 📫 Thanks for visiting – this repository also aims to inspire other self-taught explorers.
 
+---
+
+> **📖 La vision détaillée du projet DeFiPilot et de son écosystème est consultable [ici (VISION.md)](https://github.com/DavidRaffeil/DeFiPilot/blob/main/VISION.md).**
