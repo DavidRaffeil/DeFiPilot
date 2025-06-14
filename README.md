@@ -2,7 +2,7 @@
 
 [![Made with Python](https://img.shields.io/badge/Made%20with-Python-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Status](https://img.shields.io/badge/status-stable-brightgreen)]()
-[![License: CC BY-NC 4.0](https://img.shields.io/badge/license-CC%20BY--NC%204.0-blue)](https://creativecommons.org/licenses/by-nc/4.0/)
+![License: Personal Use Only](https://img.shields.io/badge/license-Personal--Use--Only-lightgrey)
 [![Built with ChatGPT](https://img.shields.io/badge/built%20with-ChatGPT-10a37f?logo=openai&logoColor=white)](https://openai.com/chatgpt)
 ![Made in France](https://img.shields.io/badge/Made%20in-France-blue?logo=france&logoColor=white)
 
@@ -124,24 +124,13 @@ Pour la vision détaillée : [Voir la page dédiée / See dedicated page](http
 
 ---
 
-## 📜 Licence / License
+### 📜 Licence / License
 
-**FR :**  
-Projet personnel distribué sous licence Creative Commons Attribution – Pas d’Utilisation Commerciale 4.0 International (CC BY-NC 4.0).  
-Vous êtes libre de :  
-✅ Partager – copier, redistribuer ce projet par tout moyen  
-✅ Adapter – remixer, transformer, modifier pour usage personnel  
-🚫 Interdiction stricte d’usage commercial sans accord écrit préalable  
+Ce projet est mis à disposition gratuitement pour un usage personnel et non commercial.  
+This project is made available free of charge for personal and non-commercial use only.
 
-**EN :**  
-This personal project is licensed under Creative Commons Attribution – NonCommercial 4.0 International (CC BY-NC 4.0).  
-You are free to:  
-✅ Share – copy and redistribute the project in any medium or format  
-✅ Adapt – remix, transform, and build upon for personal use  
-🚫 Strictly no commercial use without prior written consent  
-
-🔗 [Texte complet / Full license text](https://creativecommons.org/licenses/by-nc/4.0/legalcode)
-
+Voir les conditions complètes dans le fichier [LICENSE.md](./LICENSE.md)  
+See full terms in the [LICENSE.md](./LICENSE.md) file
 ---
 
 ## 👤 À propos de l’auteur / About the Author
