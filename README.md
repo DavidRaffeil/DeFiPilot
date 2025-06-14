@@ -129,8 +129,8 @@ Pour la vision détaillée : [Voir la page dédiée / See dedicated page](http
 Ce projet est mis à disposition gratuitement pour un usage personnel et non commercial.  
 This project is made available free of charge for personal and non-commercial use only.
 
-Voir les conditions complètes dans le fichier [LICENSE.md](./LICENSE.md)  
-See full terms in the [LICENSE.md](./LICENSE.md) file
+Voir les conditions complètes dans le fichier [License.md](./LICENSE.md)  
+See full terms in the [License.md](./LICENSE.md) file
 ---
 
 ## 👤 À propos de l’auteur / About the Author
