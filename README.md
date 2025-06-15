@@ -113,11 +113,6 @@ Historique, fichiers CSV, journal quotidien
 
 ---
 
-### 📜 Licence / License
-
-Ce projet est mis à disposition gratuitement pour un usage personnel et non commercial.  
-This project is made available free of charge for personal and non-commercial use only.
-=======
 ## Licence / License
 
 Ce projet est mis à disposition gratuitement pour un usage personnel et non commercial.
@@ -130,6 +125,23 @@ See full terms in the License.md file
 Voir les conditions complètes dans le fichier [License.md](./License.md)  
 See full terms in the [License.md](./License.md) file
 ---
+## FAQ – Questions fréquentes
+
+### Peut-on utiliser DeFiPilot avec un exchange centralisé (Binance, Kraken, etc.) ?
+Non, DeFiPilot est dédié uniquement à la DeFi (finance décentralisée). Il ne fonctionne pas avec les plateformes CeFi.
+
+### Est-ce que DeFiPilot fonctionne avec tous les wallets ?
+Actuellement, seul un wallet en mode “lecture seule” (adresse publique) est prévu pour la V1.5. Les intégrations d’autres types de wallets arriveront plus tard.
+
+### Est-ce que je peux utiliser DeFiPilot en mode réel ?
+À partir de la version 2.0, un mode “réel” avec petits montants de test sera disponible. Avant cela, tout est simulation pour la sécurité.
+
+### Peut-on personnaliser les critères de sélection des pools ?
+Oui, le choix du profil (prudent, modéré, agressif…) influence la pondération APR/TVL et la sélection des meilleures pools.
+
+### Comment signaler un bug ou une suggestion ?
+Ouvre une “issue” sur GitHub ou contacte le développeur via le dépôt.
+
 
 ## Développeur / Developer
 
