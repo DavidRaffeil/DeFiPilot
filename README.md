@@ -48,35 +48,27 @@ For the full vision of the ecosystem and future bots, see:
 
 ## Architecture simplifiée DeFiPilot
 
-┌─────────────┐
-│ Utilisateur │
-└──────┬──────┘
-       │
-       ▼
-┌─────────────────────────────────┐
-│  Interface graphique (Tkinter)  │
-└──────┬───────────────┬──────────┘
-       │               │
-       │               ▼
-       │       Sélection du profil
-       │
-       ▼
-  Chargement paramètres/config
-       │
-       ▼
-┌─────────────────────────────────────────────┐
-│       Moteur principal DeFiPilot            │
-│ - Récupération des pools via DefiLlama      │
-│ - Calcul des scores, pondération profil     │
-│ - Simulation d’investissement               │
-│ - Journalisation avancée (logs, CSV)        │
-└─────────────────────────────────────────────┘
-       │
-       ▼
-Recommandations affichées à l’utilisateur
-       │
-       ▼
+Utilisateur  
+   │  
+   ▼  
+Interface graphique (Tkinter)  
+   │  
+   ▼  
+Sélection du profil & chargement des paramètres  
+   │  
+   ▼  
+Moteur principal DeFiPilot  
+   │  
+   ├─ Récupération des pools via DefiLlama  
+   ├─ Calcul des scores & simulation  
+   ├─ Journalisation avancée (logs, CSV)  
+   │  
+   ▼  
+Recommandations à l'utilisateur  
+   │  
+   ▼  
 Historique, fichiers CSV, journal quotidien
+
 
 ---
 
