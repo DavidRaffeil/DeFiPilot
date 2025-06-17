@@ -34,6 +34,7 @@ For the full vision of the ecosystem and future bots, see:
 - Interface améliorée pour la sélection et l’affichage des profils d’investissement
 - Roadmap et README mis à jour (toujours bilingue, sans drapeau)
 - Préparation des prochaines étapes (connexion wallet test, analyse de wallet…)
+- Nouvelle fonction `detecter_adresse_wallet()` pour afficher l'adresse EVM via Web3
 
 ---
 
