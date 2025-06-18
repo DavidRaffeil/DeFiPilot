@@ -173,3 +173,125 @@ TOP 3 - berapaw | BULLISHV2
   💰 Gain estimé (24h, 100$ simulés) : ~79.08 € / 24h
 ========================================
 
+📊 Résultats de simulation (2025-06-18 15:56:36)
+Profil : modéré | Solde simulé : 1000.00$
+Montant investi par pool : 500.00$
+
+TOP 1 - beefy | NOICE-WETH
+  APR : 138013.21% | Score : 37812.54
+  💰 Gain estimé (24h, 500.0$ simulés) : 13234.14$
+TOP 2 - spectra-v2 | STUSD
+  APR : 54046.60% | Score : 14807.12
+  💰 Gain estimé (24h, 500.0$ simulés) : 5182.55$
+
+❌ Pools écartées (score trop bas) :
+  ⚠️ berapaw | BULLISHV2 | Score : 50.00
+========================================
+
+📊 Résultats de simulation (2025-06-18 15:58:55)
+Profil : modéré | Solde simulé : 1000.00$
+Montants investis pondérés selon les scores :
+
+TOP 1 - beefy | NOICE-WETH
+  APR : 138013.21% | Score : 37812.54
+  Montant investi : 718.60$
+  💰 Gain estimé : 19020.14$
+TOP 2 - spectra-v2 | STUSD
+  APR : 54046.60% | Score : 14807.12
+  Montant investi : 281.40$
+  💰 Gain estimé : 2916.73$
+
+❌ Pools écartées (score trop bas) :
+  ⚠️ berapaw | BULLISHV2 | Score : 50.00
+========================================
+
+
+📊 Résultats de simulation (2025-06-18 16:01:33)
+Profil : modéré | Solde simulé : 1000.00$
+Montants investis pondérés selon les scores :
+
+TOP 1 - beefy | NOICE-WETH
+  APR : 138013.21% | Score : 37812.54
+  Montant investi : 718.60$
+  💰 Gain estimé : 19020.14$
+TOP 2 - spectra-v2 | STUSD
+  APR : 54046.60% | Score : 14807.12
+  Montant investi : 281.40$
+  💰 Gain estimé : 2916.73$
+
+❌ Pools écartées (score trop bas) :
+  ⚠️ berapaw | BULLISHV2 | Score : 50.00
+========================================
+
+
+📊 Résultats de simulation (2025-06-18 16:04:28)
+Profil : modéré | Solde simulé : 1000.00$
+Montants investis pondérés selon les scores :
+
+TOP 1 - beefy | NOICE-WETH
+  APR : 138013.21% | Score : 37812.54
+  Montant investi : 718.60$
+  💰 Gain estimé : 19020.14$
+TOP 2 - spectra-v2 | STUSD
+  APR : 54046.60% | Score : 14807.12
+  Montant investi : 281.40$
+  💰 Gain estimé : 2916.73$
+
+❌ Pools écartées (score trop bas) :
+  ⚠️ berapaw | BULLISHV2 | Score : 50.00
+========================================
+
+
+📊 Résultats de simulation (2025-06-18 16:10:37)
+Profil : prudent | Solde simulé : 1000.00$
+Montants investis pondérés selon les scores :
+
+TOP 1 - beefy | NOICE-WETH
+  APR : 138013.21% | Score : 37812.54
+  Montant investi : 718.60$
+  💰 Gain estimé : 19020.14$
+TOP 2 - spectra-v2 | STUSD
+  APR : 54046.60% | Score : 14807.12
+  Montant investi : 281.40$
+  💰 Gain estimé : 2916.73$
+
+❌ Pools écartées (score trop bas) :
+  ⚠️ berapaw | BULLISHV2 | Score : 50.00
+========================================
+
+
+📊 Résultats de simulation (2025-06-18 16:10:37)
+Profil : modéré | Solde simulé : 1000.00$
+Montants investis pondérés selon les scores :
+
+TOP 1 - beefy | NOICE-WETH
+  APR : 138013.21% | Score : 37812.54
+  Montant investi : 718.60$
+  💰 Gain estimé : 19020.14$
+TOP 2 - spectra-v2 | STUSD
+  APR : 54046.60% | Score : 14807.12
+  Montant investi : 281.40$
+  💰 Gain estimé : 2916.73$
+
+❌ Pools écartées (score trop bas) :
+  ⚠️ berapaw | BULLISHV2 | Score : 50.00
+========================================
+
+
+📊 Résultats de simulation (2025-06-18 16:10:37)
+Profil : agressif | Solde simulé : 1000.00$
+Montants investis pondérés selon les scores :
+
+TOP 1 - beefy | NOICE-WETH
+  APR : 138013.21% | Score : 37812.54
+  Montant investi : 718.60$
+  💰 Gain estimé : 19020.14$
+TOP 2 - spectra-v2 | STUSD
+  APR : 54046.60% | Score : 14807.12
+  Montant investi : 281.40$
+  💰 Gain estimé : 2916.73$
+
+❌ Pools écartées (score trop bas) :
+  ⚠️ berapaw | BULLISHV2 | Score : 50.00
+========================================
+
