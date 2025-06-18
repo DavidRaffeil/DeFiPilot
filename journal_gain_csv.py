@@ -1,57 +1,44 @@
 # journal_gain_csv.py
 
 import csv
-import os
 from datetime import datetime
+import os
 
 FICHIER_CSV = "journal_gain_simule.csv"
 
-def initialiser_fichier():
+def enregistrer_cycle(profil, solde_simule, top3, montant_investi):
     """
-    Crée le fichier CSV avec les en-têtes s’il n’existe pas encore.
+    Enregistre un cycle d’analyse dans un fichier CSV.
+    
+    :param profil: nom du profil d’investissement utilisé
+    :param solde_simule: solde du wallet simulé après mise à jour
+    :param top3: liste des 3 meilleures pools sélectionnées
+    :param montant_investi: montant simulé investi par pool
     """
-    if not os.path.exists(FICHIER_CSV):
-        with open(FICHIER_CSV, mode="w", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            writer.writerow([
-                "datetime", "profil", "solde_simule",
-                "top1_nom", "top1_apr", "top1_gain",
-                "top2_nom", "top2_apr", "top2_gain",
-                "top3_nom", "top3_apr", "top3_gain",
-                "gain_total"
-            ])
+    ligne = {
+        "datetime": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "profil": profil,
+        "solde_simule": round(solde_simule, 2),
+    }
 
-def enregistrer_cycle(profil, solde, pools, montant=100):
-    """
-    Enregistre un cycle dans le fichier CSV.
-    """
-    initialiser_fichier()
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    gain_total = 0
 
-    lignes = [now, profil, f"{solde:.2f}"]
+    for i, pool in enumerate(top3, start=1):
+        nom_court = f"{pool['plateforme']} | {pool['nom']}"
+        apr = round(pool['apr'], 2)
+        gain = round(pool['apr'] * montant_investi / 100, 2)
+        gain_total += gain
 
-    total_gain = 0.0
-    for i in range(3):
-        if i < len(pools):
-            pool = pools[i]
-            nom = f"{pool.get('plateforme', 'inconnu')} | {pool.get('nom', 'inconnu')}"
-            apr = f"{float(pool.get('apr', 0)):.2f}"
-            gain = f"{simuler_gain_brut(pool, montant):.2f}"
-            total_gain += float(gain)
-        else:
-            nom, apr, gain = "", "", ""
-        lignes.extend([nom, apr, gain])
+        ligne[f"top{i}_nom"] = nom_court
+        ligne[f"top{i}_apr"] = apr
+        ligne[f"top{i}_gain"] = gain
 
-    lignes.append(f"{total_gain:.2f}")
+    ligne["gain_total"] = round(gain_total, 2)
 
+    fichier_existe = os.path.isfile(FICHIER_CSV)
     with open(FICHIER_CSV, mode="a", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        writer.writerow(lignes)
+        writer = csv.DictWriter(f, fieldnames=ligne.keys())
 
-def simuler_gain_brut(pool, montant):
-    try:
-        apr = abs(float(pool.get("apr", 0)))
-        taux_journalier = apr / 100 / 365
-        return montant * taux_journalier
-    except Exception:
-        return 0.0
+        if not fichier_existe:
+            writer.writeheader()
+        writer.writerow(ligne)
