@@ -18,6 +18,7 @@ from core import blacklist
 from core import historique
 from core import rendement
 from core import investisseur
+import core.wallet as wallet  # 🔑 Corrigé ici
 
 from defi_sources import defillama
 import simulateur_wallet
@@ -37,6 +38,16 @@ profil_actif = config_loader.get("profil_defaut", "modéré")
 ponderations = profil.charger_ponderations(profil_actif)
 
 logger.log_info(f"🏗 Profil actif : {profil_actif} (APR {ponderations['apr']}, TVL {ponderations['tvl']})")
+
+# 🔍 Détection de l'adresse publique EVM (lecture seule)
+try:
+    adresse = wallet.detecter_adresse_wallet()
+    if adresse:
+        logger.log_info(f"🔑 Adresse EVM détectée : {adresse}")
+    else:
+        logger.log_info("🔍 Aucune adresse détectée.")
+except Exception as e:
+    logger.log_erreur(f"Erreur lors de la détection du wallet : {e}")
 
 # Récupération des pools via DefiLlama
 try:

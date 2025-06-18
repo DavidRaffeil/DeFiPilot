@@ -1,0 +1,39 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.so
+
+# Logs et fichiers journaux
+*.log
+logs/
+journal_*.txt
+journal_*.log
+
+# Fichiers de simulation et historiques
+*.csv
+*.json
+
+# Fichiers résultats ou intermédiaires générés par le bot
+resultats_top3_*.json
+solde_virtuel.json
+journal_gain_simule.csv
+journal_gain_csv.py
+historique_cycles.csv
+journal_rendement.csv
+
+# Fichiers temporaires divers
+*.tmp
+*.bak
+
+# Fichiers spécifiques à l’OS
+.DS_Store
+Thumbs.db
+
+# Environnements virtuels Python
+.env
+.venv
+env/
+venv/
+
+# Autres fichiers ou dossiers à ignorer (si besoin)
+# /data/
