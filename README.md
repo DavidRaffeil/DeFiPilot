@@ -1,4 +1,4 @@
-o# DeFiPilot
+# DeFiPilot
 
 [![Made with Python](https://img.shields.io/badge/Made%20with-Python-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Status](https://img.shields.io/badge/status-stable-brightgreen)]()
@@ -27,14 +27,13 @@ For the full vision of the ecosystem and future bots, see:
 
 ---
 
-## Nouveautés V1.4 / What's new in V1.4
+## Nouveautés V1.5 / What's new in V1.5
 
-- Simulation d’investissement multi-profils (prudent, modéré, agressif…)
-- Journalisation enrichie : résultats, rendements simulés, historique CSV, résumé par jour
-- Interface améliorée pour la sélection et l’affichage des profils d’investissement
-- Roadmap et README mis à jour (toujours bilingue, sans drapeau)
-- Préparation des prochaines étapes (connexion wallet test, analyse de wallet…)
-- Nouvelle fonction `detecter_adresse_wallet()` pour afficher l'adresse EVM via Web3
+- 🔀 Ajout de la gestion **multi-profils** (prudent, modéré, agressif) avec pondérations personnalisées
+- 📈 Génération automatique de **graphiques PNG** pour chaque simulation
+- 📊 Création d’un **journal CSV** des résultats simulés (rendement, top 3 pools, score)
+- 🧠 Interface enrichie : prise en compte du profil actif et affichage clair des données
+- 🛠 Préparation à l’intégration du mode réel (Phase 2)
 
 ---
 
@@ -70,16 +69,15 @@ Recommandations à l'utilisateur
    ▼  
 Historique, fichiers CSV, journal quotidien
 
-
 ---
 
 ## 🛣️ Roadmap des prochaines versions / Upcoming roadmap
 
 | Version | FR : Contenu prévu | EN: Planned content |
 |---------|--------------------|---------------------|
-| `v1.4`  | Simulation d’investissement multi-profils + journalisation enrichie | Multi-profile investment simulation + enriched logging |
-| `v1.5`  | Connexion réelle à un portefeuille test (lecture seule) + analyse de wallet | Real test wallet connection (read-only) + wallet analysis |
-| `v1.6`  | Support multi-blockchains (Polygon, Fantom...) + filtres dynamiques | Multi-chain support (Polygon, Fantom...) + dynamic filters |
+| `v1.5`  | Multi-profils, graphiques PNG, journalisation CSV | Multi-profiles, PNG charts, CSV logging |
+| `v1.6`  | Connexion réelle à un portefeuille test (lecture seule) + analyse de wallet | Real test wallet connection (read-only) + wallet analysis |
+| `v1.7`  | Support multi-blockchains (Polygon, Fantom...) + filtres dynamiques | Multi-chain support (Polygon, Fantom...) + dynamic filters |
 | `v2.0`  | Passage au mode réel (hors simulation) avec montants de test | Switch to real (non-simulated) mode with small test funds |
 | `v2.1+` | Ajout d’une IA embarquée, intégration ArbiPilot/LabPilot, amélioration continue | Embedded AI, ArbiPilot/LabPilot integration, continuous improvements |
 
@@ -116,16 +114,14 @@ Historique, fichiers CSV, journal quotidien
 
 ## Licence / License
 
-Ce projet est mis à disposition gratuitement pour un usage personnel et non commercial.
+Ce projet est mis à disposition gratuitement pour un usage personnel et non commercial.  
 This project is made available free of charge for personal and non-commercial use only.
-
-Voir les conditions complètes dans le fichier License.md
-See full terms in the License.md file
-(docs: mise à jour README pour V1.4)
 
 Voir les conditions complètes dans le fichier [License.md](./License.md)  
 See full terms in the [License.md](./License.md) file
+
 ---
+
 ## FAQ – Questions fréquentes
 
 ### Peut-on utiliser DeFiPilot avec un exchange centralisé (Binance, Kraken, etc.) ?
@@ -143,6 +139,7 @@ Oui, le choix du profil (prudent, modéré, agressif…) influence la pondérati
 ### Comment signaler un bug ou une suggestion ?
 Ouvre une “issue” sur GitHub ou contacte le développeur via le dépôt.
 
+---
 
 ## Développeur / Developer
 
@@ -152,5 +149,3 @@ Project initiated and developed by **David Raffeil** (France) with ChatGPT assis
 ---
 
 Pour toute question ou suggestion : issues GitHub ou [voir la vision du projet](https://github.com/DavidRaffeil/DeFiPilot/blob/main/VISION.md)
-
----
