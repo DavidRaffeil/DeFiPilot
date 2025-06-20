@@ -2,5 +2,6 @@
   "profil_defaut": "modéré",
   "tvl_min": 1000,
   "apr_min": 1.0,
-  "seuil_score_investissement": 30000
+  "seuil_score_investissement": 30000,
+  "mode_reel": true
 }

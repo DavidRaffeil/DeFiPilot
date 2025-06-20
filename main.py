@@ -1,141 +1,74 @@
-import sys
-import os
-import json
-import time
+# main.py (version finale avec ordre corrigé)
+import logging
 from datetime import datetime
+import csv
 
-# Ajout du chemin du dossier courant pour les imports
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
-
-# Chrono pour mesurer la durée du cycle
-start_time = time.time()
-
-from core import config_loader
-from core import logger
-from core import profil
-from core import scoring
-from core import blacklist
-from core import historique
-from core import rendement
-from core import investisseur
-import core.wallet as wallet  # 🔑 Corrigé ici
-
+from core import config_loader, profil
+from core import scoring, blacklist
 from defi_sources import defillama
 import simulateur_wallet
-import journal_gain_csv  # ✅ Nouveau module
+import real_wallet
 
-# Chargement de la configuration utilisateur
-try:
+
+def main():
+    # Initialiser le logging dès le début
+    logging.basicConfig(
+        filename="logs/journal.log",
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(message)s"
+    )
+
+    logging.info("🔁 Démarrage d’un nouveau cycle d’analyse DeFiPilot")
+
+    # Charger la configuration
     config_loader.charger_config()
-    logger.log_succes("Fichier de configuration chargé avec succès.")
-except Exception as e:
-    logger.log_erreur(f"Erreur lors du chargement de la configuration : {e}")
-    exit(1)
+    print("DEBUG: mode_reel =", config_loader.get("mode_reel", False))
 
-# Initialisation du cycle
-logger.log_info("🔁 Démarrage d’un nouveau cycle d’analyse DeFiPilot")
-profil_actif = config_loader.get("profil_defaut", "modéré")
-ponderations = profil.charger_ponderations(profil_actif)
+    # Lecture du mode réel depuis la config (après chargement)
+    mode_reel = config_loader.get("mode_reel", False)
 
-logger.log_info(f"🏗 Profil actif : {profil_actif} (APR {ponderations['apr']}, TVL {ponderations['tvl']})")
+    # Journaliser séparément le mode actif dans mode.log
+    with open("logs/mode.log", "a") as mode_file:
+        mode_file.write(f"{datetime.now().isoformat()} | mode_reel = {mode_reel}\n")
 
-# 🔍 Détection de l'adresse publique EVM (lecture seule)
-try:
-    adresse = wallet.detecter_adresse_wallet()
-    if adresse:
-        logger.log_info(f"🔑 Adresse EVM détectée : {adresse}")
+    if mode_reel:
+        print("\n❗❗❗ ATTENTION : MODE RÉEL ACTIVÉ ❗❗❗")
+        logging.info("⚠️ Mode réel activé — attention, des transactions pourraient être effectuées.")
     else:
-        logger.log_info("🔍 Aucune adresse détectée.")
-except Exception as e:
-    logger.log_erreur(f"Erreur lors de la détection du wallet : {e}")
+        logging.info("🔒 Mode réel désactivé — exécution en simulation uniquement.")
 
-# Récupération des pools via DefiLlama
-try:
-    logger.log_info("🧪 Mode Dryrun : récupération des pools via DefiLlama")
+    adresse_wallet = real_wallet.detecter_adresse_wallet()
+    if adresse_wallet:
+        logging.info(f"🔑 Adresse EVM détectée : {adresse_wallet}")
+    else:
+        logging.warning("⚠️ Aucune adresse de wallet détectée.")
+
+    profil_defaut = config_loader.get("profil_defaut", "modéré")
+    ponderations = profil.charger_ponderations(profil_defaut)
+    logging.info(f"🏗 Profil actif : {profil_defaut} "
+                 f"(APR {ponderations['apr']}, TVL {ponderations['tvl']})")
+
     pools = defillama.recuperer_pools()
-    logger.log_succes(f"{len(pools)} pools récupérées avec succès.")
-except Exception as e:
-    logger.log_erreur(f"Échec de récupération des pools : {e}")
-    exit(1)
+    if not pools:
+        logging.warning("Aucune pool récupérée. Fin du cycle.")
+        return
 
-# Filtrage des pools blacklistées
-pools_filtrees = blacklist.filtrer_blacklist(pools)
-nb_blacklistees = len(pools) - len(pools_filtrees)
-logger.log_info(f"🛑 {nb_blacklistees} pool(s) ignorée(s) car blacklistée(s).")
+    pools_filtrees = blacklist.filtrer_blacklist(pools)
+    pools_notees = scoring.calculer_scores(pools_filtrees, ponderations)
+    top3 = sorted(pools_notees, key=lambda x: x['score'], reverse=True)[:3]
 
-# Filtres APR / TVL minimaux
-tvl_min = config_loader.get("tvl_min", 0)
-apr_min = config_loader.get("apr_min", 0)
+    print("\n🏆 TOP 3 POOLS SÉLECTIONNÉES :")
+    for i, pool in enumerate(top3, start=1):
+        dex = pool.get("plateforme", "N/A")
+        pair = pool.get("nom", "N/A")
+        tvl = pool.get("tvl_usd", 0)
+        apr = pool.get("apr", 0)
+        score = pool.get("score", 0)
 
-pools_filtrees = [
-    pool for pool in pools_filtrees
-    if pool["tvl_usd"] >= tvl_min and pool["apr"] >= apr_min
-]
+        print(f"{i}. {dex} | {pair} | TVL: {tvl} | APR: {apr} | SCORE: {score}")
 
-logger.log_info(f"🧹 Après filtres TVL ≥ {tvl_min} et APR ≥ {apr_min} : {len(pools_filtrees)} pool(s) restante(s)")
+        logging.info(f"TOP {i} | {dex} | {pair} | TVL: {tvl} | APR: {apr} | Score: {score}")
 
-# Calcul des scores pondérés
-logger.log_info("📊 Calcul des scores (profil pondéré) :")
-pools_scored = scoring.calculer_scores(pools_filtrees, ponderations)
-pools_scored = sorted(pools_scored, key=lambda x: x["score"], reverse=True)
 
-# Sélection du TOP 3
-top3 = pools_scored[:3]
-for i, pool in enumerate(top3, start=1):
-    message = (
-        f"TOP {i} : {pool['plateforme']} | {pool['nom']} | "
-        f"TVL ${pool['tvl_usd']:,} | APR {pool['apr']:.2f}% | Score {pool['score']:.2f}"
-    )
-    logger.log_succes(message)
-    investisseur.simuler_investissement(pool)
-
-# 💰 Simulation des gains individuels (via APR) et mise à jour du solde simulé
-try:
-    montant_simule = 100  # Peut être déplacé dans config.json plus tard
-
-    # Estimation des gains pour les 3 pools
-    gains_simules = [simulateur_wallet.simuler_gains(pool, montant_simule)[1] for pool in top3]
-    gain_total = sum(gains_simules)
-
-    solde_avant = simulateur_wallet.charger_solde()
-    nouveau_solde = simulateur_wallet.mettre_a_jour_solde(gain_total)
-
-    logger.log_info(
-        f"💰 Wallet simulé : solde avant = ${solde_avant:.2f} | "
-        f"gain estimé = ${gain_total:.2f} | solde après = ${nouveau_solde:.2f}"
-    )
-
-    rendement.enregistrer(gain_total, solde_avant, nouveau_solde)
-
-    # Journalisation avancée
-    simulateur_wallet.journaliser_resultats(profil_actif, nouveau_solde, top3, montant_simule)
-    journal_gain_csv.enregistrer_cycle(profil_actif, nouveau_solde, top3, montant_simule)
-
-except Exception as e:
-    logger.log_erreur(f"Erreur lors de la simulation du gain : {e}")
-
-# Sauvegarde dans resultats_top3.json
-try:
-    with open("resultats_top3.json", "w", encoding="utf-8") as f:
-        json.dump(top3, f, indent=4, ensure_ascii=False)
-    logger.log_succes("💾 Données TOP 3 enregistrées dans resultats_top3.json")
-except Exception as e:
-    logger.log_erreur(f"Erreur lors de la sauvegarde du fichier JSON : {e}")
-
-# Ajout à l’historique CSV
-try:
-    historique.ajouter_au_csv(top3)
-    logger.log_succes("📈 Historique mis à jour dans historique_cycles.csv")
-except Exception as e:
-    logger.log_erreur(f"Erreur lors de l’écriture dans le fichier historique : {e}")
-
-# Résumé de fin de cycle
-duree_cycle = round(time.time() - start_time, 2)
-logger.log_info("📄 Résumé du cycle :")
-logger.log_info(f"- Pools analysées : {len(pools)}")
-logger.log_info(f"- Pools sélectionnées : {len(top3)}")
-logger.log_info(f"- Meilleure pool : {top3[0]['plateforme']} | {top3[0]['nom']} | Score {top3[0]['score']}")
-logger.log_info(f"- Durée du cycle : {duree_cycle} secondes")
-
-# Fin du cycle
-logger.log_info("✅ Fin du cycle d’analyse DeFiPilot.")
+if __name__ == "__main__":
+    main()
