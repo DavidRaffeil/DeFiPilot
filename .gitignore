@@ -37,3 +37,4 @@ venv/
 
 # Autres fichiers ou dossiers à ignorer (si besoin)
 # /data/
+!config_template.json
