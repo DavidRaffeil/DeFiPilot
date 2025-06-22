@@ -15,6 +15,9 @@
 
 ## Présentation / About
 
+⚠️ *Actuellement, seule la version française du bot est disponible. L’interface et les logs sont en français uniquement.*  
+⚠️ *Currently, only the French version of the bot is available. The interface and logs are in French only.*
+
 **DeFiPilot** est un projet open-source (usage non commercial) développé par un autodidacte pour apprendre, expérimenter et automatiser l’investissement sur la finance décentralisée (DeFi), en utilisant Python et l’IA.  
 **DeFiPilot** is an open-source project (non-commercial use) developed by a self-taught enthusiast to learn, experiment, and automate investment in decentralized finance (DeFi), using Python and AI.
 
@@ -90,7 +93,12 @@ Historique, fichiers CSV, journal quotidien / History, CSV files, daily log
 |---------|--------------------|---------------------|
 | `v1.7`  | Support multi-blockchains (Polygon, Fantom...) + filtres dynamiques | Multi-chain support (Polygon, Fantom...) + dynamic filters |
 | `v2.0`  | Passage au mode réel (hors simulation) avec montants de test | Switch to real (non-simulated) mode with small test funds |
-| `v2.1+` | Ajout d’une IA embarquée, intégration ArbiPilot/LabPilot, amélioration continue | Embedded AI, ArbiPilot/LabPilot integration, continuous improvements |
+| `v2.1`  | Journalisation avancée des gains réels, interface sécurisée | Advanced real-yield logging, secured interface |
+| `v2.2`  | Gestion des LP tokens + seuils de slippage dynamiques | LP token management + dynamic slippage thresholds |
+| `v2.3`  | Mode auto-compounding quotidien + suivi des performances | Daily auto-compounding mode + performance tracking |
+| `v2.4`  | Ajout d’un simulateur de gas et estimation des coûts | Gas simulator and cost estimation tool |
+| `v2.5`  | Export complet vers CSV et intégration ControlPilot (centralisation) | Full CSV export + ControlPilot integration (central hub) |
+| `v2.6+` | Intégration IA avancée avec LabPilot : stratégies adaptatives, auto-réglages | Advanced AI integration with LabPilot: adaptive strategies, auto-tuning |
 
 *La roadmap s’adapte selon l’avancement du projet / The roadmap adapts as the project evolves.*
 
