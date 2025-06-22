@@ -27,56 +27,67 @@ For the full vision of the ecosystem and future bots, see:
 
 ---
 
-## Nouveautés V1.5 / What's new in V1.5
+## Nouveautés / What's New
 
-- 🔀 Ajout de la gestion **multi-profils** (prudent, modéré, agressif) avec pondérations personnalisées
-- 📈 Génération automatique de **graphiques PNG** pour chaque simulation
-- 📊 Création d’un **journal CSV** des résultats simulés (rendement, top 3 pools, score)
-- 🧠 Interface enrichie : prise en compte du profil actif et affichage clair des données
-- 🛠 Préparation à l’intégration du mode réel (Phase 2)
+### V1.6 – Détection de l’adresse EVM réelle
+- Nouvelle configuration : `utiliser_wallet_reel` pour activer l'adresse réelle (wallet Rabby via `.env`)  
+  New configuration: `utiliser_wallet_reel` to activate real wallet (Rabby via `.env`)
+- Lecture dynamique de l'adresse réelle depuis le fichier `.env` (`ADRESSE_WALLET`)  
+  Dynamic loading of the real address from `.env` file (`ADRESSE_WALLET`)
+- Affichage explicite de l’adresse utilisée (simulation ou réelle)  
+  Clear display of the address used (simulated or real)
+- Journalisation complète de l’adresse et du mode actif  
+  Full logging of the address and active mode
+- Préparation à la future activation des investissements réels  
+  Preparation for real investment activation
 
 ---
 
 ## Fonctionnalités principales / Main features
 
-- Analyse automatique des pools DeFi via DefiLlama
-- Simulation d’investissement multi-profils avec score pondéré
-- Journalisation détaillée (résultats, historique CSV, log résumé quotidien)
-- Interface graphique simple (Tkinter)
-- Sélection des meilleures opportunités selon le profil d’investisseur
-- Préparation à l’intégration multi-blockchains et de fonctions avancées (voir roadmap)
+- Analyse automatique des pools DeFi via DefiLlama  
+  Automatic analysis of DeFi pools via DefiLlama
+- Simulation d’investissement multi-profils avec score pondéré  
+  Multi-profile investment simulation with weighted scoring
+- Journalisation détaillée (résultats, historique CSV, log résumé quotidien)  
+  Detailed logging (results, CSV history, daily summary log)
+- Interface graphique simple (Tkinter)  
+  Simple graphical interface (Tkinter)
+- Sélection des meilleures opportunités selon le profil d’investisseur  
+  Selection of best opportunities based on investor profile
+- Préparation à l’intégration multi-blockchains et de fonctions avancées (voir roadmap)  
+  Ready for multi-chain and advanced features integration (see roadmap)
 
-## Architecture simplifiée DeFiPilot
+## Architecture simplifiée DeFiPilot / Simplified architecture
 
-Utilisateur  
+Utilisateur / User  
    │  
    ▼  
-Interface graphique (Tkinter)  
+Interface graphique (Tkinter) / GUI (Tkinter)  
    │  
    ▼  
 Sélection du profil & chargement des paramètres  
+Profile selection & parameter loading  
    │  
    ▼  
-Moteur principal DeFiPilot  
+Moteur principal DeFiPilot / Main Engine  
    │  
-   ├─ Récupération des pools via DefiLlama  
-   ├─ Calcul des scores & simulation  
-   ├─ Journalisation avancée (logs, CSV)  
-   │  
-   ▼  
-Recommandations à l'utilisateur  
+   ├─ Récupération des pools via DefiLlama / Pool retrieval via DefiLlama  
+   ├─ Calcul des scores & simulation / Score calculation & simulation  
+   ├─ Journalisation avancée (logs, CSV) / Advanced logging (logs, CSV)  
    │  
    ▼  
-Historique, fichiers CSV, journal quotidien
+Recommandations à l'utilisateur / User recommendations  
+   │  
+   ▼  
+Historique, fichiers CSV, journal quotidien / History, CSV files, daily log
 
 ---
 
-## 🛣️ Roadmap des prochaines versions / Upcoming roadmap
+## 🚣️ Roadmap des prochaines versions / Upcoming roadmap
 
 | Version | FR : Contenu prévu | EN: Planned content |
 |---------|--------------------|---------------------|
-| `v1.5`  | Multi-profils, graphiques PNG, journalisation CSV | Multi-profiles, PNG charts, CSV logging |
-| `v1.6`  | Connexion réelle à un portefeuille test (lecture seule) + analyse de wallet | Real test wallet connection (read-only) + wallet analysis |
 | `v1.7`  | Support multi-blockchains (Polygon, Fantom...) + filtres dynamiques | Multi-chain support (Polygon, Fantom...) + dynamic filters |
 | `v2.0`  | Passage au mode réel (hors simulation) avec montants de test | Switch to real (non-simulated) mode with small test funds |
 | `v2.1+` | Ajout d’une IA embarquée, intégration ArbiPilot/LabPilot, amélioration continue | Embedded AI, ArbiPilot/LabPilot integration, continuous improvements |
@@ -107,8 +118,10 @@ Historique, fichiers CSV, journal quotidien
 
 ## Utilisation / Usage
 
-- Lancer `main.py` pour démarrer une analyse et une simulation d’investissement selon le profil choisi (modéré par défaut).
-- Consulter les logs et fichiers CSV générés pour suivre l’évolution des rendements simulés.
+- Lancer `main.py` pour démarrer une analyse et une simulation d’investissement selon le profil choisi (modéré par défaut).  
+  Run `main.py` to start an analysis and investment simulation based on the selected profile (default is moderate).
+- Consulter les logs et fichiers CSV générés pour suivre l’évolution des rendements simulés.  
+  Check the logs and generated CSV files to track simulated yield performance.
 
 ---
 
@@ -122,22 +135,32 @@ See full terms in the [License.md](./License.md) file
 
 ---
 
-## FAQ – Questions fréquentes
+## FAQ – Questions fréquentes / Frequently Asked Questions
 
-### Peut-on utiliser DeFiPilot avec un exchange centralisé (Binance, Kraken, etc.) ?
-Non, DeFiPilot est dédié uniquement à la DeFi (finance décentralisée). Il ne fonctionne pas avec les plateformes CeFi.
+### Peut-on utiliser DeFiPilot avec un exchange centralisé (Binance, Kraken, etc.) ?  
+Can DeFiPilot be used with a centralized exchange (Binance, Kraken, etc.)?  
+❌ Non. DeFiPilot est dédié exclusivement à la finance décentralisée (DeFi). Il ne prend pas en charge les plateformes CeFi.  
+❌ No. DeFiPilot is strictly focused on decentralized finance (DeFi) and does not support CeFi platforms.
 
-### Est-ce que DeFiPilot fonctionne avec tous les wallets ?
-Actuellement, seul un wallet en mode “lecture seule” (adresse publique) est prévu pour la V1.5. Les intégrations d’autres types de wallets arriveront plus tard.
+### Est-ce que DeFiPilot fonctionne avec tous les wallets ?  
+Does DeFiPilot work with all wallets?  
+🧪 Actuellement, seul un wallet en lecture seule (adresse publique) est utilisé pour la simulation. Les intégrations complètes viendront plus tard.  
+🧪 Currently, only read-only (public address) wallets are supported for simulation. Full integration will come later.
 
-### Est-ce que je peux utiliser DeFiPilot en mode réel ?
-À partir de la version 2.0, un mode “réel” avec petits montants de test sera disponible. Avant cela, tout est simulation pour la sécurité.
+### Peut-on utiliser DeFiPilot en mode réel ?  
+Can I use DeFiPilot in real mode?  
+🔒 Pas encore. À partir de la version 2.0, un mode réel avec montants de test sera disponible. Avant cela, tout est simulation.  
+🔒 Not yet. From version 2.0, a real mode with test amounts will be available. Until then, everything is simulation only.
 
-### Peut-on personnaliser les critères de sélection des pools ?
-Oui, le choix du profil (prudent, modéré, agressif…) influence la pondération APR/TVL et la sélection des meilleures pools.
+### Peut-on personnaliser les critères d’analyse des pools ?  
+Can pool analysis criteria be customized?  
+✅ Oui. Le profil choisi (prudent, modéré, agressif…) influence la pondération APR/TVL et la sélection des pools.  
+✅ Yes. The selected profile (cautious, moderate, aggressive...) influences APR/TVL weighting and pool selection.
 
-### Comment signaler un bug ou une suggestion ?
-Ouvre une “issue” sur GitHub ou contacte le développeur via le dépôt.
+### Comment signaler un bug ou une suggestion ?  
+How to report a bug or suggestion?  
+💬 Ouvre une "issue" sur GitHub ou contacte le développeur via le dépôt.  
+💬 Open an issue on GitHub or contact the developer through the repository.
 
 ---
 
