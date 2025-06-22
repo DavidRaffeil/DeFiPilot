@@ -1,4 +1,4 @@
-# main.py (version finale avec ordre corrigé)
+# main.py (version V1.6 complète)
 import logging
 from datetime import datetime
 import csv
@@ -22,9 +22,8 @@ def main():
 
     # Charger la configuration
     config_loader.charger_config()
-    print("DEBUG: mode_reel =", config_loader.get("mode_reel", False))
 
-    # Lecture du mode réel depuis la config (après chargement)
+    # Lecture du mode réel depuis la config
     mode_reel = config_loader.get("mode_reel", False)
 
     # Journaliser séparément le mode actif dans mode.log
@@ -34,14 +33,26 @@ def main():
     if mode_reel:
         print("\n❗❗❗ ATTENTION : MODE RÉEL ACTIVÉ ❗❗❗")
         logging.info("⚠️ Mode réel activé — attention, des transactions pourraient être effectuées.")
+        logging.warning("⚠️ Aucun module d’investissement réel n’est encore activé. Placeholder actif.")
     else:
         logging.info("🔒 Mode réel désactivé — exécution en simulation uniquement.")
 
-    adresse_wallet = real_wallet.detecter_adresse_wallet()
-    if adresse_wallet:
-        logging.info(f"🔑 Adresse EVM détectée : {adresse_wallet}")
+    # Lecture du choix de wallet réel
+    utiliser_wallet_reel = config_loader.get("utiliser_wallet_reel", False)
+
+    if utiliser_wallet_reel:
+        from real_wallet import detecter_adresse_wallet
+        adresse_wallet = detecter_adresse_wallet()
+        if adresse_wallet:
+            print(f"✅ Adresse EVM utilisée : {adresse_wallet} (réelle)")
+            logging.info(f"🔑 Adresse EVM utilisée : {adresse_wallet} (réelle)")
+        else:
+            logging.warning("⚠️ Aucune adresse réelle détectée.")
+            adresse_wallet = "simulateur_wallet"
     else:
-        logging.warning("⚠️ Aucune adresse de wallet détectée.")
+        adresse_wallet = "simulateur_wallet"
+        print(f"✅ Adresse EVM utilisée : {adresse_wallet} (simulation)")
+        logging.info("🔑 Adresse EVM utilisée : simulateur_wallet (simulation)")
 
     profil_defaut = config_loader.get("profil_defaut", "modéré")
     ponderations = profil.charger_ponderations(profil_defaut)

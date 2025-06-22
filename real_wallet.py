@@ -1,17 +1,23 @@
-# real_wallet.py
-from dotenv import load_dotenv
 import os
+from web3 import Web3
+from dotenv import load_dotenv
 
-# Charger les variables depuis le .env (optionnel ici)
 load_dotenv()
 
-# 👉 Remplace par ton adresse publique EVM (copie depuis Rabby ou Metamask)
-ADRESSE_MANUELLE = "0x9A06D2cd867589889A6330d84Ef17414EB2b98f8"
-
 def detecter_adresse_wallet():
-    if not ADRESSE_MANUELLE.startswith("0x") or len(ADRESSE_MANUELLE) != 42:
-        print("❌ Adresse manuelle invalide. Vérifie le format.")
+    rpc_url = os.getenv("RPC_URL")
+    adresse_wallet = os.getenv("ADRESSE_WALLET")
+
+    if not rpc_url or not adresse_wallet:
+        print("❌ Variables d'environnement manquantes.")
         return None
 
-    print(f"✅ Adresse définie manuellement : {ADRESSE_MANUELLE}")
-    return ADRESSE_MANUELLE
+    web3 = Web3(Web3.HTTPProvider(rpc_url))
+
+    if not web3.is_connected():
+        print("❌ Connexion au réseau échouée.")
+        return None
+
+    print(f"🔗 URL RPC définie : {rpc_url}")
+    print(f"✅ Adresse EVM détectée : {adresse_wallet}")
+    return adresse_wallet
