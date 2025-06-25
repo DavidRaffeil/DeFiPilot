@@ -32,34 +32,32 @@ For the full vision of the ecosystem and future bots, see:
 
 ## Nouveautés / What's New
 
-### V1.6 – Détection de l’adresse EVM réelle
-- Nouvelle configuration : `utiliser_wallet_reel` pour activer l'adresse réelle (wallet Rabby via `.env`)  
-  New configuration: `utiliser_wallet_reel` to activate real wallet (Rabby via `.env`)
-- Lecture dynamique de l'adresse réelle depuis le fichier `.env` (`ADRESSE_WALLET`)  
-  Dynamic loading of the real address from `.env` file (`ADRESSE_WALLET`)
-- Affichage explicite de l’adresse utilisée (simulation ou réelle)  
-  Clear display of the address used (simulated or real)
-- Journalisation complète de l’adresse et du mode actif  
-  Full logging of the address and active mode
-- Préparation à la future activation des investissements réels  
-  Preparation for real investment activation
+### V1.7 – Simulation 30 jours & refonte des fichiers  
+- Nouvelle simulation complète sur 30 jours avec accumulation quotidienne des gains  
+- Ajout du fichier `resultats_simulation.csv` contenant les données détaillées (solde, top 3 pools, gains par jour)  
+- Nettoyage et uniformisation des fichiers CSV (`journal_rendement`, `journal_top3`)  
+- Log résumé enrichi pour chaque cycle (score, meilleure pool, durée, etc.)  
+- Préparation de la V1.8 (pondérations dynamiques & scoring ajusté)  
+
+—  
+
+### V1.7 – 30-day simulation & log file overhaul  
+- Full simulation over 30 days with daily gains accumulation  
+- New file `resultats_simulation.csv` containing detailed daily data (balance, top 3 pools, gains)  
+- Cleanup and standardization of CSV files (`journal_rendement`, `journal_top3`)  
+- Enhanced summary log per cycle (score, best pool, duration, etc.)  
+- Preparing for V1.8 (dynamic weighting & score adjustment)
 
 ---
 
 ## Fonctionnalités principales / Main features
 
 - Analyse automatique des pools DeFi via DefiLlama  
-  Automatic analysis of DeFi pools via DefiLlama
 - Simulation d’investissement multi-profils avec score pondéré  
-  Multi-profile investment simulation with weighted scoring
 - Journalisation détaillée (résultats, historique CSV, log résumé quotidien)  
-  Detailed logging (results, CSV history, daily summary log)
 - Interface graphique simple (Tkinter)  
-  Simple graphical interface (Tkinter)
 - Sélection des meilleures opportunités selon le profil d’investisseur  
-  Selection of best opportunities based on investor profile
-- Préparation à l’intégration multi-blockchains et de fonctions avancées (voir roadmap)  
-  Ready for multi-chain and advanced features integration (see roadmap)
+- Préparation à l’intégration multi-blockchains et de fonctions avancées (voir roadmap)
 
 ## Architecture simplifiée DeFiPilot / Simplified architecture
 
@@ -91,7 +89,8 @@ Historique, fichiers CSV, journal quotidien / History, CSV files, daily log
 
 | Version | FR : Contenu prévu | EN: Planned content |
 |---------|--------------------|---------------------|
-| `v1.7`  | Support multi-blockchains (Polygon, Fantom...) + filtres dynamiques | Multi-chain support (Polygon, Fantom...) + dynamic filters |
+| `v1.7`  | Simulation 30 jours + journalisation avancée | 30-day simulation + advanced logging |
+| `v1.8`  | Pondérations dynamiques selon historique | Dynamic weighting based on history |
 | `v2.0`  | Passage au mode réel (hors simulation) avec montants de test | Switch to real (non-simulated) mode with small test funds |
 | `v2.1`  | Journalisation avancée des gains réels, interface sécurisée | Advanced real-yield logging, secured interface |
 | `v2.2`  | Gestion des LP tokens + seuils de slippage dynamiques | LP token management + dynamic slippage thresholds |
