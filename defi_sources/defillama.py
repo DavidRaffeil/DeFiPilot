@@ -35,3 +35,6 @@ def recuperer_pools():
             "apr": 2.5,
         }
     ]
+
+# Alias pour compatibilité avec main.py
+recuperer_pools_defillama = recuperer_pools

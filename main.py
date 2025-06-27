@@ -1,85 +1,54 @@
-# main.py (version V1.6 complète)
-import logging
-from datetime import datetime
-import csv
+# main.py – Version V1.8 (simulation multi-jours avec pondération historique)
 
-from core import config_loader, profil
-from core import scoring, blacklist
-from defi_sources import defillama
-import simulateur_wallet
-import real_wallet
+import os
+from datetime import datetime, timedelta
+from defi_sources.defillama import recuperer_pools_defillama
+from core.scoring import calculer_scores_et_gains
+from core.profil import charger_profil_utilisateur
+from core import historique
 
+# Configuration simple
+NB_JOURS_SIMULATION = 30
+SOLDE_INITIAL = 1000.0
+profil = charger_profil_utilisateur()
+solde_simule = SOLDE_INITIAL
 
-def main():
-    # Initialiser le logging dès le début
-    logging.basicConfig(
-        filename="logs/journal.log",
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(message)s"
-    )
+# Chargement de l'historique
+historique_pools = historique.charger_historique()
 
-    logging.info("🔁 Démarrage d’un nouveau cycle d’analyse DeFiPilot")
+# Journal CSV
+CHEMIN_LOG = "logs/journal_gain_simule.csv"
+os.makedirs("logs", exist_ok=True)
+if not os.path.exists(CHEMIN_LOG):
+    with open(CHEMIN_LOG, "w") as f:
+        f.write("datetime,profil,solde_simule,top1_nom,top1_apr,top1_gain,top2_nom,top2_apr,top2_gain,top3_nom,top3_apr,top3_gain,gain_total\n")
 
-    # Charger la configuration
-    config_loader.charger_config()
+# Boucle de simulation journalière
+for jour in range(1, NB_JOURS_SIMULATION + 1):
+    date_simulee = datetime.now() + timedelta(days=jour - 1)
+    print(f"\n🔁 Simulation du jour {jour}/{NB_JOURS_SIMULATION} ({date_simulee.strftime('%Y-%m-%d')})")
 
-    # Lecture du mode réel depuis la config
-    mode_reel = config_loader.get("mode_reel", False)
+    pools = recuperer_pools_defillama()
+    top3, gain_total = calculer_scores_et_gains(pools, profil, solde_simule, historique_pools)
 
-    # Journaliser séparément le mode actif dans mode.log
-    with open("logs/mode.log", "a") as mode_file:
-        mode_file.write(f"{datetime.now().isoformat()} | mode_reel = {mode_reel}\n")
+    solde_simule += gain_total
 
-    if mode_reel:
-        print("\n❗❗❗ ATTENTION : MODE RÉEL ACTIVÉ ❗❗❗")
-        logging.info("⚠️ Mode réel activé — attention, des transactions pourraient être effectuées.")
-        logging.warning("⚠️ Aucun module d’investissement réel n’est encore activé. Placeholder actif.")
-    else:
-        logging.info("🔒 Mode réel désactivé — exécution en simulation uniquement.")
+    # Mise à jour historique avec la meilleure pool
+    top1_nom, top1_apr, top1_gain = top3[0]
+    historique.maj_historique(historique_pools, top1_nom, top1_gain)
 
-    # Lecture du choix de wallet réel
-    utiliser_wallet_reel = config_loader.get("utiliser_wallet_reel", False)
+    # Affichage résumé
+    print(f"📅 Jour {jour} – Solde : {solde_simule:.2f} USDC | Gain : +{top1_gain:.2f} | Pool top : {top1_nom} ({top1_apr:.2f} % APR)")
 
-    if utiliser_wallet_reel:
-        from real_wallet import detecter_adresse_wallet
-        adresse_wallet = detecter_adresse_wallet()
-        if adresse_wallet:
-            print(f"✅ Adresse EVM utilisée : {adresse_wallet} (réelle)")
-            logging.info(f"🔑 Adresse EVM utilisée : {adresse_wallet} (réelle)")
-        else:
-            logging.warning("⚠️ Aucune adresse réelle détectée.")
-            adresse_wallet = "simulateur_wallet"
-    else:
-        adresse_wallet = "simulateur_wallet"
-        print(f"✅ Adresse EVM utilisée : {adresse_wallet} (simulation)")
-        logging.info("🔑 Adresse EVM utilisée : simulateur_wallet (simulation)")
+    # Log CSV
+    line = f"{date_simulee.strftime('%Y-%m-%d')},{profil['nom']},{solde_simule:.2f}"
+    for nom, apr, gain in top3:
+        line += f",{nom},{apr:.2f},{gain:.2f}"
+    line += f",{gain_total:.2f}\n"
+    with open(CHEMIN_LOG, "a") as f:
+        f.write(line)
 
-    profil_defaut = config_loader.get("profil_defaut", "modéré")
-    ponderations = profil.charger_ponderations(profil_defaut)
-    logging.info(f"🏗 Profil actif : {profil_defaut} "
-                 f"(APR {ponderations['apr']}, TVL {ponderations['tvl']})")
+# Sauvegarde finale de l’historique
+historique.sauvegarder_historique(historique_pools)
 
-    pools = defillama.recuperer_pools()
-    if not pools:
-        logging.warning("Aucune pool récupérée. Fin du cycle.")
-        return
-
-    pools_filtrees = blacklist.filtrer_blacklist(pools)
-    pools_notees = scoring.calculer_scores(pools_filtrees, ponderations)
-    top3 = sorted(pools_notees, key=lambda x: x['score'], reverse=True)[:3]
-
-    print("\n🏆 TOP 3 POOLS SÉLECTIONNÉES :")
-    for i, pool in enumerate(top3, start=1):
-        dex = pool.get("plateforme", "N/A")
-        pair = pool.get("nom", "N/A")
-        tvl = pool.get("tvl_usd", 0)
-        apr = pool.get("apr", 0)
-        score = pool.get("score", 0)
-
-        print(f"{i}. {dex} | {pair} | TVL: {tvl} | APR: {apr} | SCORE: {score}")
-
-        logging.info(f"TOP {i} | {dex} | {pair} | TVL: {tvl} | APR: {apr} | Score: {score}")
-
-
-if __name__ == "__main__":
-    main()
+print("\n✅ Simulation terminée.")

@@ -1,36 +1,37 @@
-# core/historique.py
-
-import csv
 import os
-from datetime import datetime
-import simulateur_wallet  # ➕ on importe le simulateur de gains
+import json
 
-FICHIER_CSV = "historique_cycles.csv"
+HISTORIQUE_PATH = "data/historique_pools.json"
 
-def ajouter_au_csv(pools_top3):
-    """
-    Ajoute les 3 meilleures pools du cycle courant dans un fichier CSV historique.
-    Si le fichier n'existe pas, il est créé avec les en-têtes.
-    """
-    creer_fichier = not os.path.exists(FICHIER_CSV)
+def charger_historique():
+    if os.path.exists(HISTORIQUE_PATH):
+        with open(HISTORIQUE_PATH, "r") as f:
+            return json.load(f)
+    return {}
 
-    with open(FICHIER_CSV, mode="a", encoding="utf-8", newline="") as f:
-        writer = csv.writer(f)
-        if creer_fichier:
-            writer.writerow([
-                "date", "rang", "plateforme", "nom", "TVL (USD)", "APR (%)", "score", "gain_estime_24h"
-            ])
+def sauvegarder_historique(historique):
+    os.makedirs("data", exist_ok=True)
+    with open(HISTORIQUE_PATH, "w") as f:
+        json.dump(historique, f, indent=2)
 
-        date_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        for i, pool in enumerate(pools_top3, start=1):
-            gain_str, _ = simulateur_wallet.simuler_gains(pool, montant=100)
-            writer.writerow([
-                date_str,
-                i,
-                pool["plateforme"],
-                pool["nom"],
-                pool["tvl_usd"],
-                pool["apr"],
-                pool["score"],
-                gain_str  # ex: ~3.25 € / 24h
-            ])
+def maj_historique(historique, nom_pool, gain):
+    if nom_pool not in historique:
+        historique[nom_pool] = {"count": 0, "total_gain": 0.0}
+    historique[nom_pool]["count"] += 1
+    historique[nom_pool]["total_gain"] += gain
+
+def calculer_bonus(historique, nom_pool, max_bonus=0.15, max_malus=-0.10):
+    if nom_pool not in historique:
+        return 0.0
+    count = historique[nom_pool]["count"]
+    total_gain = historique[nom_pool]["total_gain"]
+    if count == 0:
+        return 0.0
+    gain_moyen = total_gain / count
+
+    if gain_moyen >= 10000:
+        return max_bonus
+    elif gain_moyen <= 0:
+        return max_malus
+    else:
+        return max_malus + (gain_moyen / 10000) * (max_bonus - max_malus)
