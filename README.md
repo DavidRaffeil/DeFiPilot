@@ -32,21 +32,21 @@ For the full vision of the ecosystem and future bots, see:
 
 ## Nouveautés / What's New
 
-### V1.7 – Simulation 30 jours & refonte des fichiers  
-- Nouvelle simulation complète sur 30 jours avec accumulation quotidienne des gains  
-- Ajout du fichier `resultats_simulation.csv` contenant les données détaillées (solde, top 3 pools, gains par jour)  
-- Nettoyage et uniformisation des fichiers CSV (`journal_rendement`, `journal_top3`)  
-- Log résumé enrichi pour chaque cycle (score, meilleure pool, durée, etc.)  
-- Préparation de la V1.8 (pondérations dynamiques & scoring ajusté)  
+### V1.8 – Pondération historique & graphique simulé  
+- Nouvelle pondération dynamique selon le rendement historique simulé  
+- Calcul de bonus appliqué au top 1 pool en fonction des gains passés  
+- Ajout du fichier `journal_gain_simule.csv` (journal 30 jours du solde simulé)  
+- Génération automatique d’un graphique PNG `resultats_simulation.png`  
+- Optimisation de la lisibilité des résultats journaliers  
 
 —  
 
-### V1.7 – 30-day simulation & log file overhaul  
-- Full simulation over 30 days with daily gains accumulation  
-- New file `resultats_simulation.csv` containing detailed daily data (balance, top 3 pools, gains)  
-- Cleanup and standardization of CSV files (`journal_rendement`, `journal_top3`)  
-- Enhanced summary log per cycle (score, best pool, duration, etc.)  
-- Preparing for V1.8 (dynamic weighting & score adjustment)
+### V1.8 – Historical weighting & simulated chart  
+- New dynamic weighting based on historical simulated yield  
+- Bonus applied to the top 1 pool based on past performance  
+- Added `journal_gain_simule.csv` (30-day simulation log of simulated balance)  
+- Automatic generation of `resultats_simulation.png` chart  
+- Improved readability of daily simulation results
 
 ---
 
@@ -89,8 +89,7 @@ Historique, fichiers CSV, journal quotidien / History, CSV files, daily log
 
 | Version | FR : Contenu prévu | EN: Planned content |
 |---------|--------------------|---------------------|
-| `v1.7`  | Simulation 30 jours + journalisation avancée | 30-day simulation + advanced logging |
-| `v1.8`  | Pondérations dynamiques selon historique | Dynamic weighting based on history |
+| `v1.8`  | Pondération historique + graphique PNG | Historical weighting + PNG chart |
 | `v2.0`  | Passage au mode réel (hors simulation) avec montants de test | Switch to real (non-simulated) mode with small test funds |
 | `v2.1`  | Journalisation avancée des gains réels, interface sécurisée | Advanced real-yield logging, secured interface |
 | `v2.2`  | Gestion des LP tokens + seuils de slippage dynamiques | LP token management + dynamic slippage thresholds |
