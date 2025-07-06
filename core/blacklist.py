@@ -11,13 +11,24 @@ def charger_blacklist():
     with open(BLACKLIST_PATH, "r", encoding="utf-8") as f:
         return json.load(f)
 
-def filtrer_blacklist(pools):
-    blacklist = charger_blacklist()
-    return [pool for pool in pools if pool["id"] not in blacklist]
+def sauvegarder_blacklist(liste):
+    with open(BLACKLIST_PATH, "w", encoding="utf-8") as f:
+        json.dump(liste, f, indent=2, ensure_ascii=False)
 
-def ajouter_a_blacklist(pool_id):
-    blacklist = charger_blacklist()
-    if pool_id not in blacklist:
-        blacklist.append(pool_id)
-        with open(BLACKLIST_PATH, "w", encoding="utf-8") as f:
-            json.dump(blacklist, f, indent=2, ensure_ascii=False)
+def filtrer_pools_exclues(pools, blacklist):
+    return [pool for pool in pools if pool["name"] not in blacklist or blacklist[pool["name"]] <= 0]
+
+def maj_blacklist(blacklist, pool_name):
+    blacklist[pool_name] = 5  # 5 jours d’exclusion
+    sauvegarder_blacklist(blacklist)
+    return blacklist
+
+def nettoyer_blacklist(blacklist):
+    nouvelles_entrees = {}
+    for pool_name, jours in blacklist.items():
+        if jours > 1:
+            nouvelles_entrees[pool_name] = jours - 1
+        elif jours == 1:
+            print(f"✅ Fin de l'exclusion : {pool_name}")
+    sauvegarder_blacklist(nouvelles_entrees)
+    return nouvelles_entrees
