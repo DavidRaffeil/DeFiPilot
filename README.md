@@ -32,21 +32,19 @@ For the full vision of the ecosystem and future bots, see:
 
 ## Nouveautés / What's New
 
-### V1.8 – Pondération historique & graphique simulé  
-- Nouvelle pondération dynamique selon le rendement historique simulé  
-- Calcul de bonus appliqué au top 1 pool en fonction des gains passés  
-- Ajout du fichier `journal_gain_simule.csv` (journal 30 jours du solde simulé)  
-- Génération automatique d’un graphique PNG `resultats_simulation.png`  
-- Optimisation de la lisibilité des résultats journaliers  
+### V1.9 – Simulation sécurisée & préparation test réel  
+- Ajout d’un **plafond journalier de gain (+20%)** pour éviter les rendements irréalistes  
+- Meilleure stabilité du solde simulé sur 30 jours même avec APR très élevés  
+- Résultats cohérents validés avec historique, CSV et graphique  
+- Version finale avant le **passage en mode réel (V2.0)**  
 
 —  
 
-### V1.8 – Historical weighting & simulated chart  
-- New dynamic weighting based on historical simulated yield  
-- Bonus applied to the top 1 pool based on past performance  
-- Added `journal_gain_simule.csv` (30-day simulation log of simulated balance)  
-- Automatic generation of `resultats_simulation.png` chart  
-- Improved readability of daily simulation results
+### V1.9 – Safe simulation & real mode preparation  
+- Added **daily gain cap (+20%)** to prevent unrealistic yields  
+- Improved stability of simulated balance over 30 days with high APRs  
+- Consistent results validated with historical data, CSVs, and graph  
+- Final version before the **switch to real mode (V2.0)**
 
 ---
 
@@ -89,7 +87,6 @@ Historique, fichiers CSV, journal quotidien / History, CSV files, daily log
 
 | Version | FR : Contenu prévu | EN: Planned content |
 |---------|--------------------|---------------------|
-| `v1.8`  | Pondération historique + graphique PNG | Historical weighting + PNG chart |
 | `v2.0`  | Passage au mode réel (hors simulation) avec montants de test | Switch to real (non-simulated) mode with small test funds |
 | `v2.1`  | Journalisation avancée des gains réels, interface sécurisée | Advanced real-yield logging, secured interface |
 | `v2.2`  | Gestion des LP tokens + seuils de slippage dynamiques | LP token management + dynamic slippage thresholds |
