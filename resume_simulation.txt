@@ -1,0 +1,7 @@
+Résumé de la simulation DeFiPilot (30 jours)
+
+Solde initial  : 1,000.00 USDC
+Solde final    : 237,376.31 USDC
+Gain total     : 236,376.31 USDC
+Rendement      : 23637.63 %
+Pool la plus fréquente : STUSD (30 jours)
