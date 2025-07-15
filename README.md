@@ -32,19 +32,25 @@ For the full vision of the ecosystem and future bots, see:
 
 ## Nouveautés / What's New
 
-### V1.9 – Simulation sécurisée & préparation test réel  
-- Ajout d’un **plafond journalier de gain (+20%)** pour éviter les rendements irréalistes  
-- Meilleure stabilité du solde simulé sur 30 jours même avec APR très élevés  
-- Résultats cohérents validés avec historique, CSV et graphique  
-- Version finale avant le **passage en mode réel (V2.0)**  
+### V2.0 – Simulation en conditions réelles (test simulé)  
+- Activation du **mode test réel** : transactions affichées mais non envoyées  
+- Calcul automatique du **seuil d’investissement dynamique**  
+- Tri quotidien des **TOP 3 pools par score pondéré**  
+- Application du **bonus historique** (15 % par défaut)  
+- Limite automatique de **20 % de rendement par jour**  
+- Génération automatique de logs + résumé + graphique  
+- Résultats finaux enregistrés dans `resume_simulation.txt` et `resultats_simulation.png`  
 
-—  
+—
 
-### V1.9 – Safe simulation & real mode preparation  
-- Added **daily gain cap (+20%)** to prevent unrealistic yields  
-- Improved stability of simulated balance over 30 days with high APRs  
-- Consistent results validated with historical data, CSVs, and graph  
-- Final version before the **switch to real mode (V2.0)**
+### V2.0 – Real-mode simulation (non-executed test)  
+- Activated **real test mode**: transactions displayed but not executed  
+- Automatic calculation of the **dynamic investment threshold**  
+- Daily sorting of **TOP 3 pools by weighted score**  
+- Application of the **historical bonus** (15% default)  
+- Daily **yield cap at 20%** to prevent unrealistic growth  
+- Auto-generated logs, summary file, and performance chart  
+- Final results stored in `resume_simulation.txt` and `resultats_simulation.png`
 
 ---
 
