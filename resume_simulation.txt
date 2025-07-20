@@ -1,7 +1,10 @@
-Résumé de la simulation DeFiPilot (30 jours)
+Résumé de la simulation réelle – Version V2.1
 
 Solde initial  : 1,000.00 USDC
-Solde final    : 237,376.31 USDC
-Gain total     : 236,376.31 USDC
-Rendement      : 23637.63 %
-Pool la plus fréquente : STUSD (30 jours)
+Solde final    : 2,100.00 USDC
+Gain total     : 1,100.00 USDC
+Rendement      : 110.00 %
+
+Nombre de jours avec investissement : 3 / 4
+Pool la plus fréquente              : raydium-amm | WSOL-VALENTINE
+Bonus historique moyen              : 4.12 %
