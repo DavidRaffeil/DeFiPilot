@@ -3,6 +3,7 @@
   "tvl_min": 1000,
   "apr_min": 1.0,
   "seuil_score_investissement": 30000,
-  "mode_reel": false,
-  "utiliser_wallet_reel": true
+  "mode_reel": true,
+  "utiliser_wallet_reel": true,
+  "ignorer_lp": true
 }
