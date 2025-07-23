@@ -8,14 +8,14 @@
 
 ---
 
-> Bot personnel d’analyse et d’investissement automatisé en DeFi.
+> Bot personnel d’analyse et d’investissement automatisé en DeFi.  
 > Personal bot for automated analysis and investment in DeFi.
 
 ---
 
 ## Présentation / About
 
-⚠️ *Actuellement, seule la version française du bot est disponible. L’interface et les logs sont en français uniquement.*
+⚠️ *Actuellement, seule la version française du bot est disponible. L’interface et les logs sont en français uniquement.*  
 ⚠️ *Currently, only the French version of the bot is available. The interface and logs are in French only.*
 
 **DeFiPilot** est un projet open-source (usage non commercial) développé par un autodidacte pour apprendre, expérimenter et automatiser l’investissement sur la finance décentralisée (DeFi), en utilisant Python et l’IA.  
@@ -31,13 +31,18 @@ Pour la vision complète de l’écosystème et des futurs bots associés, voir 
 
 ## Nouveautés / What's New
 
-### 🔹 Version V2.2 – Simulation 1 jour réaliste avec journal sécurisé (20 juillet 2025)
+### 🔹 Version V2.3 – Simulation LP & journalisation historique (23 juillet 2025)
 
-– Suppression de la boucle 30 jours  
-– Simulation limitée à une journée par exécution  
-– Plafonnement du gain journalier simulé à +20 %  
-– Nouveau fichier `journal_gain_reel.csv` pour log réel jour par jour  
-– Ajout d’une protection anti-double simulation (1 ligne par date uniquement)
+– Simulation LP avec double swap simulé (moitié/moitié)  
+  LP simulation with double swap (50/50 split)  
+– Création du fichier `journal_swaps_lp.csv` (résumé quotidien)  
+  New file `journal_swaps_lp.csv` (daily summary)  
+– Création du fichier `historique_swaps_lp.csv` (stockage complet jour par jour)  
+  New file `historique_swaps_lp.csv` (full historical storage)  
+– Affichage automatique des statistiques LP (top pools, gains moyens, scores moyens)  
+  Automatic display of LP stats (top pools, average gains, average scores)  
+– Préparation à l’analyse de performance et aux fonctions d’auto-compounding (prévue V2.4)  
+  Preparing for performance analysis and auto-compounding logic (planned for V2.4)
 
 ---
 
@@ -82,11 +87,11 @@ Historique, fichiers CSV, journal quotidien / History, CSV files, daily log
 
 | Version | Contenu prévu / Planned content                                                                                                                        |
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `v2.2`  | Simulation 1 jour réel + journalisation sécurisée / Realistic daily simulation + secure logging                                                       |
-| `v2.3`  | Mode auto-compounding quotidien + suivi des performances / Daily auto-compounding mode + performance tracking                                          |
-| `v2.4`  | Ajout d’un simulateur de gas et estimation des coûts / Gas simulator and cost estimation tool                                                          |
-| `v2.5`  | Export complet vers CSV et intégration ControlPilot (centralisation) / Full CSV export + ControlPilot integration (central hub)                        |
-| `v2.6+` | Intégration IA avancée avec LabPilot : stratégies adaptatives, auto-réglages / Advanced AI integration with LabPilot: adaptive strategies, auto-tuning |
+| `v2.4`  | Historique étendu + simulation auto-compounding journalier / Extended LP history + simulated auto-compounding                                         |
+| `v2.5`  | Estimation des coûts (simulateur de gas) + visualisation des performances / Gas simulator + yield visualization                                       |
+| `v2.6`  | Export complet + tri, filtres, vues graphiques / Full export with filters and charts                                                                  |
+| `v2.7`  | Intégration ControlPilot (centralisation multi-bots) / ControlPilot integration as a central dashboard                                                |
+| `v2.8+` | IA avancée avec LabPilot (ajustements stratégiques, pré-alertes) / Advanced AI via LabPilot (strategic tuning, predictive alerts)                     |
 
 *La roadmap s’adapte selon l’avancement du projet / The roadmap adapts as the project evolves.*
 
