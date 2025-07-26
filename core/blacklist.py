@@ -2,33 +2,35 @@
 
 import json
 import os
+from datetime import datetime, timedelta
 
-BLACKLIST_PATH = "blacklist_temporaire.json"
+BLACKLIST_PATH = "data/blacklist_temporaire.json"
 
 def charger_blacklist():
-    if not os.path.exists(BLACKLIST_PATH):
-        return []
-    with open(BLACKLIST_PATH, "r", encoding="utf-8") as f:
-        return json.load(f)
+    if os.path.exists(BLACKLIST_PATH):
+        with open(BLACKLIST_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {}
 
-def sauvegarder_blacklist(liste):
+def enregistrer_blacklist(blacklist):
     with open(BLACKLIST_PATH, "w", encoding="utf-8") as f:
-        json.dump(liste, f, indent=2, ensure_ascii=False)
+        json.dump(blacklist, f, indent=2, ensure_ascii=False)
 
-def filtrer_pools_exclues(pools, blacklist):
-    return [pool for pool in pools if pool["name"] not in blacklist or blacklist[pool["name"]] <= 0]
+def ajouter_a_blacklist_temporaire(pool_nom, jours=3):
+    date_fin = (datetime.now() + timedelta(days=jours)).strftime("%Y-%m-%d")
+    blacklist = charger_blacklist()
+    blacklist[pool_nom] = date_fin
+    enregistrer_blacklist(blacklist)
 
-def maj_blacklist(blacklist, pool_name):
-    blacklist[pool_name] = 5  # 5 jours d’exclusion
-    sauvegarder_blacklist(blacklist)
-    return blacklist
+def appliquer_blacklist_temporaire(pools):
+    blacklist = charger_blacklist()
+    today = datetime.now().date()
 
-def nettoyer_blacklist(blacklist):
-    nouvelles_entrees = {}
-    for pool_name, jours in blacklist.items():
-        if jours > 1:
-            nouvelles_entrees[pool_name] = jours - 1
-        elif jours == 1:
-            print(f"✅ Fin de l'exclusion : {pool_name}")
-    sauvegarder_blacklist(nouvelles_entrees)
-    return nouvelles_entrees
+    def est_blacklistee(pool):
+        nom = f"{pool.get('platform')} | {pool.get('id')}"
+        if nom in blacklist:
+            date_fin = datetime.strptime(blacklist[nom], "%Y-%m-%d").date()
+            return date_fin >= today
+        return False
+
+    return [p for p in pools if not est_blacklistee(p)]

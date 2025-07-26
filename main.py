@@ -1,149 +1,110 @@
 import json
-import os
-import csv
 from datetime import datetime
-from web3 import Web3
+from core.profil import charger_profil
+from core.historique import charger_historique, maj_historique, sauvegarder_historique
+from core.simulation import calculer_score_pool, simuler_gains
+from core.config import charger_config
+from core.utils import ligne_deja_presente
+from core.journal import (
+    enregistrer_swap_lp_csv,
+    afficher_journal_swaps_lp,
+    enregistrer_historique_swap_lp,
+    afficher_stats_historique_swaps_lp
+)
+from core.journalisation import log_gain_simule, afficher_resume_journalier
 from defi_sources.defillama import recuperer_pools
-from core.scoring import calculer_score_pool
-from core.profil import charger_profil_utilisateur
-from core.historique import charger_historique, maj_historique, calculer_bonus
-from core.blacklist import charger_blacklist
-from core.rendement import enregistrer
-from core.wallet import detecter_adresse_wallet
-from core.seuil import ajuster_seuil
+from simulateur_wallet import charger_solde, mettre_a_jour_solde, journaliser_resultats
 
-CONFIG_PATH = "config.json"
-JOURNAL_TOP3_PATH = "journal_top3_enrichi.csv"
-JOURNAL_REEL_PATH = "logs/journal_gain_reel.csv"
-SOLDE_INITIAL = 1000
-PLAFOND_GAIN_JOURNALIER = 0.20  # 20 %
+# Chargement config, profil, historique, solde
+config = charger_config()
+profil_nom = config.get("profil_defaut", "modéré")
+profil_utilisateur = charger_profil(profil_nom)
+ponderations = profil_utilisateur["ponderations"]
+historique_pools = charger_historique()
+solde = charger_solde()
+date_str = datetime.now().strftime("%Y-%m-%d")
 
-def charger_config():
-    with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-        return json.load(f)
+print(f"[{date_str}] ℹ️ Démarrage d’un cycle DeFiPilot")
+print(f"[{date_str}] ℹ️ Profil : {profil_nom} (APR {ponderations['apr']}, TVL {ponderations['tvl']})")
 
-def afficher_infos_profil(profil):
-    print(f"\nℹ️ INFO 🏗 Profil actif : {profil['nom']} (APR {profil['ponderations']['apr']}, TVL {profil['ponderations']['tvl']})")
+pools = recuperer_pools()
+print(f"[{date_str}] ✅ {len(pools)} pools récupérées")
 
-def afficher_top3(top3):
-    print("\n😇 Top 3 pools du jour :")
-    for i, pool in enumerate(top3, start=1):
-        apr = f"{pool['apr']:.2f}%" if pool['apr'] else "N/A"
-        tag_lp = " [LP]" if pool.get("lp") else ""
-        print(f"   {i}. {pool['id']} | {pool['plateforme']} | Score : {pool['score']:.2f} | APR : {apr}{tag_lp}")
+for pool in pools:
+    pool["score"] = calculer_score_pool(pool, ponderations, historique_pools, profil_utilisateur)
 
-def log_top3(top3):
-    entetes = ["date", "id", "plateforme", "apr", "score", "type_pool"]
-    ligne_date = datetime.now().strftime("%Y-%m-%d")
-    fichier_existe = os.path.exists(JOURNAL_TOP3_PATH)
+pools = sorted(pools, key=lambda x: x["score"], reverse=True)
+seuil = config.get("seuil_score_investissement", 30000)
+top_pools = [p for p in pools if p["score"] >= seuil][:3]
+autres = [p for p in pools if p["score"] < seuil]
 
-    with open(JOURNAL_TOP3_PATH, "a", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        if not fichier_existe:
-            writer.writerow(entetes)
-        for pool in top3:
-            ligne = [
-                ligne_date,
-                pool.get("id"),
-                pool.get("plateforme"),
-                round(pool.get("apr", 0), 2),
-                round(pool.get("score", 0), 2),
-                "LP" if pool.get("lp") else "standard"
-            ]
-            writer.writerow(ligne)
+print(f"[{date_str}] ℹ️ Seuil dynamique : {seuil}")
+for i, pool in enumerate(top_pools, 1):
+    gain_str, _ = simuler_gains(pool, solde / 3)
+    print(f"[{date_str}]    {i}. {pool.get('plateforme')} | {pool.get('nom')} | Score : {pool['score']:.2f} | Gain simulé : {gain_str} USDC")
 
-def log_gain_reel(date, pool, gain, solde_avant, solde_apres, bonus):
-    entetes = ["date", "pool", "gain", "solde_avant", "solde_apres", "bonus_applique"]
-    fichier_existe = os.path.exists(JOURNAL_REEL_PATH)
-    ligne = [date, pool, round(gain, 2), round(solde_avant, 2), round(solde_apres, 2), round(bonus * 100, 2)]
+solde_avant = round(solde, 2)
 
-    with open(JOURNAL_REEL_PATH, "a", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        if not fichier_existe:
-            writer.writerow(entetes)
-        writer.writerow(ligne)
+if not top_pools:
+    print(f"[{date_str}] ❌ Aucune pool au-dessus du seuil")
+else:
+    montants = [solde / len(top_pools)] * len(top_pools)
+    total_gain = 0.0
 
-def date_deja_loggee(journal_path, date):
-    if not os.path.exists(journal_path):
-        return False
-    with open(journal_path, "r", encoding="utf-8") as f:
-        lignes = f.readlines()
-        for ligne in lignes[1:]:
-            if ligne.startswith(date):
-                return True
-    return False
+    for i, pool in enumerate(top_pools):
+        montant = montants[i]
+        gain_str, gain_val = simuler_gains(pool, montant)
+        maj_historique(historique_pools, pool["nom"], gain_val)
+        total_gain += gain_val
 
-def main():
-    config = charger_config()
-    mode_reel = config.get("mode_reel", False)
+        tokens = pool["nom"].split("-") if "-" in pool["nom"] else ["TOKEN1", "TOKEN2"]
+        token_a = tokens[0]
+        token_b = tokens[1] if len(tokens) > 1 else "UNKNOWN"
 
-    if mode_reel:
-        print("\n⚠️ MODE TEST RÉEL ACTIVÉ : Les transactions seront simulées comme réelles, sans envoi.\n")
+        enregistrer_swap_lp_csv(date_str, pool["id"], token_a, round(montant/2, 6), token_b, round(montant/2, 6))
+        enregistrer_historique_swap_lp(
+            date_str=date_str,
+            pool=pool["id"],
+            token_a=token_a,
+            amount_a=round(montant / 2, 6),
+            token_b=token_b,
+            amount_b=round(montant / 2, 6),
+            score=pool["score"],
+            profil=profil_nom,
+            gain_simule=gain_val
+        )
 
-    w3 = Web3(Web3.HTTPProvider("https://polygon-rpc.com"))
-    adresse = detecter_adresse_wallet(w3)
-    if adresse:
-        print(f"💼 Wallet : {adresse}")
-    else:
-        print("⚠️ AVERTISSEMENT Aucune adresse de wallet détectée via Web3.")
+    sauvegarder_historique(historique_pools)
+    solde_apres = mettre_a_jour_solde(total_gain)
 
-    profil = charger_profil_utilisateur()
-    afficher_infos_profil(profil)
-    ponderations = profil["ponderations"]
-    historique = charger_historique()
-    solde = SOLDE_INITIAL
-    date_aujourdhui = datetime.now().strftime("%Y-%m-%d")
+    gain_journalier = round(solde_apres - solde_avant, 2)
+    gain_pourcent = round((gain_journalier / solde_avant) * 100, 2) if solde_avant > 0 else 0.0
 
-    if date_deja_loggee(JOURNAL_REEL_PATH, date_aujourdhui):
-        print(f"\n⛔ Le journal contient déjà une ligne pour la date {date_aujourdhui}. Aucune simulation exécutée.")
-        return
+    journaliser_resultats(profil_nom, solde_apres, top_pools, montants, autres)
 
-    print(f"\n📅 Simulation du jour ({date_aujourdhui})")
+    pool_principale = top_pools[0]
+    log_gain_simule(
+        date=date_str,
+        solde_avant=solde_avant,
+        solde_apres=solde_apres,
+        gain_journalier=gain_journalier,
+        gain_percent=gain_pourcent,
+        pool=pool_principale.get("nom", "unknown"),
+        apr=pool_principale.get("apr", "unknown"),
+        tvl=pool_principale.get("tvlUsd", "unknown"),
+        score=pool_principale.get("score", 0)
+    )
 
-    pools = recuperer_pools()
-    blacklist = charger_blacklist()
-    pools = [p for p in pools if p["id"] not in blacklist]
+    afficher_resume_journalier(
+        date=date_str,
+        gain_journalier=gain_journalier,
+        gain_percent=gain_pourcent,
+        pool=pool_principale.get("nom", "unknown"),
+        apr=pool_principale.get("apr", "unknown"),
+        tvl=pool_principale.get("tvlUsd", "unknown"),
+        score=pool_principale.get("score", 0)
+    )
 
-    if config.get("ignorer_lp", False):
-        pools = [pool for pool in pools if not pool.get("lp", False)]
+    afficher_journal_swaps_lp(date_str)
 
-    for pool in pools:
-        pool["score"] = calculer_score_pool(pool, ponderations, historique, profil)
-
-    scores = [pool["score"] for pool in pools]
-    seuil_score = ajuster_seuil(scores)
-    print(f"   🔢 Seuil dynamique : {seuil_score}")
-
-    pools_triees = sorted(pools, key=lambda x: x["score"], reverse=True)
-    top3 = pools_triees[:3]
-    afficher_top3(top3)
-    log_top3(top3)
-
-    solde_avant = solde
-    bonus = calculer_bonus(historique, f"{top3[0].get('plateforme')} | {top3[0].get('nom')}")
-    nom_pool = f"{top3[0].get('plateforme')} | {top3[0].get('nom')}"
-    apr = top3[0]["apr"]
-
-    if top3[0]["score"] >= seuil_score:
-        gain_brut = solde * (apr / 100)
-        gain = min(gain_brut, solde * PLAFOND_GAIN_JOURNALIER)
-        print(f"\n💰 Pool sélectionnée : {top3[0]['id']} | APR : {apr:.2f}%")
-        print(f"   ➕ Gain brut       : {gain_brut:.2f} USDC")
-        print(f"   ➖ Gain plafonné   : {gain:.2f} USDC")
-    else:
-        gain = 0
-        print("\n⛔ Aucune pool ne dépasse le seuil. Aucun investissement simulé aujourd’hui.")
-
-    solde_apres = solde_avant + gain
-    maj_historique(historique, nom_pool, gain)
-    enregistrer(gain, solde_avant, solde_apres, bonus_applique=bonus)
-    log_gain_reel(date_aujourdhui, nom_pool, gain, solde_avant, solde_apres, bonus)
-
-    print(f"\n🧪 Bonus historique appliqué : {bonus * 100:.2f}%")
-    print(f"\n📊 RÉSUMÉ DU JOUR")
-    print(f"   Gain simulé    : {gain:.2f} USDC")
-    print(f"   Solde avant    : {solde_avant:.2f} USDC")
-    print(f"   Solde après    : {solde_apres:.2f} USDC")
-
-if __name__ == "__main__":
-    main()
+afficher_stats_historique_swaps_lp()

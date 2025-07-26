@@ -1,25 +1,10 @@
-"""Outils de simulation d'investissement et gestion d'un wallet fictif."""
-
-import json
 import os
+import json
 import csv
 from datetime import datetime
-from core.seuil import ajuster_seuil
-import matplotlib.pyplot as plt
 
-SOLDE_INITIAL = 1000.0
-DUREE_SIMULATION_JOURS = 7
-FICHIER_WALLET = "wallet_simulation.json"
-FICHIER_LOGS = "logs_simulations.txt"
-FICHIER_CSV = "journal_simulation.csv"
-FICHIER_PNG = "resultats_simulation.png"
-
-PROFILS = {
-    "prudent": {"tvl": 0.9, "apr": 0.1},
-    "modéré": {"tvl": 0.7, "apr": 0.3},
-    "agressif": {"tvl": 0.3, "apr": 0.7}
-}
-
+FICHIER_WALLET = "data/wallet_simule.json"
+FICHIER_LOG = "logs/journal_top3.csv"
 
 def charger_solde():
     if not os.path.exists(FICHIER_WALLET):
@@ -31,148 +16,60 @@ def charger_solde():
     except Exception:
         return 0.0
 
+def mettre_a_jour_solde(gain):
+    solde = charger_solde()
+    nouveau_solde = round(solde + gain, 4)
+    os.makedirs("data", exist_ok=True)
+    with open(FICHIER_WALLET, "w", encoding="utf-8") as f:
+        json.dump({"solde": nouveau_solde}, f, indent=2)
+    return nouveau_solde
 
-def sauvegarder_solde(solde: float) -> None:
-    try:
-        with open(FICHIER_WALLET, "w", encoding="utf-8") as f:
-            json.dump({"solde": float(solde)}, f, indent=2)
-    except Exception as e:
-        print(f"[ERREUR] Échec de la sauvegarde du solde : {e}")
+def ligne_deja_presente(date_str):
+    if not os.path.exists(FICHIER_LOG):
+        return False
+    with open(FICHIER_LOG, "r", encoding="utf-8") as f:
+        for ligne in f:
+            if ligne.startswith(date_str):
+                return True
+    return False
 
-
-def journaliser_resultats(profil: str, solde: float, pools: list, montants: list, pools_écartées: list = None):
+def journaliser_resultats(profil, nouveau_solde, top_pools, montants, pools_écartées):
     lignes = []
-    lignes.append(f"\n📊 Résultats de simulation ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')})")
-    lignes.append(f"Profil : {profil} | Solde simulé : {solde:.2f}$")
-    lignes.append("Montants investis pondérés selon les scores :\n")
-
-    for i, pool in enumerate(pools, 1):
-        gain_str, _ = simuler_gains(pool, montants[i - 1])
+    lignes.append(f"\n📅 Résultats du jour pour le profil : {profil}")
+    lignes.append(f"💼 Nouveau solde simulé : {round(nouveau_solde, 2)} USDC")
+    
+    lignes.append("\n🥇 TOP 3 Pools sélectionnées :")
+    for i, pool in enumerate(top_pools):
         nom = pool.get("nom", "?")
         plateforme = pool.get("plateforme", "?")
-        apr = pool.get("apr", 0)
         score = pool.get("score", 0)
-        montant = montants[i - 1]
-        lignes.append(f"TOP {i} - {plateforme} | {nom}")
-        lignes.append(f"  APR : {apr:.2f}% | Score : {score:.2f}")
-        lignes.append(f"  Montant investi : {montant:.2f}$")
-        lignes.append(f"  💰 Gain estimé : {gain_str}")
+        montant = montants[i]
+        lignes.append(f"  {i+1}. {plateforme} | {nom} | Score : {score:.2f} | Montant investi : {round(montant, 2)} USDC")
 
-    if pools_écartées:
-        lignes.append("\n❌ Pools écartées (score trop bas) :")
-        for pool in pools_écartées:
-            nom = pool.get("nom", "?")
-            plateforme = pool.get("plateforme", "?")
-            score = pool.get("score", 0)
-            lignes.append(f"  ⚠️ {plateforme} | {nom} | Score : {score:.2f}")
+    # ❌ Affichage des pools rejetées supprimé pour alléger la sortie
 
-    lignes.append("========================================\n")
+    for ligne in lignes:
+        print(ligne)
 
-    try:
-        with open(FICHIER_LOGS, "a", encoding="utf-8") as f:
-            for ligne in lignes:
-                f.write(ligne + "\n")
-    except Exception as e:
-        print(f"[ERREUR] Impossible d'enregistrer les logs de simulation : {e}")
-
-
-def journaliser_csv(profil: str, score_moyen: float, seuil: float, pools: list, montants: list, gains: list, gain_total: float):
-    existe = os.path.exists(FICHIER_CSV)
-    with open(FICHIER_CSV, mode="a", newline="", encoding="utf-8") as csvfile:
-        writer = csv.writer(csvfile)
-        if not existe:
-            writer.writerow([
-                "date", "profil", "score_moyen", "seuil",
-                "pools", "montants_investis", "gains_simulés", "gain_total"
-            ])
-        writer.writerow([
-            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            profil,
-            f"{score_moyen:.2f}",
-            f"{seuil:.2f}",
-            ", ".join([p.get("nom", "?") for p in pools]),
-            ", ".join([f"{m:.2f}" for m in montants]),
-            ", ".join([f"{g:.2f}" for g in gains]),
-            f"{gain_total:.2f}"
-        ])
-
-
-def generer_graphique(pools, montants, gains, profil="modéré"):
-    noms = [p.get("nom", "?") for p in pools]
-    x = range(len(pools))
-
-    plt.figure(figsize=(10, 6))
-    plt.bar(x, montants, width=0.4, label="Montants investis", align='center')
-    plt.bar(x, gains, width=0.4, label="Gains simulés", align='edge')
-    plt.xticks(x, noms, rotation=45)
-    plt.xlabel("Pools")
-    plt.ylabel("$")
-    plt.title(f"Simulation DeFiPilot ({profil}) : Investissement vs Gain")
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig(f"resultats_simulation_{profil}.png")
-    plt.close()
-
-
-def simuler_gains(pool: dict, montant: float):
-    apr = pool.get("apr", 0)
-    gain = montant * (apr / 100) * (DUREE_SIMULATION_JOURS / 365)
-    return f"{gain:.2f}$", gain
-
-
-def simuler_investissement(pools, profil="modéré"):
-    scores = [pool.get("score", 0) for pool in pools]
-    seuil_invest = ajuster_seuil(scores)
-    score_moyen = sum(scores) / len(scores)
-
-    pools_valides = [p for p in pools if p.get("score", 0) >= seuil_invest]
-    pools_écartées = [p for p in pools if p.get("score", 0) < seuil_invest]
-
-    print(f"\n🔢 Simulation {profil} sur {len(pools_valides)} pools (score ≥ {seuil_invest})")
-
-    if pools_écartées:
-        print(f"\n❌ Pools écartées (score < seuil {seuil_invest}):")
-        for pool in pools_écartées:
-            print(f"  ⚠️ {pool['plateforme']} | {pool['nom']} | Score : {pool['score']:.2f}")
-
-    if not pools_valides:
-        print("⚠️ Aucune pool ne dépasse le seuil recommandé. Aucun investissement simulé.")
+    # Journalisation CSV
+    os.makedirs("logs", exist_ok=True)
+    date_str = datetime.now().strftime("%Y-%m-%d")
+    if ligne_deja_presente(date_str):
         return
 
-    total_score = sum(p.get("score", 0) for p in pools_valides)
-    montants_pondérés = [
-        (p.get("score", 0) / total_score) * SOLDE_INITIAL for p in pools_valides
-    ]
-
-    gains = []
-
-    for pool, montant in zip(pools_valides, montants_pondérés):
-        apr = pool.get("apr", 0)
-        score = pool.get("score", 0)
-        gain = montant * (apr / 100) * (DUREE_SIMULATION_JOURS / 365)
-        gains.append(gain)
-        print(f"➡️ {pool['plateforme']} | {pool['nom']} | APR : {apr:.2f}% | Score : {score:.2f} | Investi : {montant:.2f}$ → Gain : {gain:.2f}$")
-
-    total_gain = sum(gains)
-    print(f"\n📅 Durée : {DUREE_SIMULATION_JOURS} jours")
-    print(f"🎯 Seuil d'investissement suggéré : {seuil_invest} (score moyen : {score_moyen:.2f})")
-    print(f"💰 Gain total estimé : {total_gain:.2f}$")
-
-    journaliser_resultats(profil, SOLDE_INITIAL, pools_valides, montants_pondérés, pools_écartées)
-    journaliser_csv(profil, score_moyen, seuil_invest, pools_valides, montants_pondérés, gains, total_gain)
-    generer_graphique(pools_valides, montants_pondérés, gains, profil)
-
-
-def simuler_tous_profils(pools):
-    for profil in PROFILS:
-        print("\n" + "="*40 + f"\n▶ Profil en cours : {profil}\n" + "="*40)
-        simuler_investissement(pools, profil=profil)
-
-
-if __name__ == "__main__":
-    pools = [
-        {"plateforme": "beefy", "nom": "NOICE-WETH", "apr": 138013.21, "score": 37812.54},
-        {"plateforme": "spectra-v2", "nom": "STUSD", "apr": 54046.60, "score": 14807.12},
-        {"plateforme": "berapaw", "nom": "BULLISHV2", "apr": 28862.79, "score": 50.0},
-    ]
-    simuler_tous_profils(pools)
+    try:
+        with open(FICHIER_LOG, "a", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            if f.tell() == 0:
+                writer.writerow(["date", "solde_simule", "top1_nom", "top1_apr", "top1_gain", "bonus_historique"])
+            top1 = top_pools[0]
+            writer.writerow([
+                date_str,
+                round(nouveau_solde, 2),
+                top1.get("nom", "?"),
+                top1.get("apr", "?"),
+                round(montants[0] * top1.get("apr", 0) / 100 / 365, 2),
+                "0.00"
+            ])
+    except Exception as e:
+        print(f"[ERREUR] Impossible d’écrire dans le journal CSV : {e}")
