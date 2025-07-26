@@ -5,7 +5,6 @@
 from web3 import Web3
 from core import logger
 
-
 def detecter_adresse_wallet(w3):
     """Retourne l'adresse publique EVM du wallet connecté.
 
@@ -31,3 +30,9 @@ def detecter_adresse_wallet(w3):
     except Exception as exc:
         logger.log_erreur(f"Erreur lors de la détection du wallet : {exc}")
     return None
+
+def obtenir_solde_usdc():
+    """
+    Simule un solde USDC. Cette fonction sera remplacée plus tard par une vraie lecture du wallet.
+    """
+    return 1000.0  # Valeur simulée, ex: 1000 USDC
