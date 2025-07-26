@@ -1,26 +1,17 @@
-from typing import List
+# core/seuil.py
 
-# Seuils ajustables selon le score moyen
-SEUILS = [
-    (10000, 50),
-    (25000, 100),
-    (50000, 150),
-    (float("inf"), 200),
-]
-
-def ajuster_seuil(score_list: List[float]) -> float:
+def calculer_seuil_dynamique(profil_utilisateur):
     """
-    Calcule un seuil d'investissement automatiquement en fonction
-    de la moyenne des scores fournis.
+    Calcule un seuil dynamique basé sur le profil de l'utilisateur.
+    Exemple simplifié : seuil fixe pour chaque profil, ajustable si besoin.
     """
-    if not score_list:
-        raise ValueError("La liste des scores ne peut pas être vide.")
+    base_seuil = {
+        "prudent": 100,
+        "modere": 50,
+        "equilibre": 30,
+        "dynamique": 20,
+        "agressif": 10
+    }
 
-    moyenne = sum(score_list) / len(score_list)
-
-    for seuil_max, valeur in SEUILS:
-        if moyenne < seuil_max:
-            return valeur
-
-    # Valeur par défaut (ne devrait jamais être atteinte)
-    return 100.0
+    nom = profil_utilisateur.get("nom", "modere")
+    return base_seuil.get(nom, 50)
