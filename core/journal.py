@@ -1,25 +1,33 @@
+# core/journal.py
+
 import os
 import csv
 from collections import defaultdict
+from datetime import datetime
+
+# 📄 Fichier des swaps LP simulés
+SWAPS_LP_CSV = "logs/journal_swap_lp.csv"
+
+# 📄 Fichier des résumés journaliers
+RESUME_JOURNALIER_CSV = "logs/resume_journalier.csv"
 
 def enregistrer_swap_lp_csv(date_str, pool, token_a, amount_a, token_b, amount_b):
     """
     Journalise un swap simulé dans journal_swap_lp.csv,
     avec protection anti-duplication sur (date + pool).
     """
-    chemin = "logs/journal_swap_lp.csv"
-    fichier_existe = os.path.exists(chemin)
+    fichier_existe = os.path.exists(SWAPS_LP_CSV)
     pool_id = pool.lower()
 
     if fichier_existe:
-        with open(chemin, mode="r", encoding="utf-8") as f:
+        with open(SWAPS_LP_CSV, mode="r", encoding="utf-8") as f:
             reader = csv.reader(f)
             for ligne in list(reader)[1:]:
                 if ligne and ligne[0] == date_str and ligne[1].lower() == pool_id:
                     print(f"⚠️ Swap LP déjà enregistré pour {date_str} | {pool}")
                     return
 
-    with open(chemin, mode="a", newline="", encoding="utf-8") as f:
+    with open(SWAPS_LP_CSV, mode="a", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         if not fichier_existe:
             writer.writerow(["date", "pool", "token_a", "amount_a", "token_b", "amount_b"])
@@ -31,12 +39,11 @@ def afficher_journal_swaps_lp(date_str):
     """
     Affiche les swaps LP du jour donné.
     """
-    chemin = "logs/journal_swap_lp.csv"
-    if not os.path.exists(chemin):
+    if not os.path.exists(SWAPS_LP_CSV):
         print("⚠️ Aucun journal LP trouvé.")
         return
 
-    with open(chemin, mode="r", encoding="utf-8") as f:
+    with open(SWAPS_LP_CSV, mode="r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         lignes = [row for row in reader if row["date"] == date_str]
 
@@ -97,3 +104,16 @@ def afficher_stats_historique_swaps_lp():
         moy_gain = data["gain_total"] / data["count"]
         moy_score = data["score_total"] / data["count"]
         print(f"  • {pool} : {data['count']}x | gain moyen : {moy_gain:.4f} USDC | score moyen : {moy_score:.2f}")
+
+
+def enregistrer_resume_journalier(date_str, profil, nb_pools, gain_total, gain_moyen):
+    """
+    Enregistre un résumé global du jour dans resume_journalier.csv
+    """
+    fichier_existe = os.path.exists(RESUME_JOURNALIER_CSV)
+
+    with open(RESUME_JOURNALIER_CSV, "a", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        if not fichier_existe:
+            writer.writerow(["date", "profil", "nb_pools", "gain_total", "gain_moyen"])
+        writer.writerow([date_str, profil, nb_pools, gain_total, gain_moyen])
