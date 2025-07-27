@@ -1,110 +1,147 @@
-import json
-from datetime import datetime
+# ✅ Fichier main.py intégral avec journalisation rendement + erreurs (V2.4.2)
+
+from core.wallet_lp import WalletLP
+from core.config import config
 from core.profil import charger_profil
-from core.historique import charger_historique, maj_historique, sauvegarder_historique
-from core.simulation import calculer_score_pool, simuler_gains
-from core.config import charger_config
-from core.utils import ligne_deja_presente
+from core.blacklist import appliquer_blacklist_temporaire
+from core.historique import charger_historique
+from core.scoring import calculer_score_pool
+from core.simulation import simuler_gains
 from core.journal import (
     enregistrer_swap_lp_csv,
-    afficher_journal_swaps_lp,
     enregistrer_historique_swap_lp,
-    afficher_stats_historique_swaps_lp
+    afficher_journal_swaps_lp,
+    afficher_stats_historique_swaps_lp,
+    enregistrer_resume_journalier
 )
-from core.journalisation import log_gain_simule, afficher_resume_journalier
+from core.rendement import (
+    afficher_rendements_journaliers,
+    enregistrer as enregistrer_rendement  # ✅ Ajout fonction d'enregistrement
+)
+from core.logs_erreur import log_exception  # ✅ Nouveau module de logs d'erreurs
 from defi_sources.defillama import recuperer_pools
-from simulateur_wallet import charger_solde, mettre_a_jour_solde, journaliser_resultats
 
-# Chargement config, profil, historique, solde
-config = charger_config()
-profil_nom = config.get("profil_defaut", "modéré")
-profil_utilisateur = charger_profil(profil_nom)
-ponderations = profil_utilisateur["ponderations"]
-historique_pools = charger_historique()
-solde = charger_solde()
-date_str = datetime.now().strftime("%Y-%m-%d")
+import datetime
+import logging
 
-print(f"[{date_str}] ℹ️ Démarrage d’un cycle DeFiPilot")
-print(f"[{date_str}] ℹ️ Profil : {profil_nom} (APR {ponderations['apr']}, TVL {ponderations['tvl']})")
+# Initialisation du logger
+logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(levelname)s %(message)s')
 
-pools = recuperer_pools()
-print(f"[{date_str}] ✅ {len(pools)} pools récupérées")
+# Chargement du profil d'investissement
+nom_profil = config.get("profil_defaut", "modéré")
+profil = charger_profil(nom_profil)
+logging.info(f"🏗 Profil actif : {profil['nom']} (APR {profil['ponderations']['apr']}, TVL {profil['ponderations']['tvl']})")
 
-for pool in pools:
-    pool["score"] = calculer_score_pool(pool, ponderations, historique_pools, profil_utilisateur)
+# Chargement du seuil dynamique et autres paramètres
+seuil_invest = config.get('seuil_invest', 30000)
+slippage_simule = config.get('slippage_simule', 0.005)
 
-pools = sorted(pools, key=lambda x: x["score"], reverse=True)
-seuil = config.get("seuil_score_investissement", 30000)
-top_pools = [p for p in pools if p["score"] >= seuil][:3]
-autres = [p for p in pools if p["score"] < seuil]
+# Chargement de l'historique des scores
+historique_scores = charger_historique()
 
-print(f"[{date_str}] ℹ️ Seuil dynamique : {seuil}")
-for i, pool in enumerate(top_pools, 1):
-    gain_str, _ = simuler_gains(pool, solde / 3)
-    print(f"[{date_str}]    {i}. {pool.get('plateforme')} | {pool.get('nom')} | Score : {pool['score']:.2f} | Gain simulé : {gain_str} USDC")
+# Initialisation du wallet LP simulé
+wallet_lp = WalletLP()
 
-solde_avant = round(solde, 2)
+# Récupération des pools
+logging.info("🧪 Récupération des pools via DefiLlama")
+try:
+    pools = recuperer_pools()
+    logging.info(f"✅ {len(pools)} pools récupérées")
+except Exception as e:
+    log_exception("defillama", "recuperer_pools", e)
+    pools = []
 
-if not top_pools:
-    print(f"[{date_str}] ❌ Aucune pool au-dessus du seuil")
-else:
-    montants = [solde / len(top_pools)] * len(top_pools)
-    total_gain = 0.0
+# Application de la blacklist temporaire
+pools_filtrees = appliquer_blacklist_temporaire(pools)
 
-    for i, pool in enumerate(top_pools):
-        montant = montants[i]
-        gain_str, gain_val = simuler_gains(pool, montant)
-        maj_historique(historique_pools, pool["nom"], gain_val)
-        total_gain += gain_val
+# Filtrage et scoring des pools
+resultats = []
+for pool in pools_filtrees:
+    try:
+        score = calculer_score_pool(pool, profil["ponderations"], historique_scores, profil)
+        if score > seuil_invest:
+            resultats.append((pool, score))
+    except Exception as e:
+        log_exception(pool.get("id", "unknown_pool"), "calculer_score_pool", e)
 
-        tokens = pool["nom"].split("-") if "-" in pool["nom"] else ["TOKEN1", "TOKEN2"]
-        token_a = tokens[0]
-        token_b = tokens[1] if len(tokens) > 1 else "UNKNOWN"
+# Tri des résultats par score décroissant
+resultats = sorted(resultats, key=lambda x: x[1], reverse=True)
 
-        enregistrer_swap_lp_csv(date_str, pool["id"], token_a, round(montant/2, 6), token_b, round(montant/2, 6))
+# Simulation sur les 3 meilleures pools
+top_pools = resultats[:3]
+total_gain = 0
+
+for pool, score in top_pools:
+    logging.info(f"🔍 Pool sélectionnée : {pool['nom']} | Score : {score:.2f}")
+    try:
+        _, gain_simule = simuler_gains(pool, 1000.0)
+        total_gain += gain_simule
+        token_lp = f"LP-{pool['id']}"
+        wallet_lp.ajouter_lp(token_lp, gain_simule)
+
+        # ✅ Enregistrement CSV du swap LP simulé
+        date_str = datetime.datetime.now().strftime("%Y-%m-%d")
+        token_a = pool['nom'].split("-")[0] if "-" in pool["nom"] else "TOKEN1"
+        token_b = pool['nom'].split("-")[1] if "-" in pool["nom"] else "TOKEN2"
+        enregistrer_swap_lp_csv(
+            date_str=date_str,
+            pool=pool["id"],
+            token_a=token_a,
+            amount_a=500.0,
+            token_b=token_b,
+            amount_b=500.0
+        )
+
+        # ✅ Journalisation complète dans l'historique
         enregistrer_historique_swap_lp(
             date_str=date_str,
             pool=pool["id"],
             token_a=token_a,
-            amount_a=round(montant / 2, 6),
+            amount_a=500.0,
             token_b=token_b,
-            amount_b=round(montant / 2, 6),
-            score=pool["score"],
-            profil=profil_nom,
-            gain_simule=gain_val
+            amount_b=500.0,
+            score=score,
+            profil=profil["nom"],
+            gain_simule=gain_simule
         )
 
-    sauvegarder_historique(historique_pools)
-    solde_apres = mettre_a_jour_solde(total_gain)
+    except Exception as e:
+        log_exception(pool.get("id", "unknown_pool"), "simuler_gains", e)
 
-    gain_journalier = round(solde_apres - solde_avant, 2)
-    gain_pourcent = round((gain_journalier / solde_avant) * 100, 2) if solde_avant > 0 else 0.0
+# ✅ Enregistrement du résumé global du jour
+nb_pools = len(top_pools)
+gain_moyen = total_gain / nb_pools if nb_pools > 0 else 0.0
+date_str = datetime.datetime.now().strftime("%Y-%m-%d")
 
-    journaliser_resultats(profil_nom, solde_apres, top_pools, montants, autres)
+enregistrer_resume_journalier(
+    date_str=date_str,
+    profil=profil["nom"],
+    nb_pools=nb_pools,
+    gain_total=round(total_gain, 4),
+    gain_moyen=round(gain_moyen, 4)
+)
 
-    pool_principale = top_pools[0]
-    log_gain_simule(
-        date=date_str,
-        solde_avant=solde_avant,
-        solde_apres=solde_apres,
-        gain_journalier=gain_journalier,
-        gain_percent=gain_pourcent,
-        pool=pool_principale.get("nom", "unknown"),
-        apr=pool_principale.get("apr", "unknown"),
-        tvl=pool_principale.get("tvlUsd", "unknown"),
-        score=pool_principale.get("score", 0)
-    )
+# ✅ Enregistrement dans journal_rendement.csv
+solde_avant = 1000.0
+solde_apres = solde_avant + total_gain
+enregistrer_rendement(
+    gain=total_gain,
+    solde_avant=solde_avant,
+    solde_apres=solde_apres,
+    bonus_applique=0.00  # Bonus désactivé ici mais prêt pour usage
+)
 
-    afficher_resume_journalier(
-        date=date_str,
-        gain_journalier=gain_journalier,
-        gain_percent=gain_pourcent,
-        pool=pool_principale.get("nom", "unknown"),
-        apr=pool_principale.get("apr", "unknown"),
-        tvl=pool_principale.get("tvlUsd", "unknown"),
-        score=pool_principale.get("score", 0)
-    )
+# ✅ Affichage du portefeuille LP simulé
+wallet_lp.afficher_soldes()
 
-    afficher_journal_swaps_lp(date_str)
+# ✅ Affichage du journal LP du jour et stats globales
+logging.info("📄 Lecture des swaps LP du jour")
+afficher_journal_swaps_lp(date_str)
 
+logging.info("📊 Statistiques historiques LP")
 afficher_stats_historique_swaps_lp()
+
+# ✅ Affichage du rendement journalier
+afficher_rendements_journaliers()
+
+logging.info("✅ Fin du cycle de simulation.")

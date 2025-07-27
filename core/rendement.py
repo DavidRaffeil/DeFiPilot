@@ -29,3 +29,25 @@ def enregistrer(gain, solde_avant, solde_apres, bonus_applique=None):
             writer.writerow(ligne)
     except Exception as e:
         print(f"[ERREUR] Impossible d’enregistrer le rendement simulé : {e}")
+
+def afficher_rendements_journaliers():
+    """
+    Affiche un résumé des rendements journaliers enregistrés.
+    """
+    if not os.path.exists(FICHIER_RENDEMENT):
+        print("⚠️ Aucun fichier de rendement trouvé.")
+        return
+
+    rendements_par_jour = {}
+
+    with open(FICHIER_RENDEMENT, "r", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            date = row["date"].split(" ")[0]
+            gain = float(row["gain_simule"])
+            rendements_par_jour.setdefault(date, 0.0)
+            rendements_par_jour[date] += gain
+
+    print("📈 Résumé des rendements journaliers :")
+    for date, gain_total in sorted(rendements_par_jour.items()):
+        print(f"  • {date} : {gain_total:.4f} USDC")
