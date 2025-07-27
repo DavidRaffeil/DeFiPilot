@@ -31,18 +31,14 @@ Pour la vision complète de l’écosystème et des futurs bots associés, voir 
 
 ## Nouveautés / What's New
 
-### 🔹 Version V2.3 – Simulation LP & journalisation historique (23 juillet 2025)
+### 🔹 Version V2.4 – Auto-compounding simulé & slippage (26 juillet 2025)
 
-– Simulation LP avec double swap simulé (moitié/moitié)  
-  LP simulation with double swap (50/50 split)  
-– Création du fichier `journal_swaps_lp.csv` (résumé quotidien)  
-  New file `journal_swaps_lp.csv` (daily summary)  
-– Création du fichier `historique_swaps_lp.csv` (stockage complet jour par jour)  
-  New file `historique_swaps_lp.csv` (full historical storage)  
-– Affichage automatique des statistiques LP (top pools, gains moyens, scores moyens)  
-  Automatic display of LP stats (top pools, average gains, average scores)  
-– Préparation à l’analyse de performance et aux fonctions d’auto-compounding (prévue V2.4)  
-  Preparing for performance analysis and auto-compounding logic (planned for V2.4)
+– Simulation complète du double swap 50/50 avant ajout de liquidité  
+  Full simulation of 50/50 double swap before liquidity provision  
+– Journalisation CSV des swaps simulés avec application d’un slippage paramétrable  
+  Simulated swaps logged with configurable slippage  
+– Préparation de la logique de wallet LP (V2.5)  
+  Preparation of LP wallet logic (V2.5)
 
 ---
 
@@ -87,7 +83,6 @@ Historique, fichiers CSV, journal quotidien / History, CSV files, daily log
 
 | Version | Contenu prévu / Planned content                                                                                                                        |
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `v2.4`  | Historique étendu + simulation auto-compounding journalier / Extended LP history + simulated auto-compounding                                         |
 | `v2.5`  | Estimation des coûts (simulateur de gas) + visualisation des performances / Gas simulator + yield visualization                                       |
 | `v2.6`  | Export complet + tri, filtres, vues graphiques / Full export with filters and charts                                                                  |
 | `v2.7`  | Intégration ControlPilot (centralisation multi-bots) / ControlPilot integration as a central dashboard                                                |
