@@ -1,9 +1,15 @@
 {
   "profil_defaut": "modéré",
-  "tvl_min": 1000,
-  "apr_min": 1.0,
-  "seuil_score_investissement": 30000,
-  "mode_reel": false,
-  "utiliser_wallet_reel": false,
-  "ignorer_lp": true
+  "seuil_invest": 30000,
+  "slippage_simule": 0.005,
+  "gas_simulation": {
+    "swap": {
+      "polygon": 0.02,
+      "ethereum": 4.5
+    },
+    "add_liquidity": {
+      "polygon": 0.03,
+      "ethereum": 5.2
+    }
+  }
 }
