@@ -31,14 +31,31 @@ Pour la vision complète de l’écosystème et des futurs bots associés, voir 
 
 ## Nouveautés / What's New
 
-### 🔹 Version V2.4 – Auto-compounding simulé & slippage (26 juillet 2025)
+### 🔹 Version V2.5 – Journalisation LP & check système (30 juillet 2025)
 
-– Simulation complète du double swap 50/50 avant ajout de liquidité  
-  Full simulation of 50/50 double swap before liquidity provision  
-– Journalisation CSV des swaps simulés avec application d’un slippage paramétrable  
-  Simulated swaps logged with configurable slippage  
-– Préparation de la logique de wallet LP (V2.5)  
-  Preparation of LP wallet logic (V2.5)
+– Journalisation CSV complète des deux swaps simulés pour les pools LP  
+  Full CSV logging of both simulated swaps for LP pools  
+– Intégration du fichier check_setup.py pour vérifier la stabilité avant exécution  
+  Integration of check_setup.py for stability checks before running  
+– Refonte des logs et résumé journalier pour un meilleur suivi  
+  Redesigned logs and daily summaries for better tracking
+
+---
+
+## 📜 Historique des versions / Past Versions
+
+### 🔹 Version V2.4 – Simulation LP + Journalisation avancée (27 juillet 2025)
+
+– Simulation complète d’un investissement avec ajout fictif de tokens LP  
+  Full simulation of an investment with fictive LP token provision  
+– Gestion d’un portefeuille LP simulé (wallet LP avec solde affiché)  
+  Simulated LP wallet management with displayed balance  
+– Journalisation CSV des swaps LP simulés + résumé global journalier  
+  Simulated LP swap logging in CSV + daily summary  
+– Statistiques historiques des performances LP (score, gains moyens, etc.)  
+  Historical stats on LP pool performance (average scores & gains)  
+– Nouveau module de logs d’erreurs pour tracer les exceptions  
+  New error logging module for tracking exceptions
 
 ---
 
