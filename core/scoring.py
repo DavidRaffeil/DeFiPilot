@@ -1,4 +1,4 @@
-# core/scoring.py – Version V1.8 avec bonus historique
+# core/scoring.py – Version V2.5 avec bonus historique + simulation farming LP
 
 from core import historique
 
@@ -64,3 +64,25 @@ def calculer_scores_et_gains(pools, profil, solde, historique_pools):
         gain_total += gain
 
     return resultats, round(gain_total, 2)
+
+def trier_pools(pools, profil_nom, historique_pools):
+    """Trie les pools selon le profil donné et retourne la liste triée."""
+    profil = charger_profil_utilisateur()
+    ponderations = profil["ponderations"]
+    pools = calculer_scores(pools, ponderations, historique_pools, profil)
+    return sorted(pools, key=lambda p: p["score"], reverse=True)
+
+def simuler_gain_farming_lp(montant_lp, farming_apr):
+    """
+    Calcule le gain simulé issu du farming d'un token LP sur une journée.
+
+    :param montant_lp: Montant de LP tokens simulés (en $ ou équivalent)
+    :param farming_apr: Taux APR du farming (en %)
+    :return: Gain simulé sur une journée (float, en $)
+    """
+    try:
+        gain = (montant_lp * farming_apr / 100) / 365
+        return round(gain, 4)
+    except Exception as e:
+        print(f"[ERREUR] Échec du calcul de gain farming : {e}")
+        return 0.0

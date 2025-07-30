@@ -1,6 +1,5 @@
-"""Récupération (simulée) des pools depuis l'API DefiLlama."""
-
 import requests
+import random
 
 _POOLS_FALLBACK = [
     {
@@ -10,6 +9,7 @@ _POOLS_FALLBACK = [
         "tvl_usd": 30528.0,
         "apr": 138013.21,
         "lp": True,
+        "farming_apr": random.uniform(5, 50),
     },
     {
         "id": "spectra-stusd",
@@ -30,10 +30,7 @@ _POOLS_FALLBACK = [
 ]
 
 def recuperer_pools():
-    """Retourne une liste de pools depuis DefiLlama.
-
-    Si la récupération échoue, une liste de pools fictive est renvoyée.
-    """
+    """Retourne une liste de pools depuis DefiLlama. Sinon, fallback."""
     url = "https://yields.llama.fi/pools"
     try:
         response = requests.get(url, timeout=10)
@@ -42,14 +39,18 @@ def recuperer_pools():
 
         pools = []
         for item in data.get("data", []):
+            symbol = item.get("symbol", "")
+            is_lp = "lp" in symbol.lower()
             pool = {
-                "id": f"{item.get('project', '')}-{item.get('symbol', '')}",
-                "nom": item.get("symbol", ""),
+                "id": f"{item.get('project', '')}-{symbol}",
+                "nom": symbol,
                 "plateforme": item.get("project", ""),
                 "tvl_usd": item.get("tvlUsd", 0),
                 "apr": item.get("apy", item.get("apr", 0)),
-                "lp": "lp" in item.get("symbol", "").lower(),
+                "lp": is_lp,
             }
+            if is_lp:
+                pool["farming_apr"] = round(random.uniform(5, 50), 2)
             pools.append(pool)
 
         return pools
