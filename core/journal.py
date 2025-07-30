@@ -1,119 +1,81 @@
-# core/journal.py
+# core/journal.py – Version V2.5 complète avec historique + farming LP
 
-import os
 import csv
-from collections import defaultdict
+import os
 from datetime import datetime
 
-# 📄 Fichier des swaps LP simulés
-SWAPS_LP_CSV = "logs/journal_swap_lp.csv"
-
-# 📄 Fichier des résumés journaliers
-RESUME_JOURNALIER_CSV = "logs/resume_journalier.csv"
-
-def enregistrer_swap_lp_csv(date_str, pool, token_a, amount_a, token_b, amount_b):
+def lire_historique_pools():
     """
-    Journalise un swap simulé dans journal_swap_lp.csv,
-    avec protection anti-duplication sur (date + pool).
+    Retourne un historique simulé (vide pour l'instant).
+    Peut être modifié plus tard pour lire un fichier.
     """
-    fichier_existe = os.path.exists(SWAPS_LP_CSV)
-    pool_id = pool.lower()
+    return {}
 
-    if fichier_existe:
-        with open(SWAPS_LP_CSV, mode="r", encoding="utf-8") as f:
-            reader = csv.reader(f)
-            for ligne in list(reader)[1:]:
-                if ligne and ligne[0] == date_str and ligne[1].lower() == pool_id:
-                    print(f"⚠️ Swap LP déjà enregistré pour {date_str} | {pool}")
-                    return
-
-    with open(SWAPS_LP_CSV, mode="a", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        if not fichier_existe:
-            writer.writerow(["date", "pool", "token_a", "amount_a", "token_b", "amount_b"])
-        writer.writerow([date_str, pool, token_a, amount_a, token_b, amount_b])
-        print(f"📝 Swap LP enregistré pour {pool} le {date_str}")
-
-
-def afficher_journal_swaps_lp(date_str):
+def enregistrer_resume_journalier(date, profil, nb_pools, gain_total, gain_moyen):
     """
-    Affiche les swaps LP du jour donné.
-    """
-    if not os.path.exists(SWAPS_LP_CSV):
-        print("⚠️ Aucun journal LP trouvé.")
-        return
-
-    with open(SWAPS_LP_CSV, mode="r", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        lignes = [row for row in reader if row["date"] == date_str]
-
-        if not lignes:
-            print(f"📄 Aucun swap LP pour le {date_str}.")
-            return
-
-        print(f"📄 Journal des swaps LP simulés du {date_str} :")
-        for ligne in lignes:
-            print(f"  • {ligne['pool']} → {ligne['amount_a']} {ligne['token_a']} + {ligne['amount_b']} {ligne['token_b']}")
-
-
-def enregistrer_historique_swap_lp(date_str, pool, token_a, amount_a, token_b, amount_b, score, profil, gain_simule):
-    """
-    Enregistre les détails complets d’un swap LP dans un fichier journalisé jour par jour.
-    """
-    chemin = f"logs/historique_lp_{profil}.csv"
-    fichier_existe = os.path.exists(chemin)
-
-    with open(chemin, mode="a", newline="", encoding="utf-8") as fichier_csv:
-        writer = csv.writer(fichier_csv)
-        if not fichier_existe:
-            writer.writerow([
-                "date", "pool", "token_a", "amount_a", "token_b", "amount_b",
-                "score", "profil", "gain_simule"
-            ])
-
-        writer.writerow([
-            date_str, pool, token_a, amount_a, token_b, amount_b,
-            round(score, 2), profil, round(gain_simule, 4)
-        ])
-
-
-def afficher_stats_historique_swaps_lp():
-    """
-    Affiche des statistiques basées sur les fichiers historiques LP.
+    Enregistre un résumé quotidien dans le journal principal.
     """
     dossier = "logs"
-    fichiers = [f for f in os.listdir(dossier) if f.startswith("historique_lp_") and f.endswith(".csv")]
-    stats = defaultdict(lambda: {"count": 0, "gain_total": 0.0, "score_total": 0.0})
+    os.makedirs(dossier, exist_ok=True)
+    fichier = os.path.join(dossier, "journal_gain_simule.csv")
 
-    for fichier in fichiers:
-        with open(os.path.join(dossier, fichier), mode="r", encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                pool = row["pool"]
-                stats[pool]["count"] += 1
-                stats[pool]["gain_total"] += float(row["gain_simule"])
-                stats[pool]["score_total"] += float(row["score"])
-
-    if not stats:
-        print("📊 Aucune donnée historique à afficher.")
-        return
-
-    print("📊 Statistiques historiques LP (top 10 pools) :")
-    top_pools = sorted(stats.items(), key=lambda x: x[1]["count"], reverse=True)[:10]
-    for pool, data in top_pools:
-        moy_gain = data["gain_total"] / data["count"]
-        moy_score = data["score_total"] / data["count"]
-        print(f"  • {pool} : {data['count']}x | gain moyen : {moy_gain:.4f} USDC | score moyen : {moy_score:.2f}")
-
-
-def enregistrer_resume_journalier(date_str, profil, nb_pools, gain_total, gain_moyen):
-    """
-    Enregistre un résumé global du jour dans resume_journalier.csv
-    """
-    fichier_existe = os.path.exists(RESUME_JOURNALIER_CSV)
-
-    with open(RESUME_JOURNALIER_CSV, "a", newline="", encoding="utf-8") as f:
+    existe = os.path.isfile(fichier)
+    with open(fichier, mode="a", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-        if not fichier_existe:
+        if not existe:
             writer.writerow(["date", "profil", "nb_pools", "gain_total", "gain_moyen"])
-        writer.writerow([date_str, profil, nb_pools, gain_total, gain_moyen])
+        writer.writerow([date, profil, nb_pools, round(gain_total, 4), round(gain_moyen, 4)])
+
+def enregistrer_top3(date, top3, profil):
+    """
+    Enregistre le top 3 des pools dans un journal CSV.
+    """
+    dossier = "logs"
+    os.makedirs(dossier, exist_ok=True)
+    fichier = os.path.join(dossier, "journal_top3.csv")
+
+    existe = os.path.isfile(fichier)
+    with open(fichier, mode="a", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        if not existe:
+            writer.writerow(["date", "profil", "nom_pool", "apr", "gain_simule"])
+        for nom, apr, gain in top3:
+            writer.writerow([date, profil, nom, round(apr, 2), round(gain, 2)])
+
+def enregistrer_swap_lp(date, nom_pool, plateforme, montant, token1, token2, slippage, profil):
+    """
+    Enregistre les swaps simulés vers des tokens LP dans un journal CSV.
+    """
+    dossier = "logs"
+    os.makedirs(dossier, exist_ok=True)
+    fichier = os.path.join(dossier, "journal_lp_swap.csv")
+
+    existe = os.path.isfile(fichier)
+    with open(fichier, mode="a", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        if not existe:
+            writer.writerow(["date", "profil", "plateforme", "pool", "montant", "token1", "token2", "slippage"])
+        writer.writerow([date, profil, plateforme, nom_pool, round(montant, 4), token1, token2, round(slippage, 4)])
+
+def enregistrer_farming(date, nom_pool, plateforme, montant_lp, farming_apr, gain_farming, profil):
+    """
+    Enregistre dans un journal CSV les gains simulés issus du farming de LP tokens.
+    """
+    dossier = "logs"
+    os.makedirs(dossier, exist_ok=True)
+    fichier = os.path.join(dossier, "journal_farming.csv")
+
+    existe = os.path.isfile(fichier)
+    with open(fichier, mode="a", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        if not existe:
+            writer.writerow(["date", "profil", "plateforme", "pool", "montant_lp", "farming_apr", "gain_farming"])
+        writer.writerow([
+            date,
+            profil,
+            plateforme,
+            nom_pool,
+            round(montant_lp, 4),
+            round(farming_apr, 2),
+            round(gain_farming, 4)
+        ])
