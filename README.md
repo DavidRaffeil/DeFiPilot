@@ -31,6 +31,19 @@ Pour la vision complète de l’écosystème et des futurs bots associés, voir 
 
 ## Nouveautés / What's New
 
+### 🔹 Version V2.6 – Mode simulate + journal LP cumulatif (2 août 2025)
+
+– Mode simulateur complet avec enchaînement journalier automatique  
+  Full simulator mode with automatic daily simulation loop  
+– Journalisation cumulative des investissements LP (jours, montants, farming)  
+  Cumulative logging of LP investments (days, amounts, farming rewards)  
+– Nouvelle structure de fichiers : séparation logique des modules de simulation  
+  New file structure: separated logic modules for simulation tracking
+
+---
+
+## 📜 Historique des versions / Past Versions
+
 ### 🔹 Version V2.5 – Journalisation LP & check système (30 juillet 2025)
 
 – Journalisation CSV complète des deux swaps simulés pour les pools LP  
@@ -39,10 +52,6 @@ Pour la vision complète de l’écosystème et des futurs bots associés, voir 
   Integration of check_setup.py for stability checks before running  
 – Refonte des logs et résumé journalier pour un meilleur suivi  
   Redesigned logs and daily summaries for better tracking
-
----
-
-## 📜 Historique des versions / Past Versions
 
 ### 🔹 Version V2.4 – Simulation LP + Journalisation avancée (27 juillet 2025)
 
