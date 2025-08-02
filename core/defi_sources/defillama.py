@@ -1,61 +1,60 @@
-import requests
-import random
+"""Module simulating DeFiLlama data for local testing.
 
-_POOLS_FALLBACK = [
-    {
-        "id": "beefy-noice-weth",
-        "plateforme": "beefy",
-        "nom": "NOICE-WETH",
-        "tvl_usd": 30528.0,
-        "apr": 138013.21,
-        "lp": True,
-        "farming_apr": random.uniform(5, 50),
-    },
-    {
-        "id": "spectra-stusd",
-        "plateforme": "spectra-v2",
-        "nom": "STUSD",
-        "tvl_usd": 132448.0,
-        "apr": 54046.6,
-        "lp": False,
-    },
-    {
-        "id": "berapaw-bullishv2",
-        "plateforme": "berapaw",
-        "nom": "BULLISHV2",
-        "tvl_usd": 28784.0,
-        "apr": 28862.79,
-        "lp": False,
-    },
-]
+This lightweight stub provides a :func:`get_pools` function returning a
+hard‑coded list of liquidity pool dictionaries.  It allows the rest of the
+application (e.g. ``main.py``) to run in environments without network access or
+external dependencies.
 
-def recuperer_pools():
-    """Retourne une liste de pools depuis DefiLlama. Sinon, fallback."""
-    url = "https://yields.llama.fi/pools"
-    try:
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
-        data = response.json()
+The data here is purely fictitious and serves only as a placeholder for real
+API responses.
+"""
 
-        pools = []
-        for item in data.get("data", []):
-            symbol = item.get("symbol", "")
-            is_lp = "lp" in symbol.lower()
-            pool = {
-                "id": f"{item.get('project', '')}-{symbol}",
-                "nom": symbol,
-                "plateforme": item.get("project", ""),
-                "tvl_usd": item.get("tvlUsd", 0),
-                "apr": item.get("apy", item.get("apr", 0)),
-                "lp": is_lp,
-            }
-            if is_lp:
-                pool["farming_apr"] = round(random.uniform(5, 50), 2)
-            pools.append(pool)
+from __future__ import annotations
 
-        return pools
+from typing import Dict, List
 
-    except Exception as e:
-        print(f"[ERREUR] Échec de récupération des pools : {e}")
-        print("➡️ Utilisation des données locales de secours.")
-        return _POOLS_FALLBACK
+
+def get_pools() -> List[Dict[str, object]]:
+    """Return a list of sample liquidity pools.
+
+    The pools are intentionally simple and contain only the keys required by the
+    rest of the codebase:
+
+    - ``nom``: Name of the pool.
+    - ``plateforme``: Platform or DEX hosting the pool.
+    - ``apr``: Annual Percentage Rate for the pool.
+    - ``lp``: Boolean flag indicating that this is an LP pool (always ``True``).
+    - ``farming_apr``: APR for farming rewards associated with the pool.
+    """
+
+    return [
+        {
+            "nom": "USDC-ETH",
+            "plateforme": "uniswap",
+            "apr": 5.0,
+            "lp": True,
+            "farming_apr": 10.0,
+        },
+        {
+            "nom": "DAI-ETH",
+            "plateforme": "sushiswap",
+            "apr": 4.2,
+            "lp": True,
+            "farming_apr": 8.5,
+        },
+        {
+            "nom": "USDT-BTC",
+            "plateforme": "curve",
+            "apr": 3.0,
+            "lp": True,
+            "farming_apr": 7.1,
+        },
+    ]
+
+
+# Backwards compatibility ---------------------------------------------------
+#
+# Older parts of the project might still import ``recuperer_pools``.  Map this
+# name to ``get_pools`` so those callers continue to function during the local
+# simulation phase.
+recuperer_pools = get_pools
