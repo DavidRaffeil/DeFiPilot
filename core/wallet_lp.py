@@ -1,55 +1,18 @@
 # core/wallet_lp.py
 
-import os
-import json
-
-FICHIER_SIMULATION = "wallet_simulation.json"
-
-class WalletSimule:
-    def __init__(self, montant_initial=100.0):
-        self.solde = montant_initial
-        self._charger()
-
-    def _charger(self):
-        if os.path.exists(FICHIER_SIMULATION):
-            try:
-                with open(FICHIER_SIMULATION, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    self.solde = data.get("solde", self.solde)
-            except Exception as e:
-                print(f"[ERREUR] Impossible de charger le fichier de simulation : {e}")
-
-    def _sauvegarder(self):
-        try:
-            with open(FICHIER_SIMULATION, "w", encoding="utf-8") as f:
-                json.dump({"solde": round(self.solde, 2)}, f, indent=2)
-        except Exception as e:
-            print(f"[ERREUR] Impossible de sauvegarder la simulation : {e}")
-
-    def investir(self, gain_estime):
-        solde_avant = self.solde
-        self.solde += gain_estime
-        self._sauvegarder()
-        return solde_avant, gain_estime, self.solde
-
-    def reset(self, nouveau_montant=100.0):
-        self.solde = nouveau_montant
-        self._sauvegarder()
-
-    def get_solde(self):
-        return self.solde
-
-
 class WalletLP:
     def __init__(self):
-        self.solde_lp = {}  # Dictionnaire pour stocker {token_lp: montant}
+        self.solde_lp = {}
 
-    def ajouter_lp(self, token_lp: str, montant: float):
+    def ajouter(self, token_lp: str, montant: float):
         if token_lp in self.solde_lp:
             self.solde_lp[token_lp] += montant
         else:
             self.solde_lp[token_lp] = montant
         print(f"💼 Ajout simulé : {montant:.4f} {token_lp} dans le wallet LP")
+
+    def ajouter_lp(self, token_lp: str, montant: float):
+        self.ajouter(token_lp, montant)
 
     def afficher_soldes(self):
         print("\n📊 Solde LP simulé :")
