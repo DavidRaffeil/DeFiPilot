@@ -1,32 +1,44 @@
-# core/scoring.py – Version V2.7
+# core/scoring.py
+# 🧩 Version : V2.8 – Étape 3 finalisée
+# 🎯 Intégration propre de `poids_slippage` + nettoyage
 
-from core import historique
-
-PROFILS = {
-    "prudent": {"apr": 0.2, "tvl": 0.8, "historique_max_bonus": 0.10, "historique_max_malus": -0.05},
-    "modere": {"apr": 0.3, "tvl": 0.7, "historique_max_bonus": 0.15, "historique_max_malus": -0.10},
-    "equilibre": {"apr": 0.5, "tvl": 0.5, "historique_max_bonus": 0.20, "historique_max_malus": -0.10},
-    "dynamique": {"apr": 0.7, "tvl": 0.3, "historique_max_bonus": 0.25, "historique_max_malus": -0.15},
-    "agressif": {"apr": 0.8, "tvl": 0.2, "historique_max_bonus": 0.30, "historique_max_malus": -0.20},
-}
+from core import historique, config, profil
 
 
 def charger_ponderations(profil_nom):
-    return PROFILS.get(profil_nom, PROFILS["modere"])
+    """
+    Charge les pondérations APR/TVL depuis le profil défini dans config.
+    """
+    base = config.PROFILS.get(profil_nom, config.PROFILS["modere"])
+    return {
+        "apr": base["apr"],
+        "tvl": base["tvl"]
+    }
 
 
 def charger_profil_utilisateur():
-    profil_nom = "modere"
-    base = PROFILS.get(profil_nom, PROFILS["modere"])
+    """
+    Charge l’ensemble des paramètres du profil actif, y compris le poids du slippage LP.
+    """
+    profil_actif = profil.PROFIL_ACTIF
+    base = config.PROFILS.get(profil_actif, config.PROFILS["modere"])
     return {
-        "nom": profil_nom,
-        "ponderations": {"apr": base["apr"], "tvl": base["tvl"]},
+        "nom": profil_actif,
+        "ponderations": {
+            "apr": base["apr"],
+            "tvl": base["tvl"]
+        },
         "historique_max_bonus": base["historique_max_bonus"],
-        "historique_max_malus": base["historique_max_malus"]
+        "historique_max_malus": base["historique_max_malus"],
+        # Ce poids est appliqué aux pools LP pour réduire leur score
+        "poids_slippage": base["poids_slippage"],
     }
 
 
 def calculer_score_pool(pool, ponderations, historique_pools, profil):
+    """
+    Calcule le score pondéré d'une pool, incluant bonus historique et malus slippage LP.
+    """
     apr = pool.get("apr", 0)
     tvl = pool.get("tvl_usd", 0)
 
@@ -41,6 +53,11 @@ def calculer_score_pool(pool, ponderations, historique_pools, profil):
     )
 
     score_final = score_base * (1 + bonus)
+
+    # 🛡️ Appliquer une pénalité via `poids_slippage` si le pool est un LP
+    if pool.get("lp"):
+        poids_slippage = profil.get("poids_slippage", 0)
+        score_final *= (1 - poids_slippage)
 
     # 🔍 Affichage debug bonus
     print(f"[SCORE] {nom_pool} | Score base : {round(score_base,2)} | Bonus : {round(bonus*100,2)}% → Score final : {round(score_final,2)}")
@@ -67,23 +84,7 @@ def calculer_scores_et_gains(pools, profil, solde, historique_pools):
         apr = pool.get("apr", 0)
         nom = f"{pool.get('plateforme')} | {pool.get('nom')}"
         gain = round((solde * apr / 100) / 365, 2)
-        resultats.append((nom, apr, gain))
+        resultats.append((pool, pool["score"]))
         gain_total += gain
 
     return resultats, round(gain_total, 2)
-
-
-def trier_pools(pools, profil_nom, historique_pools):
-    profil = charger_profil_utilisateur()
-    ponderations = profil["ponderations"]
-    pools = calculer_scores(pools, ponderations, historique_pools, profil)
-    return sorted(pools, key=lambda p: p["score"], reverse=True)
-
-
-def simuler_gain_farming_lp(montant_lp, farming_apr):
-    try:
-        gain = (montant_lp * farming_apr / 100) / 365
-        return round(gain, 4)
-    except Exception as e:
-        print(f"[ERREUR] Échec du calcul de gain farming : {e}")
-        return 0.0

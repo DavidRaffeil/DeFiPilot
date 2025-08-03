@@ -31,6 +31,19 @@ Pour la vision complète de l’écosystème et des futurs bots associés, voir 
 
 ## Nouveautés / What's New
 
+### 🔹 Version V2.8 – Pondération du slippage LP (3 août 2025)
+
+– Intégration du paramètre `poids_slippage` dans les profils  
+  `poids_slippage` parameter added to profiles  
+– Application d’un malus pondéré sur les pools utilisant des tokens LP  
+  Weighted malus applied to LP-based pools  
+– Score final ajusté automatiquement selon le profil  
+  Final score adjusted automatically based on the active profile  
+
+---
+
+## 📜 Historique des versions / Past Versions
+
 ### 🔹 Version V2.7 – Intégration complète farming LP (3 août 2025)
 
 – Simulation complète du farming LP avec APR (rendement annualisé)  
@@ -42,9 +55,14 @@ Pour la vision complète de l’écosystème et des futurs bots associés, voir 
 – Vérification complète des logs avant passage au mode réel  
   Full log validation before entering real mode
 
----
+### 🔹 Version V2.6 – Mode simulateur amélioré (2 août 2025)
 
-## 📜 Historique des versions / Past Versions
+– Amélioration du simulateur avec enregistrement du solde LP simulé  
+  Improved simulator with LP balance logging  
+– Nouveau fichier `journal_lp_cumul.csv` pour le suivi des LP  
+  New `journal_lp_cumul.csv` for LP tracking  
+– Nouvelle fonction de journalisation des rendements LP par pool  
+  New LP farming yield logger by pool
 
 ### 🔹 Version V2.5 – Journalisation LP & check système (30 juillet 2025)
 
@@ -54,19 +72,6 @@ Pour la vision complète de l’écosystème et des futurs bots associés, voir 
   Integration of check_setup.py for stability checks before running  
 – Refonte des logs et résumé journalier pour un meilleur suivi  
   Redesigned logs and daily summaries for better tracking
-
-### 🔹 Version V2.4 – Simulation LP + Journalisation avancée (27 juillet 2025)
-
-– Simulation complète d’un investissement avec ajout fictif de tokens LP  
-  Full simulation of an investment with fictive LP token provision  
-– Gestion d’un portefeuille LP simulé (wallet LP avec solde affiché)  
-  Simulated LP wallet management with displayed balance  
-– Journalisation CSV des swaps LP simulés + résumé global journalier  
-  Simulated LP swap logging in CSV + daily summary  
-– Statistiques historiques des performances LP (score, gains moyens, etc.)  
-  Historical stats on LP pool performance (average scores & gains)  
-– Nouveau module de logs d’erreurs pour tracer les exceptions  
-  New error logging module for tracking exceptions
 
 ---
 
@@ -111,9 +116,9 @@ Historique, fichiers CSV, journal quotidien / History, CSV files, daily log
 
 | Version | Contenu prévu / Planned content                                                                                                                        |
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `v2.7`  | Intégration ControlPilot (centralisation multi-bots) / ControlPilot integration as a central dashboard                                                |
-| `v2.8`  | Export complet + tri, filtres, vues graphiques / Full export with filters and charts                                                                  |
-| `v2.9+` | IA avancée avec LabPilot (ajustements stratégiques, pré-alertes) / Advanced AI via LabPilot (strategic tuning, predictive alerts)                     |
+| `v2.9`  | IA avancée avec LabPilot (ajustements stratégiques, pré-alertes) / Advanced AI via LabPilot (strategic tuning, predictive alerts)                     |
+| `v3.0`  | Score de rentabilité complet (avec slippage LP, TVL dynamique, etc.) / Full profitability scoring (with LP slippage, dynamic TVL, etc.)              |
+| `v3.1`  | Début de l’exécution réelle en conditions réelles (répartition, gas fees, etc.) / Start of real investment execution (allocation, gas fees, etc.)     |
 
 *La roadmap s’adapte selon l’avancement du projet / The roadmap adapts as the project evolves.*
 
@@ -198,4 +203,4 @@ Project initiated and developed by **David Raffeil** with ChatGPT assistance.
 
 ---
 
-Pour toute question ou suggestion : issues GitHub ou [voir la vision du projet](https://github.com/DavidRaffeil/DeFiPilot/blob/main/VISIO
+Pour toute question ou suggestion : issues GitHub ou [voir la vision du projet](https://github.com/DavidRaffeil/DeFiPilot/blob/main/VISION.md)
