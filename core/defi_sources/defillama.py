@@ -1,33 +1,12 @@
-"""Module simulating DeFiLlama data for local testing.
+# core/defi_sources/defillama.py
+# 🧩 Version : V2.8 – Ajout TVL fictif à chaque pool
 
-This lightweight stub provides a :func:`get_pools` function returning a
-hard‑coded list of liquidity pool dictionaries.  It allows the rest of the
-application (e.g. ``main.py``) to run in environments without network access or
-external dependencies.
-
-The data here is purely fictitious and serves only as a placeholder for real
-API responses.
-"""
-
-from __future__ import annotations
-
-from typing import Dict, List
-
-
-def get_pools() -> List[Dict[str, object]]:
-    """Return a list of sample liquidity pools.
-
-    The pools are intentionally simple and contain only the keys required by the
-    rest of the codebase:
-
-    - ``nom``: Name of the pool.
-    - ``plateforme``: Platform or DEX hosting the pool.
-    - ``apr``: Annual Percentage Rate for the pool.
-    - ``lp``: Boolean flag indicating that this is an LP pool (always ``True``).
-    - ``farming_apr``: APR for farming rewards associated with the pool.
+def recuperer_pools():
     """
-
-    return [
+    Simule la récupération de pools DeFi depuis DefiLlama.
+    Injecte une valeur fictive pour 'tvl_usd' afin de permettre la simulation.
+    """
+    pools = [
         {
             "nom": "USDC-ETH",
             "plateforme": "uniswap",
@@ -51,10 +30,8 @@ def get_pools() -> List[Dict[str, object]]:
         },
     ]
 
+    # 💠 Ajout d'une TVL fictive pour chaque pool (valeur stable pour simulation)
+    for pool in pools:
+        pool["tvl_usd"] = 10000.0
 
-# Backwards compatibility ---------------------------------------------------
-#
-# Older parts of the project might still import ``recuperer_pools``.  Map this
-# name to ``get_pools`` so those callers continue to function during the local
-# simulation phase.
-recuperer_pools = get_pools
+    return pools

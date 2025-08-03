@@ -1,78 +1,51 @@
-# main.py – Version V2.7 complète et corrigée
+# main.py
+# 🧩 Version : V2.8 – Nettoyée (suppression DEBUG)
 
-import os
-import sys
+from core.defi_sources import defillama
+from core import scoring, journal, simulateur_logique
+from core.profil import PROFIL_ACTIF
 import datetime
-from core import scoring, historique, defi_sources, wallet_lp, journal
-
-# Initialisation du portefeuille LP
-lp_wallet = wallet_lp.WalletLP()
 
 def main():
-    print("\U0001F680 Lancement de DeFiPilot")
+    print("🚀 Lancement de DeFiPilot")
 
-    # Charger le profil utilisateur
-    profil = scoring.charger_profil_utilisateur()
-    print(f"[{datetime.date.today()}] INFO \U0001F3D7 Profil actif : {profil['nom']} (APR {profil['ponderations']['apr']}, TVL {profil['ponderations']['tvl']})")
+    profil_utilisateur = scoring.charger_profil_utilisateur()
+    print(f"[{datetime.date.today()}] INFO 🏗 Profil actif : {PROFIL_ACTIF} (APR {profil_utilisateur['ponderations']['apr']}, TVL {profil_utilisateur['ponderations']['tvl']})")
 
-    # Charger l'historique des performances
-    historique_pools = historique.charger_historique()
+    pools = defillama.recuperer_pools()
+    print(f"[{datetime.date.today()}] INFO ✅ {len(pools)} pools récupérées")
 
-    # Récupération des pools
-    print("[2025-08-03] INFO \U0001F9EA Récupération des pools via DefiLlama")
-    pools = defi_sources.defillama.get_pools()
-    print(f"[2025-08-03] INFO ✅ {len(pools)} pools récupérées")
+    historique_pools = {}
 
-    # Calcul des scores et gains simulés
+    for pool in pools:
+        gain_affiche, gain_valeur = simulateur_logique.simuler_gains(pool)
+        pool["gain_simule"] = gain_valeur
+        pool["gain_affiche"] = gain_affiche
+
     solde_usdc = 5000.00
-    resultats, gain_total = scoring.calculer_scores_et_gains(pools, profil, solde_usdc, historique_pools)
+    resultats, gain_total = scoring.calculer_scores_et_gains(pools, profil_utilisateur, solde_usdc, historique_pools)
 
-    date_du_jour = str(datetime.date.today())
-    for nom, apr, gain in resultats:
+    print(f"\n📊 Résumé du {datetime.date.today()} – Profil : {PROFIL_ACTIF}")
+    for pool, score in resultats:
+        nom = f"{pool['plateforme']} | {pool['nom']}"
+        apr = pool.get("apr", 0)
+        gain = pool.get("gain_simule", 0)
         print(f"  • {nom} | APR : {apr:.2f}% | Gain simulé : {gain:.2f} $ USDC")
 
-    # Simuler les investissements et journaux LP
-    for nom, apr, gain in resultats:
-        solde_usdc += gain
-        print(f"💰 Gain simulé : +{gain:.2f} $ USDC → Nouveau solde : {solde_usdc:.2f} $ USDC")
+    for pool, score in resultats[:3]:
+        nom_pool = f"{pool['plateforme']} | {pool['nom']}"
+        apr_farming = pool.get("farming_apr", 10.0)
+        montant_lp = round(pool["gain_simule"] / 2, 4)
+        montant_farm = simulateur_logique.simuler_gain_farming_lp(montant_lp, apr_farming)
+        solde_usdc += pool["gain_simule"]
+        print(f"💰 Gain simulé : +{pool['gain_simule']:.2f} $ USDC → Nouveau solde : {solde_usdc:.2f} $ USDC")
+        print(f"🗓️ LP simulé reçu : {montant_lp:.4f} LP-{pool['nom']}")
+        print(f"🌾 Farming LP simulé : {montant_farm:.4f} $ USDC générés avec {apr_farming:.2f}% APR")
 
-        parts = nom.split(" | ")
-        plateforme = parts[0]
-        token_lp = "LP-" + parts[1]
-        montant_lp = round(gain / 2, 4)  # simulation de réception de LP token
-
-        lp_wallet.ajouter(token_lp, montant_lp)
-        print(f"🗓️ LP simulé reçu : {montant_lp:.4f} {token_lp}")
-
-        # Récupérer l'APR de farming de la pool
-        pool = next((p for p in pools if f"{p['plateforme']} | {p['nom']}" == nom), None)
-        farming_apr = pool.get("farming_apr", 0) if pool else 0
-        gain_farming = scoring.simuler_gain_farming_lp(montant_lp, farming_apr)
-
-        print(f"🌾 Farming LP simulé : {gain_farming:.4f} $ USDC générés avec {farming_apr:.2f}% APR")
-
-        # Journalisation
-        poids_profil = profil["ponderations"]
-        token_parts = token_lp.split('-')
-        journal.enregistrer_lp(
-            date_du_jour,
-            profil["nom"],
-            nom,
-            token_parts[1],
-            token_parts[2],
-            gain,
-            round(poids_profil["apr"], 4),
-            round(poids_profil["tvl"], 4)
-        )
-
-        # Mise à jour de l'historique pour bonus futur
-        historique.maj_historique(historique_pools, nom, gain)
-
-    # Affichage des soldes LP
-    lp_wallet.afficher_soldes()
-
-    # Sauvegarde de l'historique
-    historique.sauvegarder_historique(historique_pools)
+    print(f"\n📊 Solde LP simulé :")
+    for pool, score in resultats[:3]:
+        montant_lp = round(pool["gain_simule"] / 2, 4)
+        print(f" - LP-{pool['nom']} : {montant_lp:.4f}")
 
 if __name__ == "__main__":
     main()
