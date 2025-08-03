@@ -1,22 +1,32 @@
-# core/wallet_lp.py
+# core/wallet_lp.py – Version V2.7
 
 class WalletLP:
+    """
+    Représente un portefeuille simulé pour les tokens LP.
+    """
+
     def __init__(self):
-        self.solde_lp = {}
+        self.soldes = {}
 
-    def ajouter(self, token_lp: str, montant: float):
-        if token_lp in self.solde_lp:
-            self.solde_lp[token_lp] += montant
+    def ajouter(self, nom_token, montant):
+        """
+        Ajoute un montant de tokens LP au portefeuille.
+        """
+        if nom_token in self.soldes:
+            self.soldes[nom_token] += montant
         else:
-            self.solde_lp[token_lp] = montant
-        print(f"💼 Ajout simulé : {montant:.4f} {token_lp} dans le wallet LP")
+            self.soldes[nom_token] = montant
 
-    def ajouter_lp(self, token_lp: str, montant: float):
-        self.ajouter(token_lp, montant)
+    def get_solde(self, nom_token):
+        """
+        Retourne le solde d’un token LP donné.
+        """
+        return self.soldes.get(nom_token, 0)
 
     def afficher_soldes(self):
+        """
+        Affiche les soldes des tokens LP simulés.
+        """
         print("\n📊 Solde LP simulé :")
-        if not self.solde_lp:
-            print("(vide)")
-        for token, montant in self.solde_lp.items():
+        for token, montant in self.soldes.items():
             print(f" - {token} : {montant:.4f}")
