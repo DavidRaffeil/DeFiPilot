@@ -31,14 +31,16 @@ Pour la vision complète de l’écosystème et des futurs bots associés, voir 
 
 ## Nouveautés / What's New
 
-### 🔹 Version V2.6 – Mode simulate + journal LP cumulatif (2 août 2025)
+### 🔹 Version V2.6 – Journalisation farming LP (3 août 2025)
 
-– Mode simulateur complet avec enchaînement journalier automatique  
-  Full simulator mode with automatic daily simulation loop  
-– Journalisation cumulative des investissements LP (jours, montants, farming)  
-  Cumulative logging of LP investments (days, amounts, farming rewards)  
-– Nouvelle structure de fichiers : séparation logique des modules de simulation  
-  New file structure: separated logic modules for simulation tracking
+– Simulation complète du farming LP avec APR (rendement annualisé)  
+  Full simulation of LP farming with APR (annual yield)  
+– Nouveau fichier `journal_farming.csv` pour tracer les gains simulés par pool  
+  New `journal_farming.csv` file to track simulated pool yields  
+– Journalisation cumulée des LP dans `journal_lp_cumul.csv`  
+  Cumulative LP logging in `journal_lp_cumul.csv`  
+– Vérification complète des logs avant passage au mode réel  
+  Full log validation before entering real mode
 
 ---
 
