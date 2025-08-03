@@ -31,7 +31,7 @@ Pour la vision complète de l’écosystème et des futurs bots associés, voir 
 
 ## Nouveautés / What's New
 
-### 🔹 Version V2.6 – Journalisation farming LP (3 août 2025)
+### 🔹 Version V2.7 – Intégration complète farming LP (3 août 2025)
 
 – Simulation complète du farming LP avec APR (rendement annualisé)  
   Full simulation of LP farming with APR (annual yield)  
@@ -111,10 +111,9 @@ Historique, fichiers CSV, journal quotidien / History, CSV files, daily log
 
 | Version | Contenu prévu / Planned content                                                                                                                        |
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `v2.5`  | Estimation des coûts (simulateur de gas) + visualisation des performances / Gas simulator + yield visualization                                       |
-| `v2.6`  | Export complet + tri, filtres, vues graphiques / Full export with filters and charts                                                                  |
 | `v2.7`  | Intégration ControlPilot (centralisation multi-bots) / ControlPilot integration as a central dashboard                                                |
-| `v2.8+` | IA avancée avec LabPilot (ajustements stratégiques, pré-alertes) / Advanced AI via LabPilot (strategic tuning, predictive alerts)                     |
+| `v2.8`  | Export complet + tri, filtres, vues graphiques / Full export with filters and charts                                                                  |
+| `v2.9+` | IA avancée avec LabPilot (ajustements stratégiques, pré-alertes) / Advanced AI via LabPilot (strategic tuning, predictive alerts)                     |
 
 *La roadmap s’adapte selon l’avancement du projet / The roadmap adapts as the project evolves.*
 
@@ -199,4 +198,4 @@ Project initiated and developed by **David Raffeil** with ChatGPT assistance.
 
 ---
 
-Pour toute question ou suggestion : issues GitHub ou [voir la vision du projet](https://github.com/DavidRaffeil/DeFiPilot/blob/main/VISION.md)
+Pour toute question ou suggestion : issues GitHub ou [voir la vision du projet](https://github.com/DavidRaffeil/DeFiPilot/blob/main/VISIO
