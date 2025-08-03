@@ -1,22 +1,11 @@
-# simulateur_logique.py
-
-"""Fonctions logiques pour la simulation de gains."""
+# core/simulateur_logique.py
+# 🧩 Version : V2.8 – Nettoyée (suppression DEBUG)
 
 from typing import Tuple
 
-
 def simuler_gains(pool: dict) -> Tuple[str, float]:
-    """Calcule le gain potentiel sur 24h pour une pool.
-
-    Parameters
-    ----------
-    pool : dict
-        Dictionnaire décrivant la pool avec les clés ``"apr"`` et ``"tvl_usd"``.
-
-    Returns
-    -------
-    Tuple[str, float]
-        Une chaîne lisible du gain estimé et la valeur numérique correspondante.
+    """
+    Simule les gains journaliers en USDC pour une pool classique (non LP).
     """
     try:
         apr = float(pool.get("apr", 0))
@@ -30,22 +19,11 @@ def simuler_gains(pool: dict) -> Tuple[str, float]:
 
 
 def simuler_gain_farming_lp(montant_lp: float, farming_apr: float) -> float:
-    """Simule les gains journaliers issus du farming de LP tokens.
-
-    Parameters
-    ----------
-    montant_lp : float
-        Montant de LP tokens simulé.
-
-    farming_apr : float
-        APR en pourcentage pour le farming.
-
-    Returns
-    -------
-    float
-        Gain simulé en dollars USDC.
+    """
+    Simule les gains journaliers issus du farming de LP tokens.
     """
     try:
+        montant_lp = montant_lp * 0.98  # slippage LP simulé de 2 %
         gain = (montant_lp * farming_apr / 100) / 365
         return round(gain, 4)
     except Exception as e:
