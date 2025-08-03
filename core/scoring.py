@@ -1,4 +1,4 @@
-# core/scoring.py – Version V2.5 avec bonus historique + simulation farming LP
+# core/scoring.py – Version V2.7
 
 from core import historique
 
@@ -10,8 +10,10 @@ PROFILS = {
     "agressif": {"apr": 0.8, "tvl": 0.2, "historique_max_bonus": 0.30, "historique_max_malus": -0.20},
 }
 
+
 def charger_ponderations(profil_nom):
     return PROFILS.get(profil_nom, PROFILS["modere"])
+
 
 def charger_profil_utilisateur():
     profil_nom = "modere"
@@ -23,29 +25,34 @@ def charger_profil_utilisateur():
         "historique_max_malus": base["historique_max_malus"]
     }
 
+
 def calculer_score_pool(pool, ponderations, historique_pools, profil):
     apr = pool.get("apr", 0)
     tvl = pool.get("tvl_usd", 0)
 
-    score = (
-        apr * ponderations["apr"] +
-        tvl * ponderations["tvl"]
-    )
-
+    score_base = apr * ponderations["apr"] + tvl * ponderations["tvl"]
     nom_pool = f"{pool.get('plateforme')} | {pool.get('nom')}"
+
     bonus = historique.calculer_bonus(
         historique_pools,
         nom_pool,
         max_bonus=profil.get("historique_max_bonus", 0.15),
         max_malus=profil.get("historique_max_malus", -0.10)
     )
-    score *= (1 + bonus)
-    return round(score, 2)
+
+    score_final = score_base * (1 + bonus)
+
+    # 🔍 Affichage debug bonus
+    print(f"[SCORE] {nom_pool} | Score base : {round(score_base,2)} | Bonus : {round(bonus*100,2)}% → Score final : {round(score_final,2)}")
+
+    return round(score_final, 2)
+
 
 def calculer_scores(pools, ponderations, historique_pools, profil):
     for pool in pools:
         pool["score"] = calculer_score_pool(pool, ponderations, historique_pools, profil)
     return pools
+
 
 def calculer_scores_et_gains(pools, profil, solde, historique_pools):
     ponderations = profil["ponderations"]
@@ -65,21 +72,15 @@ def calculer_scores_et_gains(pools, profil, solde, historique_pools):
 
     return resultats, round(gain_total, 2)
 
+
 def trier_pools(pools, profil_nom, historique_pools):
-    """Trie les pools selon le profil donné et retourne la liste triée."""
     profil = charger_profil_utilisateur()
     ponderations = profil["ponderations"]
     pools = calculer_scores(pools, ponderations, historique_pools, profil)
     return sorted(pools, key=lambda p: p["score"], reverse=True)
 
-def simuler_gain_farming_lp(montant_lp, farming_apr):
-    """
-    Calcule le gain simulé issu du farming d'un token LP sur une journée.
 
-    :param montant_lp: Montant de LP tokens simulés (en $ ou équivalent)
-    :param farming_apr: Taux APR du farming (en %)
-    :return: Gain simulé sur une journée (float, en $)
-    """
+def simuler_gain_farming_lp(montant_lp, farming_apr):
     try:
         gain = (montant_lp * farming_apr / 100) / 365
         return round(gain, 4)
