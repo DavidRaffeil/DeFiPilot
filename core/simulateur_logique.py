@@ -1,7 +1,8 @@
 # core/simulateur_logique.py
-# 🧩 Version : V2.8 – Nettoyée (suppression DEBUG)
+# 🧩 Version : V2.9 – Journalisation du slippage LP
 
 from typing import Tuple
+from .journal import enregistrer_slippage_lp
 
 def simuler_gains(pool: dict) -> Tuple[str, float]:
     """
@@ -28,4 +29,19 @@ def simuler_gain_farming_lp(montant_lp: float, farming_apr: float) -> float:
         return round(gain, 4)
     except Exception as e:
         print(f"[ERREUR] Échec du calcul farming LP : {e}")
+        return 0.0
+
+
+def simuler_farming_lp(date: str, nom_pool: str, plateforme: str, montant_lp: float, farming_apr: float, profil: str) -> float:
+    """
+    Simule le farming de LP tokens et journalise le slippage subi.
+    """
+    try:
+        slippage_lp = montant_lp * 0.02  # slippage LP simulé de 2 %
+        montant_apres_slippage = montant_lp - slippage_lp
+        enregistrer_slippage_lp(date, nom_pool, plateforme, montant_lp, slippage_lp, profil)
+        gain = (montant_apres_slippage * farming_apr / 100) / 365
+        return round(gain, 4)
+    except Exception as e:
+        print(f"[ERREUR] Échec du farming LP : {e}")
         return 0.0
