@@ -9,3 +9,4 @@ from . import defi_sources  # ✅ Ajouté pour corriger l'import dans main.py
 from . import simulation
 from . import journal
 from . import env
+from . import simulateur_wallet
