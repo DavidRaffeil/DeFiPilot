@@ -1,5 +1,5 @@
 # main.py
-# 🧩 Version : V2.8 – Nettoyée (suppression DEBUG)
+# 🧩 Version : V2.9 – Appel farming LP avec journalisation slippage
 
 from core.defi_sources import defillama
 from core import scoring, journal, simulateur_logique
@@ -34,13 +34,21 @@ def main():
 
     for pool, score in resultats[:3]:
         nom_pool = f"{pool['plateforme']} | {pool['nom']}"
-        apr_farming = pool.get("farming_apr", 10.0)
+        farming_apr = pool.get("farming_apr", 10.0)
         montant_lp = round(pool["gain_simule"] / 2, 4)
-        montant_farm = simulateur_logique.simuler_gain_farming_lp(montant_lp, apr_farming)
+        # 🧩 V2.9
+        farming_gain = simulateur_logique.simuler_farming_lp(
+            date=datetime.date.today().isoformat(),
+            nom_pool=pool['nom'],
+            plateforme=pool['plateforme'],
+            montant_lp=montant_lp,
+            farming_apr=farming_apr,
+            profil=PROFIL_ACTIF
+        )
         solde_usdc += pool["gain_simule"]
         print(f"💰 Gain simulé : +{pool['gain_simule']:.2f} $ USDC → Nouveau solde : {solde_usdc:.2f} $ USDC")
         print(f"🗓️ LP simulé reçu : {montant_lp:.4f} LP-{pool['nom']}")
-        print(f"🌾 Farming LP simulé : {montant_farm:.4f} $ USDC générés avec {apr_farming:.2f}% APR")
+        print(f"🌾 Farming LP simulé : {farming_gain:.4f} $ USDC générés avec {farming_apr:.2f}% APR")
 
     print(f"\n📊 Solde LP simulé :")
     for pool, score in resultats[:3]:
