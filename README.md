@@ -31,6 +31,19 @@ Pour la vision complète de l’écosystème et des futurs bots associés, voir 
 
 ## Nouveautés / What's New
 
+### 🔹 Version V2.9 – Journalisation du slippage LP (5 août 2025)
+
+– Journalisation automatique du slippage LP simulé dans `journal_slippage_lp.csv`  
+  Automatic logging of simulated LP slippage in `journal_slippage_lp.csv`  
+– Chaque ligne contient 7 colonnes : date, pool, plateforme, montant LP, slippage, profil  
+  Each line contains 7 columns: date, pool, platform, LP amount, slippage, profile  
+– Utilisation de `simuler_farming_lp()` pour tracer les pertes simulées dues au slippage  
+  Uses `simuler_farming_lp()` to log simulated losses due to slippage
+
+---
+
+## 📜 Historique des versions / Past Versions
+
 ### 🔹 Version V2.8 – Pondération du slippage LP (3 août 2025)
 
 – Intégration du paramètre `poids_slippage` dans les profils  
@@ -39,10 +52,6 @@ Pour la vision complète de l’écosystème et des futurs bots associés, voir 
   Weighted malus applied to LP-based pools  
 – Score final ajusté automatiquement selon le profil  
   Final score adjusted automatically based on the active profile  
-
----
-
-## 📜 Historique des versions / Past Versions
 
 ### 🔹 Version V2.7 – Intégration complète farming LP (3 août 2025)
 
@@ -114,11 +123,14 @@ Historique, fichiers CSV, journal quotidien / History, CSV files, daily log
 
 ## 🚣️ Roadmap des prochaines versions / Upcoming roadmap
 
-| Version | Contenu prévu / Planned content                                                                                                                        |
-| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `v2.9`  | IA avancée avec LabPilot (ajustements stratégiques, pré-alertes) / Advanced AI via LabPilot (strategic tuning, predictive alerts)                     |
-| `v3.0`  | Score de rentabilité complet (avec slippage LP, TVL dynamique, etc.) / Full profitability scoring (with LP slippage, dynamic TVL, etc.)              |
-| `v3.1`  | Début de l’exécution réelle en conditions réelles (répartition, gas fees, etc.) / Start of real investment execution (allocation, gas fees, etc.)     |
+| Version | Contenu prévu / Planned content                                                                                                                       |
+|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `v3.0`  | Passage au mode réel avec premiers swaps exécutés (sur petit montant) / First real swaps executed (with small amounts)                                |
+| `v3.1`  | Gestion réelle des LP tokens : dépôt, retrait, récupération des rewards / Real LP token management: deposit, withdraw, harvest                       |
+| `v3.2`  | Ajout de la protection anti-MEV bots + détection de pools à risque / MEV bot protection + detection of risky pools                                    |
+| `v3.3`  | Réglages intelligents des pondérations via IA (LabPilot) / AI-powered weighting strategy (via LabPilot)                                               |
+| `v3.4`  | Multi-wallet : gestion de plusieurs portefeuilles simultanés / Multi-wallet support: manage several wallets simultaneously                            |
+| `v3.5`  | Compatibilité multi-blockchains (Polygon, Avalanche, Fantom…) / Multi-chain compatibility (Polygon, Avalanche, Fantom…)                              |
 
 *La roadmap s’adapte selon l’avancement du projet / The roadmap adapts as the project evolves.*
 
