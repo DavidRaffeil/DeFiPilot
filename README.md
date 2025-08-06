@@ -31,6 +31,21 @@ Pour la vision complète de l’écosystème et des futurs bots associés, voir 
 
 ## Nouveautés / What's New
 
+### 🔹 Version V3.0 – Signature des transactions réelles (6 août 2025)
+
+– Ajout de la fonction `signer_transaction_swap()` pour signer localement des transactions via Web3  
+  Added `signer_transaction_swap()` function to locally sign transactions using Web3  
+– Intégration sécurisée de la clé privée via `real_wallet.py` et `.env`  
+  Secure integration of the private key via `real_wallet.py` and `.env`  
+– Connexion Web3 via Infura (réseau Polygon) validée  
+  Web3 connection via Infura (Polygon network) successfully tested  
+– Test complet avec `test_signer_transaction.py` pour valider la signature  
+  Full test with `test_signer_transaction.py` to validate transaction signing  
+
+---
+
+## 📜 Historique des versions / Past Versions
+
 ### 🔹 Version V2.9 – Journalisation du slippage LP (5 août 2025)
 
 – Journalisation automatique du slippage LP simulé dans `journal_slippage_lp.csv`  
@@ -39,10 +54,6 @@ Pour la vision complète de l’écosystème et des futurs bots associés, voir 
   Each line contains 7 columns: date, pool, platform, LP amount, slippage, profile  
 – Utilisation de `simuler_farming_lp()` pour tracer les pertes simulées dues au slippage  
   Uses `simuler_farming_lp()` to log simulated losses due to slippage
-
----
-
-## 📜 Historique des versions / Past Versions
 
 ### 🔹 Version V2.8 – Pondération du slippage LP (3 août 2025)
 
@@ -62,7 +73,7 @@ Pour la vision complète de l’écosystème et des futurs bots associés, voir 
 – Journalisation cumulée des LP dans `journal_lp_cumul.csv`  
   Cumulative LP logging in `journal_lp_cumul.csv`  
 – Vérification complète des logs avant passage au mode réel  
-  Full log validation before entering real mode
+  Full log validation before entering real mode  
 
 ### 🔹 Version V2.6 – Mode simulateur amélioré (2 août 2025)
 
@@ -71,7 +82,7 @@ Pour la vision complète de l’écosystème et des futurs bots associés, voir 
 – Nouveau fichier `journal_lp_cumul.csv` pour le suivi des LP  
   New `journal_lp_cumul.csv` for LP tracking  
 – Nouvelle fonction de journalisation des rendements LP par pool  
-  New LP farming yield logger by pool
+  New LP farming yield logger by pool  
 
 ### 🔹 Version V2.5 – Journalisation LP & check système (30 juillet 2025)
 
@@ -80,7 +91,7 @@ Pour la vision complète de l’écosystème et des futurs bots associés, voir 
 – Intégration du fichier check_setup.py pour vérifier la stabilité avant exécution  
   Integration of check_setup.py for stability checks before running  
 – Refonte des logs et résumé journalier pour un meilleur suivi  
-  Redesigned logs and daily summaries for better tracking
+  Redesigned logs and daily summaries for better tracking  
 
 ---
 
