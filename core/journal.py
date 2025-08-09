@@ -1,109 +1,4 @@
-# core/journal.py – V3.2
-
-import os
-import csv
-
-
-def enregistrer_top3(date, top3, profil):
-    dossier = "logs"
-    os.makedirs(dossier, exist_ok=True)
-    fichier = os.path.join(dossier, "journal_top3.csv")
-
-    existe = os.path.isfile(fichier)
-    with open(fichier, mode="a", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        if not existe:
-            writer.writerow(["date", "profil", "nom_pool", "apr", "gain_simule"])
-        for nom, apr, gain in top3:
-            writer.writerow([date, profil, nom, round(apr, 2), round(gain, 2)])
-
-
-def enregistrer_swap_lp(date, nom_pool, plateforme, montant, token1, token2, slippage, profil):
-    dossier = "logs"
-    os.makedirs(dossier, exist_ok=True)
-    fichier = os.path.join(dossier, "journal_swaps_lp.csv")
-    existe = os.path.isfile(fichier)
-    with open(fichier, mode="a", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        if not existe:
-            writer.writerow(["date", "nom_pool", "plateforme", "montant", "token1", "token2", "slippage", "profil"])
-        writer.writerow([date, nom_pool, plateforme, round(montant, 4), token1, token2, round(slippage, 4), profil])
-
-
-def enregistrer_lp(date, profil, nom_pool, token1, token2, valeur_totale, poids_profil, slippage_simule):
-    dossier = "logs"
-    os.makedirs(dossier, exist_ok=True)
-    fichier = os.path.join(dossier, "journal_lp.csv")
-    existe = os.path.isfile(fichier)
-    with open(fichier, mode="a", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        if not existe:
-            writer.writerow([
-                "date", "profil", "nom_pool", "token1", "token2",
-                "valeur_totale", "poids_profil", "slippage_simule"
-            ])
-        writer.writerow([
-            date,
-            profil,
-            nom_pool,
-            token1,
-            token2,
-            round(valeur_totale, 4),
-            round(poids_profil, 4),
-            round(slippage_simule, 4),
-        ])
-
-
-def enregistrer_lp_tokens(date, nom_pool, plateforme, lp_token, montant, profil):
-    dossier = "logs"
-    os.makedirs(dossier, exist_ok=True)
-    fichier = os.path.join(dossier, "journal_lp_tokens.csv")
-    existe = os.path.isfile(fichier)
-    with open(fichier, mode="a", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        if not existe:
-            writer.writerow(["date", "nom_pool", "plateforme", "lp_token", "montant", "profil"])
-        writer.writerow([date, nom_pool, plateforme, lp_token, round(montant, 4), profil])
-
-
-def journaliser_scores(date, profil, pools, historique_pools):
-    """
-    Enregistre dans un fichier CSV les scores détaillés des pools simulées.
-    """
-    dossier = "logs"
-    os.makedirs(dossier, exist_ok=True)
-    fichier = os.path.join(dossier, "journal_scores.csv")
-
-    existe = os.path.isfile(fichier)
-    with open(fichier, mode="a", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        if not existe:
-            writer.writerow(["date", "profil", "nom_pool", "apr", "tvl", "score_brut", "bonus", "score_final"])
-
-        for pool in pools:
-            apr = pool.get("apr", 0)
-            tvl = pool.get("tvl_usd", 0)
-            nom = f"{pool.get('plateforme')} | {pool.get('nom')}"
-            score_final = pool.get("score", 0)
-            score_brut = apr * profil["ponderations"]["apr"] + tvl * profil["ponderations"]["tvl"]
-            bonus = round((score_final / score_brut - 1) if score_brut else 0, 4)
-
-            writer.writerow([
-                date,
-                profil["nom"],
-                nom,
-                round(apr, 2),
-                round(tvl, 2),
-                round(score_brut, 4),
-                bonus,
-                round(score_final, 2)
-            ])
-
-
-def lire_historique_pools():
-    return []
-
-# === V3.2 – Nouvelle fonction : enregistrer_pools_risquées ===
+# === V3.2 – Correction : enregistrer_pools_risquées (robuste) ===
 
 def enregistrer_pools_risquées(pools: list, date: str, profil: str):
     dossier = "logs"
@@ -114,7 +9,32 @@ def enregistrer_pools_risquées(pools: list, date: str, profil: str):
     with open(fichier, mode="a", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         if not existe:
-            writer.writerow(["date", "profil", "nom_pool", "plateforme", "raisons"])
+            writer.writerow(["date", "profil", "plateforme", "nom_pool", "apr", "tvl", "risque", "raisons"])
+
         for pool in pools:
-            raisons = ", ".join(pool["raisons_risque"])
-            writer.writerow([date, profil, pool["name"], pool["platform"], raisons])
+            # Ne journaliser que les pools marquées à risque
+            if not bool(pool.get("risque", False)):
+                continue
+
+            plateforme = pool.get("platform") or pool.get("plateforme") or ""
+            nom_pool = (
+                pool.get("name")
+                or pool.get("nom")
+                or pool.get("pair")
+                or f"{pool.get('token0', '?')}-{pool.get('token1', '?')}"
+            )
+            apr = pool.get("apr", pool.get("apr_percent", 0)) or 0
+            tvl = pool.get("tvl_usd", pool.get("tvl", 0)) or 0
+            raisons_list = pool.get("raisons_risque") or []
+            raisons = ", ".join(map(str, raisons_list))
+
+            writer.writerow([
+                date,
+                profil,
+                plateforme,
+                nom_pool,
+                round(float(apr), 4) if isinstance(apr, (int, float)) else apr,
+                round(float(tvl), 4) if isinstance(tvl, (int, float)) else tvl,
+                1,
+                raisons
+            ])
