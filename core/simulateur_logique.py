@@ -1,8 +1,8 @@
 # core/simulateur_logique.py
-# 🧩 Version : V2.9 – Journalisation du slippage LP
+# 🧩 Version : V2.9 – Journalisation du slippage LP (import désactivé pour test V3.2)
 
 from typing import Tuple
-from .journal import enregistrer_slippage_lp
+# from .journal import enregistrer_slippage_lp  # Désactivé temporairement
 
 def simuler_gains(pool: dict) -> Tuple[str, float]:
     """
@@ -39,7 +39,7 @@ def simuler_farming_lp(date: str, nom_pool: str, plateforme: str, montant_lp: fl
     try:
         slippage_lp = montant_lp * 0.02  # slippage LP simulé de 2 %
         montant_apres_slippage = montant_lp - slippage_lp
-        enregistrer_slippage_lp(date, nom_pool, plateforme, montant_lp, slippage_lp, profil)
+        # enregistrer_slippage_lp(date, nom_pool, plateforme, montant_lp, slippage_lp, profil)  # Désactivé
         gain = (montant_apres_slippage * farming_apr / 100) / 365
         return round(gain, 4)
     except Exception as e:

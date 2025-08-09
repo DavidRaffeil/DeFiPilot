@@ -1,4 +1,4 @@
-# main.py – Version V3.1 – Étape 4
+# main.py – Version V3.2
 
 import argparse
 import logging
@@ -9,16 +9,16 @@ from core.config import charger_config, PROFILS
 from core.defi_sources.defillama import recuperer_pools
 from core.scoring import calculer_scores
 from core.simulateur_logique import simuler_gains
-from core.journal import enregistrer_top3
+from core.journal import enregistrer_top3, enregistrer_pools_risquées
 from core.real_wallet import get_wallet_address
 from core.swap_reel import effectuer_swap_reel
+from core.risk_analysis import analyser_risque  # ✅ corriger import ici si nécessaire
 
 # Configuration du logging
 logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(levelname)s %(message)s", datefmt="%Y-%m-%d")
 
 
 def executer_test_swap_reel():
-    """Effectue un test de swap réel simulé via Web3."""
     from_token = "USDC"
     to_token = "ETH"
     amount = 12.34
@@ -62,11 +62,23 @@ def main():
     historique_pools = []
     ponderations = {"apr": profil["apr"], "tvl": profil["tvl"]}
     pools_notees = calculer_scores(pools, ponderations, historique_pools, profil)
-    pools_triees = sorted(pools_notees, key=lambda x: x["score"], reverse=True)
+
+    # ✅ Corrigé : appliquer l’analyse de risque pool par pool
+    pools_analysees = [analyser_risque(p) for p in pools_notees]
+
+    # Tri décroissant
+    pools_triees = sorted(pools_analysees, key=lambda x: x["score"], reverse=True)
     top3 = pools_triees[:3]
 
     # Simulation des gains et affichage
     date_du_jour = str(datetime.today().date())
+
+    # 🛑 Journalisation des pools à risque (V3.2)
+    pools_risquees = [p for p in pools_analysees if p.get("risque")]
+    if pools_risquees:
+        enregistrer_pools_risquées(pools_risquees, date_du_jour, nom_profil)
+        print(f"[RISQUE] {len(pools_risquees)} pools risquées détectées et journalisées.")
+
     top3_journal = []
 
     for pool in top3:
