@@ -33,8 +33,8 @@ Pour la vision complète de l’écosystème et des futurs bots associés, voir 
 
 ### 🔹 Version V3.2 – Journalisation des pools risquées (9 août 2025)
 
-– Ajout de `enregistrer_pools_risquees()` pour tracer automatiquement les pools à risque  
-  Added `enregistrer_pools_risquees()` to automatically log risky pools  
+– Ajout de `enregistrer_pools_risquées()` pour tracer automatiquement les pools à risque  
+  Added `enregistrer_pools_risquées()` to automatically log risky pools  
 – Journalisation automatique dans `logs/journal_risques.csv`  
   Automatic logging in `logs/journal_risques.csv`  
 – Analyse simple du risque via APR et TVL  
