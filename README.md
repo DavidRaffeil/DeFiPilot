@@ -31,20 +31,38 @@ Pour la vision complète de l’écosystème et des futurs bots associés, voir 
 
 ## Nouveautés / What's New
 
-### 🔹 Version V3.0 – Signature des transactions réelles (6 août 2025)
+### 🔹 Version V3.2 – Journalisation des pools risquées (9 août 2025)
 
-– Ajout de la fonction `signer_transaction_swap()` pour signer localement des transactions via Web3  
-  Added `signer_transaction_swap()` function to locally sign transactions using Web3  
-– Intégration sécurisée de la clé privée via `real_wallet.py` et `.env`  
-  Secure integration of the private key via `real_wallet.py` and `.env`  
-– Connexion Web3 via Infura (réseau Polygon) validée  
-  Web3 connection via Infura (Polygon network) successfully tested  
-– Test complet avec `test_signer_transaction.py` pour valider la signature  
-  Full test with `test_signer_transaction.py` to validate transaction signing  
+– Ajout de `enregistrer_pools_risquees()` pour tracer automatiquement les pools à risque  
+  Added `enregistrer_pools_risquees()` to automatically log risky pools  
+– Journalisation automatique dans `logs/journal_risques.csv`  
+  Automatic logging in `logs/journal_risques.csv`  
+– Analyse simple du risque via APR et TVL  
+  Simple risk analysis via APR and TVL  
 
 ---
 
 ## 📜 Historique des versions / Past Versions
+
+### 🔹 Version V3.1 – Signature des transactions Web3 (7 août 2025)
+
+– Signature locale des swaps via Web3 avec clé privée sécurisée  
+  Local swap signing via Web3 with secure private key  
+– Connexion stable au réseau Polygon via Infura  
+  Stable connection to Polygon network via Infura  
+– Test de signature avec `test_signer_transaction.py`  
+  Signature test with `test_signer_transaction.py`
+
+### 🔹 Version V3.0 – Simulation LP & Swap simulé (6 août 2025)
+
+– Ajout de `swap_reel.py` pour simuler un swap "réel" avec wallet  
+  Added `swap_reel.py` to simulate wallet-based swaps  
+– Intégration du wallet simulé via `real_wallet.py`  
+  Simulated wallet integration via `real_wallet.py`  
+– Journalisation détaillée des swaps LP dans `journal_swap_lp.csv`  
+  Detailed LP swap logging in `journal_swap_lp.csv`  
+– Préparation à la gestion réelle des transactions  
+  Preparing for real transaction execution
 
 ### 🔹 Version V2.9 – Journalisation du slippage LP (5 août 2025)
 
@@ -62,7 +80,7 @@ Pour la vision complète de l’écosystème et des futurs bots associés, voir 
 – Application d’un malus pondéré sur les pools utilisant des tokens LP  
   Weighted malus applied to LP-based pools  
 – Score final ajusté automatiquement selon le profil  
-  Final score adjusted automatically based on the active profile  
+  Final score adjusted automatically based on the active profile
 
 ### 🔹 Version V2.7 – Intégration complète farming LP (3 août 2025)
 
@@ -73,7 +91,7 @@ Pour la vision complète de l’écosystème et des futurs bots associés, voir 
 – Journalisation cumulée des LP dans `journal_lp_cumul.csv`  
   Cumulative LP logging in `journal_lp_cumul.csv`  
 – Vérification complète des logs avant passage au mode réel  
-  Full log validation before entering real mode  
+  Full log validation before entering real mode
 
 ### 🔹 Version V2.6 – Mode simulateur amélioré (2 août 2025)
 
@@ -82,7 +100,7 @@ Pour la vision complète de l’écosystème et des futurs bots associés, voir 
 – Nouveau fichier `journal_lp_cumul.csv` pour le suivi des LP  
   New `journal_lp_cumul.csv` for LP tracking  
 – Nouvelle fonction de journalisation des rendements LP par pool  
-  New LP farming yield logger by pool  
+  New LP farming yield logger by pool
 
 ### 🔹 Version V2.5 – Journalisation LP & check système (30 juillet 2025)
 
@@ -91,7 +109,7 @@ Pour la vision complète de l’écosystème et des futurs bots associés, voir 
 – Intégration du fichier check_setup.py pour vérifier la stabilité avant exécution  
   Integration of check_setup.py for stability checks before running  
 – Refonte des logs et résumé journalier pour un meilleur suivi  
-  Redesigned logs and daily summaries for better tracking  
+  Redesigned logs and daily summaries for better tracking
 
 ---
 
@@ -136,9 +154,7 @@ Historique, fichiers CSV, journal quotidien / History, CSV files, daily log
 
 | Version | Contenu prévu / Planned content                                                                                                                       |
 |---------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `v3.0`  | Passage au mode réel avec premiers swaps exécutés (sur petit montant) / First real swaps executed (with small amounts)                                |
-| `v3.1`  | Gestion réelle des LP tokens : dépôt, retrait, récupération des rewards / Real LP token management: deposit, withdraw, harvest                       |
-| `v3.2`  | Ajout de la protection anti-MEV bots + détection de pools à risque / MEV bot protection + detection of risky pools                                    |
+| ~~`v3.2`~~ | ✅ Journalisation des pools risquées / Risky pool logging                                                                                            |
 | `v3.3`  | Réglages intelligents des pondérations via IA (LabPilot) / AI-powered weighting strategy (via LabPilot)                                               |
 | `v3.4`  | Multi-wallet : gestion de plusieurs portefeuilles simultanés / Multi-wallet support: manage several wallets simultaneously                            |
 | `v3.5`  | Compatibilité multi-blockchains (Polygon, Avalanche, Fantom…) / Multi-chain compatibility (Polygon, Avalanche, Fantom…)                              |
@@ -226,4 +242,4 @@ Project initiated and developed by **David Raffeil** with ChatGPT assistance.
 
 ---
 
-Pour toute question ou suggestion : issues GitHub ou [voir la vision du projet](https://github.com/DavidRaffeil/DeFiPilot/blob/main/VISION.md)
+Pour toute question ou suggestion : issues GitHub ou [voir la vision du projet](https://github.com/DavidRaffeil/DeFiPilot/blob/main/VISION.md)
