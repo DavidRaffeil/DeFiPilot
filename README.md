@@ -31,6 +31,19 @@ Pour la vision complète de l’écosystème et des futurs bots associés, voir 
 
 ## Nouveautés / What's New
 
+### 🔹 Version V3.3 – Socle pondérations IA (9 août 2025)
+
+– Préparation des pondérations dynamiques APR/TVL via IA (flag désactivé pour l’instant)  
+  Preparation for AI-driven APR/TVL weighting (flag disabled for now)  
+– `core/scoring.py` mis à jour : `AI_PONDERATION_ACTIVE=False` (mode off par défaut)  
+  Updated `core/scoring.py`: `AI_PONDERATION_ACTIVE=False` (off by default)  
+– Correctif : appel de `simuler_gains()` sans paramètre superflu  
+  Fix: call to `simuler_gains()` without extra parameter
+
+---
+
+## 📜 Historique des versions / Past Versions
+
 ### 🔹 Version V3.2 – Journalisation des pools risquées (9 août 2025)
 
 – Ajout de `enregistrer_pools_risquées()` pour tracer automatiquement les pools à risque  
@@ -38,11 +51,7 @@ Pour la vision complète de l’écosystème et des futurs bots associés, voir 
 – Journalisation automatique dans `logs/journal_risques.csv`  
   Automatic logging in `logs/journal_risques.csv`  
 – Analyse simple du risque via APR et TVL  
-  Simple risk analysis via APR and TVL  
-
----
-
-## 📜 Historique des versions / Past Versions
+  Simple risk analysis via APR and TVL
 
 ### 🔹 Version V3.1 – Signature des transactions Web3 (7 août 2025)
 
@@ -154,8 +163,7 @@ Historique, fichiers CSV, journal quotidien / History, CSV files, daily log
 
 | Version | Contenu prévu / Planned content                                                                                                                       |
 |---------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
-| ~~`v3.2`~~ | ✅ Journalisation des pools risquées / Risky pool logging                                                                                            |
-| `v3.3`  | Réglages intelligents des pondérations via IA (LabPilot) / AI-powered weighting strategy (via LabPilot)                                               |
+| ~~`v3.3`~~ | ✅ Socle pondérations IA (désactivé) + correctifs scoring                                                                                            |
 | `v3.4`  | Multi-wallet : gestion de plusieurs portefeuilles simultanés / Multi-wallet support: manage several wallets simultaneously                            |
 | `v3.5`  | Compatibilité multi-blockchains (Polygon, Avalanche, Fantom…) / Multi-chain compatibility (Polygon, Avalanche, Fantom…)                              |
 
