@@ -1,21 +1,18 @@
 # core/config.py
-# 🧩 Version : V2.8 – Étape 2
-# 🎯 Ajout du champ `poids_slippage` dans les profils + export PROJETS
+# 🧩 Version : V3.2 – Chargement dynamique + export des variables globales
 
 def charger_config():
     config = {
-        "seuil_invest": 30000,         # Seuil de score minimum pour investir
-        "slippage_simule": 0.005,      # Slippage simulé (0.5 %)
-        "nombre_max_invest": 3,        # Nombre max de pools actives
-        "profil_defaut": "modere",     # ⚠️ Sans accent !
-        "dry_run": True,               # Mode simulation activé
-        "gas_simulation": {},          # Paramètres de simulation du gas (à compléter dans V2.5)
-        "network": "polygon"           # Réseau par défaut (Polygon)
+        "seuil_invest": 30000,
+        "slippage_simule": 0.005,
+        "nombre_max_invest": 3,
+        "profil_defaut": "modere",  # ⚠️ Sans accent
+        "dry_run": True,
+        "gas_simulation": {},
+        "network": "polygon"
     }
     return config
 
-
-# Pondérations des différents profils utilisateurs
 PROFILS = {
     "prudent": {
         "apr": 0.2,
@@ -54,5 +51,9 @@ PROFILS = {
     },
 }
 
-# 🔁 Rend la variable PROFILS accessible depuis les autres modules
-PROFILS = PROFILS
+# Chargement unique de la configuration
+_config = charger_config()
+
+# Variables globales exportées
+PROFIL_ACTIF = _config["profil_defaut"]
+SWAP_REEL = not _config["dry_run"]

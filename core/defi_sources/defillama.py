@@ -1,5 +1,5 @@
 # core/defi_sources/defillama.py
-# 🧩 Version : V2.8 – Ajout TVL fictif à chaque pool
+# 🧩 Version : V3.2 – Alias get_pools_defillama + TVL fictif
 
 def recuperer_pools():
     """
@@ -35,3 +35,7 @@ def recuperer_pools():
         pool["tvl_usd"] = 10000.0
 
     return pools
+
+
+# ✅ Alias attendu par main.py
+get_pools_defillama = recuperer_pools
