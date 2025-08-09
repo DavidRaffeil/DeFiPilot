@@ -1,90 +1,41 @@
-# core/scoring.py
-# 🧩 Version : V2.8 – Étape 3 finalisée
-# 🎯 Intégration propre de `poids_slippage` + nettoyage
+# core/scoring.py – V3.3
 
-from core import historique, config, profil
+from core.simulateur_logique import simuler_gains
 
-
-def charger_ponderations(profil_nom):
-    """
-    Charge les pondérations APR/TVL depuis le profil défini dans config.
-    """
-    base = config.PROFILS.get(profil_nom, config.PROFILS["modere"])
-    return {
-        "apr": base["apr"],
-        "tvl": base["tvl"]
-    }
+# Flag IA (placeholder, pas utilisé dans cette version simplifiée)
+AI_PONDERATION_ACTIVE = True
 
 
 def charger_profil_utilisateur():
+    """Charge et retourne les pondérations du profil utilisateur actif."""
+    from core.config import charger_config, PROFILS
+    config = charger_config()
+    nom_profil = config.get("profil_defaut", "modere")
+    return PROFILS[nom_profil]
+
+
+def calculer_scores_et_gains(pools, profil_data, solde, historique_pools):
+    """Calcule les scores des pools et renvoie (pool, score) comme attendu par main.py.
+    Le gain total n'est pas utilisé par main.py, on retourne 0.0 pour compatibilité.
     """
-    Charge l’ensemble des paramètres du profil actif, y compris le poids du slippage LP.
-    """
-    profil_actif = profil.PROFIL_ACTIF
-    base = config.PROFILS.get(profil_actif, config.PROFILS["modere"])
-    return {
-        "nom": profil_actif,
-        "ponderations": {
-            "apr": base["apr"],
-            "tvl": base["tvl"]
-        },
-        "historique_max_bonus": base["historique_max_bonus"],
-        "historique_max_malus": base["historique_max_malus"],
-        # Ce poids est appliqué aux pools LP pour réduire leur score
-        "poids_slippage": base["poids_slippage"],
-    }
-
-
-def calculer_score_pool(pool, ponderations, historique_pools, profil):
-    """
-    Calcule le score pondéré d'une pool, incluant bonus historique et malus slippage LP.
-    """
-    apr = pool.get("apr", 0)
-    tvl = pool.get("tvl_usd", 0)
-
-    score_base = apr * ponderations["apr"] + tvl * ponderations["tvl"]
-    nom_pool = f"{pool.get('plateforme')} | {pool.get('nom')}"
-
-    bonus = historique.calculer_bonus(
-        historique_pools,
-        nom_pool,
-        max_bonus=profil.get("historique_max_bonus", 0.15),
-        max_malus=profil.get("historique_max_malus", -0.10)
-    )
-
-    score_final = score_base * (1 + bonus)
-
-    # 🛡️ Appliquer une pénalité via `poids_slippage` si le pool est un LP
-    if pool.get("lp"):
-        poids_slippage = profil.get("poids_slippage", 0)
-        score_final *= (1 - poids_slippage)
-
-    # 🔍 Affichage debug bonus
-    print(f"[SCORE] {nom_pool} | Score base : {round(score_base,2)} | Bonus : {round(bonus*100,2)}% → Score final : {round(score_final,2)}")
-
-    return round(score_final, 2)
-
-
-def calculer_scores(pools, ponderations, historique_pools, profil):
-    for pool in pools:
-        pool["score"] = calculer_score_pool(pool, ponderations, historique_pools, profil)
-    return pools
-
-
-def calculer_scores_et_gains(pools, profil, solde, historique_pools):
-    ponderations = profil["ponderations"]
-    pools = calculer_scores(pools, ponderations, historique_pools, profil)
-    pools_tries = sorted(pools, key=lambda p: p["score"], reverse=True)
-
-    top3 = pools_tries[:3]
     resultats = []
-    gain_total = 0
+    gain_total = 0.0
 
-    for pool in top3:
+    for pool in pools:
         apr = pool.get("apr", 0)
-        nom = f"{pool.get('plateforme')} | {pool.get('nom')}"
-        gain = round((solde * apr / 100) / 365, 2)
-        resultats.append((pool, pool["score"]))
-        gain_total += gain
+        tvl = pool.get("tvl_usd", 0)
+        score_base = (apr * profil_data.get("apr", 0)) + (tvl * profil_data.get("tvl", 0))
 
-    return resultats, round(gain_total, 2)
+        # Bonus/malus simple si historique disponible (optionnel, safe)
+        bonus = 0.0
+        nom_pool = pool.get("nom")
+        if isinstance(historique_pools, dict) and nom_pool in historique_pools:
+            bonus = float(historique_pools[nom_pool].get("bonus", 0))
+
+        score_final = score_base * (1 + bonus / 100)
+        pool["score"] = round(score_final, 2)
+
+        # IMPORTANT: renvoyer (pool, score) car main.py s'attend à cette structure
+        resultats.append((pool, pool["score"]))
+
+    return resultats, gain_total
