@@ -1,0 +1,121 @@
+* [33m9a3bc4a[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m � Mise à jour README – Publication V3.2 (journalisation pools risquées)
+* [33m16ca2a3[m � Version V3.2 – Journalisation des pools risquées + intégration dans main.py
+* [33m1ae8185[m � Déplacement des tests V3.2 dans tests/
+* [33m1c579cf[m � Tests V3.2 — vérification journal_risques
+* [33mdeda5b0[m[33m ([m[1;33mtag: [m[1;33mv3.2[m[33m)[m � Mise à jour README – Version V3.2
+* [33md4f03fd[m[33m ([m[1;33mtag: [m[1;33mv3.1[m[33m)[m ✅ Version V3.0 – Gestion complète des swaps simulés et intégration de swap_reel
+* [33m6acb422[m � Mise à jour README – Version V3.0 ajoutée, V2.9 déplacée dans l’historique
+* [33m30bcf87[m[33m ([m[1;33mtag: [m[1;33mv3.0[m[33m)[m � Version V3.0 – Signature des transactions réelles via Web3
+* [33md7fafa3[m � MAJ README – Ajout V2.9 dans nouveautés + roadmap enrichie
+* [33m81e0ecc[m[33m ([m[1;33mtag: [m[1;33mv2.9[m[33m)[m � Version V2.9 – Journalisation du slippage LP
+* [33m021b28a[m � Version V2.7 – Simulation farming LP + journalisation complète
+* [33me9ff374[m � Version V2.8 – Pondération slippage LP dans le score final
+* [33mee50300[m[33m ([m[1;33mtag: [m[1;33mv2.8[m[33m, [m[1;33mtag: [m[1;33mv2.7[m[33m)[m � Version V2.7 – Simulation farming LP + journalisation complète
+* [33m6adf1b9[m � Mise à jour README – suppression section V2.6, mise en avant V2.7
+* [33mf194fe6[m � Mise à jour README – publication V2.6 (journalisation farming LP)
+* [33mb6dd51b[m � Version V2.6 – Journalisation LP cumulée et farming simulé
+* [33m277c7d1[m � Mise à jour README – Publication V2.6
+* [33m9576ba4[m[33m ([m[1;33mtag: [m[1;33mv2.6[m[33m)[m � Publication DeFiPilot V2.6 – Mode simulate + journal LP cumulatif
+[31m|[m * [33med29cfe[m[33m ([m[1;31morigin/codex/create-core/state.py-with-state-management-functions[m[33m)[m Add persistent state management
+[31m|[m[31m/[m  
+* [33m4605f1e[m � Publication des fichiers version V2.5
+* [33m5e7d07a[m[33m ([m[1;33mtag: [m[1;33mv2.5[m[33m)[m � Mise à jour README – version V2.5
+* [33mb00137f[m[33m ([m[1;33mtag: [m[1;33mv2.4[m[33m)[m � Finalisation version V2.4 – Simulation LP + journalisation avancée
+* [33me30c294[m � Modifs locales avant pull --rebase
+* [33m329b6d8[m � Mise à jour README – changelog V2.4
+* [33m5e277d0[m Update VISION.md
+* [33m171de64[m � Finalisation version V2.4 – Simulation LP et journalisation complètes
+* [33mcc782c1[m � Mise à jour README – version V2.3 publiée
+* [33m928705d[m[33m ([m[1;33mtag: [m[1;33mv2.3[m[33m)[m � Mise à jour README – Ajout V2.2, suppression V2.1 des nouveautés
+* [33m31d780a[m[33m ([m[1;33mtag: [m[1;33mv2.2[m[33m)[m ✅ Version V2.2 – Simulation jour par jour avec plafond et journal protégé
+*   [33m69f57f3[m[33m ([m[1;33mtag: [m[1;33mv2.1[m[33m)[m Merge branch 'dev'
+[33m|[m[34m\[m  
+[33m|[m * [33m553b4ec[m[33m ([m[1;32mdev[m[33m)[m ✅ Ajout des fichiers manquants – Fin de la version V2.1
+* [34m|[m [33m4b2b4f4[m � Mise à jour README – Version V2.1
+[34m|[m [34m|[m * [33m563fc83[m[33m ([m[1;35mrefs/stash[m[33m)[m WIP on main: f0e4bc3 � Mise à jour README – Publication V2.0 (test réel simulé)
+[34m|[m [34m|[m[34m/[m[36m|[m 
+[34m|[m[34m/[m[34m|[m [36m|[m 
+[34m|[m [34m|[m * [33mc44c163[m index on main: f0e4bc3 � Mise à jour README – Publication V2.0 (test réel simulé)
+[34m|[m [34m|[m[34m/[m  
+[34m|[m[34m/[m[34m|[m   
+* [34m|[m [33mf0e4bc3[m � Mise à jour README – Publication V2.0 (test réel simulé)
+* [34m|[m [33mb391582[m[33m ([m[1;33mtag: [m[1;33mv2.0[m[33m)[m í´ Merge dev into main – Publication de la V2.0 (test réel simulé)'
+[1;31m|[m[34m\[m[34m|[m 
+[1;31m|[m * [33m4d01056[m[33m ([m[1;31morigin/dev[m[33m)[m � Résumé final simulation V2.0 – Résultats, graphique et logs
+* [1;32m|[m [33mff89b91[m[33m ([m[1;33mtag: [m[1;33mv1.9[m[33m)[m � Publication V1.9 – Simulation stable avec plafonnement journalier
+* [1;32m|[m [33m6b53501[m ✅ Ajout WalletSimule + mise à jour blacklist
+* [1;32m|[m [33mf06f19b[m � Mise à jour README – V1.8 officielle + roadmap ajustée
+[1;32m|[m[1;32m/[m  
+* [33m710fb23[m[33m ([m[1;33mtag: [m[1;33mv1.8[m[33m)[m � Modif locale main.py avant merge V1.8
+* [33m2d36963[m ✅ Finalisation V1.8 – Pondération dynamique par historique + graphique PNG
+* [33ma3e48c7[m � Début V1.8 – Ajout de la pondération dynamique par historique (gain moyen)
+* [33m158079c[m � Forçage : ajout des CSV ignorés par erreur (V1.7)
+* [33ma49ee4a[m � Ajout des fichiers CSV pour la simulation V1.7
+* [33md29947e[m[33m ([m[1;33mtag: [m[1;33mv1.7[m[33m)[m � Mise à jour README complet pour V1.7
+* [33m6c12f9d[m �️ Correction ligne roadmap v2.6+
+* [33m69510fd[m � Mise à jour du README.md : V1.6, bilingue, FAQ corrigée
+* [33mf6c0d9a[m[33m ([m[1;33mtag: [m[1;33mv1.6[m[33m)[m ✅ Finalisation V1.6 : détection adresse EVM réelle + config dynamique
+* [33m8f6852e[m[33m ([m[1;33mtag: [m[1;33mv1.6-pre[m[33m)[m ✅ V1.6-pre : mode réel + sécurité gitignore OK
+* [33m7629ab6[m ✅ V1.6-pre : intégration du mode réel, alerte et logs
+* [33mef3476d[m[33m ([m[1;33mtag: [m[1;33mv1.5[m[33m)[m � Mise à jour README pour V1.5 : changelog + roadmap
+* [33m7547887[m ✅ Finalisation V1.5 : multi-profils, graphique PNG, logs CSV
+* [33m986e842[m � Sauvegarde temporaire avant rebase
+* [33m19a0a23[m ✨ Ajout de la fonction ajuster_seuil dans core/seuil.py
+*   [33m8369de4[m Merge pull request #2 from DavidRaffeil/codex/ajouter-fonction-detecter_adresse_wallet
+[1;33m|[m[1;34m\[m  
+[1;33m|[m * [33md9a9b62[m[33m ([m[1;31morigin/codex/ajouter-fonction-detecter_adresse_wallet[m[33m)[m Ajout fonction detection wallet
+* [1;34m|[m   [33mdaffadf[m Merge pull request #1 from DavidRaffeil/codex/trouver-et-corriger-un-bug
+[1;34m|[m[1;36m\[m [1;34m\[m  
+[1;34m|[m [1;36m|[m[1;34m/[m  
+[1;34m|[m[1;34m/[m[1;36m|[m   
+[1;34m|[m * [33m3b20efa[m[33m ([m[1;31morigin/codex/trouver-et-corriger-un-bug[m[33m)[m feat(wallet): restore gain simulation and logging
+[1;34m|[m[1;34m/[m  
+* [33m6c11049[m Update README.md
+* [33m4d06268[m Update README.md
+* [33m4845d34[m Update README.md
+* [33mf9764c1[m[33m ([m[1;33mtag: [m[1;33mv1.4[m[33m)[m docs: mise à jour README pour V1.4
+* [33mbd67442[m Update README.md
+* [33mb5500a9[m Update README.md
+* [33ma43d6e6[m Update README.md
+* [33m878ad10[m Create License.md
+* [33mfe86398[m WIP : sauvegarde temporaire avant rebase
+* [33meb962e0[m � Archive V1.2 ajoutée dans versions_archivées/v1.2
+* [33m5b95173[m Update README.md
+* [33m2d22028[m Create VISION.md
+* [33m6b1dc1b[m Update README.md
+[1;36m|[m * [33m8d23148[m[33m ([m[1;33mtag: [m[1;33mv1.2-archive[m[33m)[m � Archive V1.2 ajoutée dans versions_archivées/v1.2
+[1;36m|[m[1;36m/[m  
+* [33m0a757f0[m[33m ([m[1;33mtag: [m[1;33mv1.3[m[33m)[m ✅ Version V1.3 : interface graphique, simulation wallet, journalisation CSV, images, modules complets
+* [33m48cee56[m Update README.md
+* [33m83de0a0[m Déplacement des versions v1.0 et v1.1 dans versions_archivées/
+* [33m7bbcc69[m Update README.md
+* [33m2c5f37c[m Update README.md
+* [33m2ad2190[m Restauration du README.md d'origine
+* [33m8453c01[m Ajout propre de la V1.2 sans fichiers inutiles
+* [33m41cef84[m Suppression complète de la V1.2 pour nettoyage
+* [33m0ad1d41[m Déplacement des fichiers racine dans versions_archivées/v1.2
+* [33m163ec5a[m[33m ([m[1;33mtag: [m[1;33mv1.2[m[33m, [m[1;32mtemp_v1.2[m[33m)[m Préparation rebase avant push de la V1.2
+* [33m782c451[m Exclure les snapshots du suivi Git via .gitignore
+* [33m6d68d24[m Version 1.2 - version stable avec filtres et simulation améliorée
+* [33m29c54e8[m Update README.md
+* [33m646f563[m Update README.md
+* [33md01f7a3[m Update README.md
+* [33m2bdd01b[m[33m ([m[1;33mtag: [m[1;33mv1.1[m[33m)[m Create README.txt
+* [33m0181337[m Create README.txt
+* [33mb44aa42[m Create README.txt
+* [33m84068b8[m Create README.txt
+* [33maa86e41[m Add files via upload
+* [33m6991f75[m Create VERSION.txt
+* [33m41e5158[m[33m ([m[1;33mtag: [m[1;33mv1.0[m[33m)[m Create README.txt
+* [33mbd405e0[m Update README.txt
+* [33m1d89735[m Create README.txt
+* [33m35efdfd[m Create README.txt
+* [33m06dfce7[m Create README.txt
+* [33m3f0d6d6[m Delete v1/v1 directory
+* [33mdd5cc5f[m Create README.txt
+* [33ma17fc70[m Add files via upload
+* [33m5b2d9d9[m Create README.md
+* [33mf4bf9e6[m Add files via upload
+* [33m58f3cad[m Add files via upload
+* [33m66651b8[m Add files via upload
+* [33m259230d[m Initial commit

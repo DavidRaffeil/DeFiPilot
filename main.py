@@ -1,17 +1,44 @@
-# main.py – V3.2
-# Intégration : risk_analysis.analyser_risque + journal.enregistrer_pools_risquées
-# Objectif : conserver les sorties existantes et ajouter la journalisation des pools risquées.
+# main.py – V3.5
+# Intégration : core.journal_wallet (init_logs, log_wallet_action, log_wallet_balance)
+# Conserver le flux existant ; ajouts discrets et robustes.
+
+from __future__ import annotations
 
 import sys
 import os
+import logging
 from datetime import datetime
+from typing import Any, Callable, Tuple
+
+# Journal wallet (obligatoire à cette version)
+from core.journal_wallet import init_logs, log_wallet_action, log_wallet_balance
+
+# Wallet réel optionnel (adresse uniquement si dispo)
+try:
+    from core.real_wallet import get_wallet_address  # type: ignore
+except Exception:  # pragma: no cover
+    get_wallet_address = None  # type: ignore
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Utilitaires d’affichage
+# ────────────────────────────────────────────────────────────────────────────────
+
+def _fmt_date_iso(dt: datetime | None = None) -> str:
+    dt = dt or datetime.now()
+    return dt.strftime("%Y-%m-%d")
+
+
+def _afficher_entete(profil_nom: str, profil: dict) -> None:
+    print("🚀 Lancement de DeFiPilot")
+    print(f"[{_fmt_date_iso(datetime.now())}] INFO 🏗 Profil actif : {profil_nom} (APR {profil.get('ponderations',{}).get('apr',0.3)}, TVL {profil.get('ponderations',{}).get('tvl',0.7)})")
 
 # ────────────────────────────────────────────────────────────────────────────────
 # Imports robustes (garde-fous sur noms/chemins)
 # ────────────────────────────────────────────────────────────────────────────────
-def _safe_import_profil():
+
+def _safe_import_profil() -> Tuple[dict, str]:
     """
-    Essaie d'importer le profil depuis core.config puis core.profil.
+    Essaie d’importer le profil depuis core.config puis core.profil.
     Doit fournir :
       - PROFILS : dict des profils
       - PROFIL_ACTIF (str) ou get_profil_actif() -> str
@@ -19,207 +46,112 @@ def _safe_import_profil():
     profils, actif = None, None
     try:
         # cas 1 : core.config
-        from core.config import PROFILS as _PROFILS
+        from core.config import PROFILS as _PROFILS  # type: ignore
         profils = _PROFILS
         try:
-            from core.config import PROFIL_ACTIF as _ACTIF
+            from core.config import PROFIL_ACTIF as _ACTIF  # type: ignore
             actif = _ACTIF
         except Exception:
             pass
         try:
-            from core.config import get_profil_actif as _get
+            from core.config import get_profil_actif as _get  # type: ignore
             actif = actif or _get()
         except Exception:
             pass
     except Exception:
         pass
 
-    if profils is None:
+    if not profils:
         try:
-            # cas 2 : core.profil
-            from core.profil import PROFILS as _PROFILS
+            # cas 2 : core.profil (fallback historique)
+            from core.profil import PROFILS as _PROFILS  # type: ignore
             profils = _PROFILS
             try:
-                from core.profil import PROFIL_ACTIF as _ACTIF
+                from core.profil import PROFIL_ACTIF as _ACTIF  # type: ignore
                 actif = _ACTIF
             except Exception:
                 pass
-            try:
-                from core.profil import get_profil_actif as _get
-                actif = actif or _get()
-            except Exception:
-                pass
         except Exception:
-            pass
+            profils = {"modere": {"nom": "modere", "ponderations": {"apr": 0.3, "tvl": 0.7}}}
 
-    # Défaut raisonnable
-    if profils is None:
-        profils = {
-            "modere": {"nom": "modere", "ponderations": {"apr": 0.3, "tvl": 0.7}}
-        }
-    if not actif:
-        actif = "modere"
-    return profils, actif
+    actif_str = actif if isinstance(actif, str) else "modere"
+    return profils, actif_str
 
 
-def _safe_import_pools_fetcher():
-    """
-    Essaie d'importer la récupération des pools depuis DefiLlama.
-    Cherche d'abord core.defi_sources.defillama, sinon core.defillama.
-    Attend une fonction 'recuperer_pools' (signature libre).
-    """
-    fetcher = None
-    tried = []
-    for mod_name in (
-        "core.defi_sources.defillama",
-        "core.defillama",
-        "defillama",
-    ):
-        try:
-            mod = __import__(mod_name, fromlist=["*"])
-            if hasattr(mod, "recuperer_pools"):
-                fetcher = getattr(mod, "recuperer_pools")
-                return fetcher
-            elif hasattr(mod, "get_pools"):
-                fetcher = getattr(mod, "get_pools")
-                return fetcher
-            else:
-                tried.append(mod_name)
-        except Exception:
-            tried.append(mod_name)
-            continue
-    return None
-
-
-def _safe_import_scoring():
-    """
-    Essaie d’importer les fonctions de scoring/simulation.
-    Retourne (calculer_score_pool, simuler_gains) — chacun peut être None.
-    """
-    calc, simu = None, None
+def _safe_import_pools_fetcher() -> Callable[..., list] | None:
     try:
-        from core.scoring import calculer_score_pool as _calc
-        calc = _calc
+        # Emplacement actuel du projet
+        from core.defi_sources.defillama import fetch_pools  # type: ignore
+        return fetch_pools
     except Exception:
         try:
-            from core.scoring import calcul_score_pool as _calc2
-            calc = _calc2
+            # Fallback ancien nom
+            from core.defillama import fetch_pools  # type: ignore
+            return fetch_pools
         except Exception:
-            calc = None
+            return None
+
+
+def _safe_import_scoring() -> Tuple[Callable[[dict, dict], float] | None, Callable[[dict, dict], float] | None]:
+    calculer_score_fn = None
+    simuler_gains_fn = None
     try:
-        from core.scoring import simuler_gains as _sim
-        simu = _sim
+        from core.scoring import calculer_score as _calc  # type: ignore
+        calculer_score_fn = _calc
     except Exception:
-        simu = None
-    return calc, simu
-
-
-def _safe_import_risk():
-    """
-    Importe analyser_risque depuis risk_analysis.py
-    """
+        pass
     try:
-        from risk_analysis import analyser_risque
+        from core.scoring import simuler_gains as _sim  # type: ignore
+        simuler_gains_fn = _sim
+    except Exception:
+        pass
+    return calculer_score_fn, simuler_gains_fn
+
+
+def _safe_import_risk() -> Callable[[dict], dict] | None:
+    try:
+        from risk_analysis import analyser_risque  # type: ignore
         return analyser_risque
     except Exception:
-        pass
-    try:
-        from core.risk_analysis import analyser_risque
-        return analyser_risque
-    except Exception:
-        return None
-
-
-def _safe_import_journal():
-    """
-    Importe les fonctions de journalisation nécessaires.
-    """
-    enregistrer_top3 = None
-    journaliser_scores = None
-    enregistrer_pools_risquees = None
-
-    try:
-        from core.journal import enregistrer_top3 as _top3
-        enregistrer_top3 = _top3
-    except Exception:
-        pass
-    try:
-        from core.journal import journaliser_scores as _scores
-        journaliser_scores = _scores
-    except Exception:
-        pass
-    # Attention : nom avec accent dans le code existant
-    try:
-        from core.journal import enregistrer_pools_risquées as _risques
-        enregistrer_pools_risquees = _risques
-    except Exception:
-        # fallback sans accent, au cas où
         try:
-            from core.journal import enregistrer_pools_risquees as _risques2
-            enregistrer_pools_risquees = _risques2
+            from core.risk_analysis import analyser_risque  # type: ignore
+            return analyser_risque
         except Exception:
-            pass
-
-    return enregistrer_top3, journaliser_scores, enregistrer_pools_risquees
+            return None
 
 
-# ────────────────────────────────────────────────────────────────────────────────
-# Utilitaires
-# ────────────────────────────────────────────────────────────────────────────────
-def _fmt_date_iso(dt: datetime) -> str:
-    return dt.strftime("%Y-%m-%d")
-
-
-def _afficher_entete(profil_nom: str, profil_data: dict):
-    today = datetime.now()
-    print("🚀 Lancement de DeFiPilot")
-    apr_w = profil_data.get("ponderations", {}).get("apr", 0.3)
-    tvl_w = profil_data.get("ponderations", {}).get("tvl", 0.7)
-    print(f"[{_fmt_date_iso(today)}] INFO 🏗 Profil actif : {profil_nom} (APR {apr_w}, TVL {tvl_w})")
-
-
-def _nom_pool_court(pool: dict) -> str:
-    # Ex : "uniswap | USDC-ETH" ou "plateforme | nom"
-    plateforme = pool.get("platform") or pool.get("plateforme") or "?"
-    nom = (
-        pool.get("nom")
-        or pool.get("name")
-        or pool.get("pair")
-        or f"{pool.get('token0', '?')}-{pool.get('token1', '?')}"
-    )
-    return f"{plateforme} | {nom}"
-
-
-def _gain_simule_usdc(pool: dict, simuler_gains_fn):
-    """
-    Retourne un float 'gain simulé' si possible, sinon 0.0
-    """
+def _safe_import_journal() -> Tuple[Callable[..., None] | None, Callable[..., None] | None, Callable[..., None] | None]:
+    enreg_top3 = None
+    journal_scores = None
+    enreg_risque = None
     try:
-        if callable(simuler_gains_fn):
-            val = simuler_gains_fn(pool)  # V3.3 : appelé sans paramètre supplémentaire
-            if isinstance(val, (int, float)):
-                return float(val)
-            # si la fn renvoie un dict
-            if isinstance(val, dict):
-                for k in ("gain_usdc", "gain", "gain_simule"):
-                    if k in val and isinstance(val[k], (int, float)):
-                        return float(val[k])
-        # fallback simple si pas de fonction
-        apr = float(pool.get("apr", 0) or 0)
-        tvl = float(pool.get("tvl_usd", pool.get("tvl", 0)) or 0)
-        # Simple proxy : gain ~ APR (en %) * échelle fixe (arbitraire pour affichage)
-        return round(apr / 100 * 27, 2) if (apr > 0) else 0.0
+        from core.journal import enregistrer_top3 as _top3  # type: ignore
+        enreg_top3 = _top3
     except Exception:
-        return 0.0
+        pass
+    try:
+        from core.journal import journaliser_scores as _js  # type: ignore
+        journal_scores = _js
+    except Exception:
+        pass
+    try:
+        from core.journal import enregistrer_pools_risquées as _jr  # type: ignore
+        enreg_risque = _jr
+    except Exception:
+        pass
+    return enreg_top3, journal_scores, enreg_risque
 
+# ────────────────────────────────────────────────────────────────────────────────
+# Calculs de secours
+# ────────────────────────────────────────────────────────────────────────────────
 
-def _score(pool: dict, profil: dict, calculer_score_fn):
+def _score(pool: dict, profil: dict, calculer_score_fn: Callable[[dict, dict], float] | None) -> float:
     if callable(calculer_score_fn):
         try:
             return float(calculer_score_fn(pool, profil))
         except Exception:
             pass
-    # Fallback : score pondéré simple
+    # Fallback simple : pondération APR/TVL
     apr = float(pool.get("apr", 0) or 0)
     tvl = float(pool.get("tvl_usd", pool.get("tvl", 0)) or 0)
     w_apr = float(profil.get("ponderations", {}).get("apr", 0.3))
@@ -227,11 +159,18 @@ def _score(pool: dict, profil: dict, calculer_score_fn):
     return apr * w_apr + tvl * w_tvl
 
 
+def _nom_pool_court(p: dict) -> str:
+    plat = str(p.get("platform", p.get("plateforme", "?")))
+    t0 = str(p.get("token0", p.get("base", "?")))
+    t1 = str(p.get("token1", p.get("quote", "?")))
+    return f"{plat} | {t0}-{t1}"
+
 # ────────────────────────────────────────────────────────────────────────────────
 # Programme principal
 # ────────────────────────────────────────────────────────────────────────────────
-def main():
-    # Profils
+
+def main() -> None:
+    # Profil actif
     PROFILS, PROFIL_ACTIF = _safe_import_profil()
     profil_nom = PROFIL_ACTIF if isinstance(PROFIL_ACTIF, str) else "modere"
     profil = PROFILS.get(profil_nom, {"nom": profil_nom, "ponderations": {"apr": 0.3, "tvl": 0.7}})
@@ -239,17 +178,20 @@ def main():
 
     _afficher_entete(profil_nom, profil)
 
+    # Journal wallet (début de run)
+    init_logs()
+    log_wallet_action(action="run_start", notes="début exécution DeFiPilot")
+
     # Récupération des pools
     fetch_pools = _safe_import_pools_fetcher()
     if not callable(fetch_pools):
         print("[INFO] 🧪 Récupération des pools via DefiLlama (fallback)")
-        pools = []
+        pools: list[dict] = []
     else:
         print("[INFO] 🧪 Récupération des pools via DefiLlama")
         try:
-            # Essaye avec profil si la signature le permet
             try:
-                pools = fetch_pools(profil)
+                pools = fetch_pools(profil)  # certains fetchers acceptent le profil
             except TypeError:
                 pools = fetch_pools()
         except Exception:
@@ -257,81 +199,82 @@ def main():
 
     print(f"[{_fmt_date_iso(datetime.now())}] INFO ✅ {len(pools)} pools récupérées")
 
-    # Scoring & Simulation
+    # Scoring / gains / risque
     calculer_score_fn, simuler_gains_fn = _safe_import_scoring()
     analyser_risque = _safe_import_risk()
     enreg_top3, journal_scores, enreg_risque = _safe_import_journal()
 
-    # Calcul score, gain, risque
     for pool in pools:
-        # 1) score
-        score_val = _score(pool, profil, calculer_score_fn)
-        pool["score"] = score_val
-
-        # Log style déjà observé (si fn scoring affiche déjà, ça fera doublon visuel, mais non bloquant)
+        # Score
         try:
-            plateforme = pool.get("platform") or pool.get("plateforme") or "?"
-            nom = pool.get("nom") or pool.get("name") or pool.get("pair") or f"{pool.get('token0', '?')}-{pool.get('token1', '?')}"
-            apr = float(pool.get("apr", 0) or 0)
-            tvl = float(pool.get("tvl_usd", pool.get("tvl", 0)) or 0)
-            w_apr = float(profil.get("ponderations", {}).get("apr", 0.3))
-            w_tvl = float(profil.get("ponderations", {}).get("tvl", 0.7))
-            score_brut = apr * w_apr + tvl * w_tvl
-            bonus_pct = 0.0
-            if score_brut:
-                bonus_pct = ((score_val / score_brut) - 1.0) * 100.0
-            print(f"[SCORE] {plateforme} | {nom} | Score base : {round(score_brut, 2)} | Bonus : {round(bonus_pct, 1)}% → Score final : {round(score_val, 2)}")
+            s = _score(pool, profil, calculer_score_fn)
+            pool["score"] = float(s)
         except Exception:
-            pass
-
-        # 2) gain simulé
-        pool["gain_simule_usdc"] = _gain_simule_usdc(pool, simuler_gains_fn)
-
-        # 3) analyse de risque
+            pool["score"] = 0.0
+        # Gains simulés
+        if callable(simuler_gains_fn):
+            try:
+                pool["gain_simule_usdc"] = float(simuler_gains_fn(pool, profil))
+            except Exception:
+                pool["gain_simule_usdc"] = 0.0
+        # Risque
         if callable(analyser_risque):
             try:
-                analyser_risque(pool)
+                analyser_risque(pool)  # ajoute champs "risque" et "raisons_risque"
             except Exception:
-                # en cas d'erreur, on n'interrompt pas
                 pass
 
-    # Tri par score décroissant
-    pools_sorted = sorted(pools, key=lambda p: float(p.get("score", 0) or 0), reverse=True)
+        # Affichage score (style historique)
+        plat = str(pool.get("platform", pool.get("plateforme", "?")))
+        pair = f"{pool.get('token0','?')}-{pool.get('token1','?')}"
+        print(f"[SCORE] {plat} | {pair} | Score : {pool.get('score',0)}")
 
-    # Affichage résumé (comme tes runs)
-    for pool in pools_sorted:
-        apr = float(pool.get("apr", 0) or 0)
-        nom_simple = _nom_pool_court(pool).split(" | ")[1]
-        gain = float(pool.get("gain_simule_usdc", 0.0))
-        print(f"  • {nom_simple} | APR : {apr:.2f}% | Gain simulé : {gain:.2f} $ USDC")
+    # Tri scores
+    pools_sorted = sorted(pools, key=lambda x: float(x.get("score", 0.0)), reverse=True) if pools else []
 
-    # Journalisations
+    # Résumé TOP 3 (affichage + journal optionnel)
     date_iso = _fmt_date_iso(datetime.now())
-
-    # Top3
-    if pools_sorted and callable(enreg_top3):
-        top3 = []
+    if pools_sorted:
+        print()  # espace visuel
         for p in pools_sorted[:3]:
             nom_simple = _nom_pool_court(p)
             apr = float(p.get("apr", 0) or 0)
             gain = float(p.get("gain_simule_usdc", 0.0))
-            top3.append((nom_simple, apr, gain))
+            print(f"  • {nom_simple} | APR : {apr:.2f}% | Gain simulé : {gain:.2f} $ USDC")
         try:
-            enreg_top3(date_iso, top3, profil.get("nom", profil_nom))
+            if callable(enreg_top3):
+                top3 = []
+                for p in pools_sorted[:3]:
+                    nom_simple = _nom_pool_court(p)
+                    apr = float(p.get("apr", 0) or 0)
+                    gain = float(p.get("gain_simule_usdc", 0.0))
+                    top3.append((nom_simple, apr, gain))
+                enreg_top3(date_iso, top3, profil.get("nom", profil_nom))
         except Exception:
             pass
 
-    # Scores détaillés
+    # Scores détaillés (journal)
     if pools_sorted and callable(journal_scores):
         try:
             journal_scores(date_iso, profil, pools_sorted, historique_pools=[])
         except Exception:
             pass
 
-    # Pools risquées (NOUVEAU)
+    # Pools risquées (journal)
     if pools_sorted and callable(enreg_risque):
         try:
             enreg_risque(pools_sorted, date_iso, profil.get("nom", profil_nom))
+        except Exception:
+            pass
+
+    # Fin de run + snapshot optionnel
+    log_wallet_action(action="run_end", notes="fin exécution DeFiPilot")
+
+    wallet_address = get_wallet_address() if callable(get_wallet_address) else None
+    chain_name = os.getenv("CHAIN_NAME", "polygon")
+    if wallet_address:
+        try:
+            log_wallet_balance(wallet=wallet_address, chain=chain_name, balances={}, notes="snapshot fin de run")
         except Exception:
             pass
 

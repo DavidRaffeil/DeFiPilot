@@ -1,74 +1,47 @@
-# core/real_wallet.py – Version V3.0
+# core/real_wallet.py – V3.4
+# Adaptation multi-wallet : expose get_wallet_address / get_private_key via wallets_manager.
+# Compatible mono-wallet : par défaut, utilise le premier wallet de config/wallets.json.
 
-"""
-Contient les fonctions liées au wallet réel :
-– Chargement de la clé privée et connexion Web3
-– Simulation d’un swap réel (à remplacer plus tard)
-– Lecture du solde réel via Web3
-"""
+from __future__ import annotations
 
-import os
-import logging
-from dotenv import load_dotenv
-from web3 import Web3
-
-# Chargement des variables d’environnement
-load_dotenv()
-PRIVATE_KEY = os.getenv("PRIVATE_KEY")
-WEB3_PROVIDER_URL = os.getenv("WEB3_PROVIDER_URL")
-
-# Connexion Web3
-w3 = Web3(Web3.HTTPProvider(WEB3_PROVIDER_URL))
-wallet_address = w3.eth.account.from_key(PRIVATE_KEY).address if PRIVATE_KEY else None
+from typing import Any, Dict
+from core.wallets_manager import get_default_wallet, get_wallet, WalletConfigError
 
 
-def effectuer_swap_reel(token_from, token_to, montant, wallet_address):
+def load_active_wallet(active_name: str | None = None) -> Dict[str, Any]:
     """
-    Simule un swap réel – à remplacer par une vraie transaction plus tard.
-
-    Args:
-        token_from (str): Symbole du token à échanger.
-        token_to (str): Symbole du token cible.
-        montant (float): Montant à échanger.
-        wallet_address (str): Adresse du wallet utilisateur.
-
-    Returns:
-        str: Résultat simulé du swap.
-    """
-    logging.info(
-        f"Swap simulé {token_from} → {token_to} : {montant:.2f} $ vers {wallet_address}"
-    )
-    return f"🔄 Swap réel simulé : {montant:.2f} {token_from} -> {token_to} vers {wallet_address}"
-
-
-def get_solde_reel(address: str):
-    """
-    Récupère le solde réel d'un wallet Ethereum via Web3.
-
-    Args:
-        address (str): Adresse Ethereum à interroger.
-
-    Returns:
-        float | None: Solde en ETH ou None si une erreur survient.
+    Charge et renvoie le wallet actif sous forme de dict {"name","address","private_key"}.
+    - Si active_name est fourni, charge ce wallet ; sinon, utilise le premier (par défaut).
+    - Lève RuntimeError avec message clair si la configuration est invalide/absente.
     """
     try:
-        if not w3.is_connected():
-            logging.error("Connexion Web3 échouée")
-            return None
-        if not w3.is_address(address):
-            logging.error("Adresse Ethereum invalide")
-            return None
-        balance_wei = w3.eth.get_balance(address)
-        balance_eth = w3.from_wei(balance_wei, "ether")
-        return float(balance_eth)
-    except Exception as e:  # noqa: BLE001
-        logging.error(f"Erreur lors de la récupération du solde : {e}")
-        return None
+        wallet: Dict[str, Any] = get_wallet(active_name) if active_name else get_default_wallet()
+    except WalletConfigError as exc:  # Pas de log/print ici
+        raise RuntimeError(
+            f"Wallet configuration error: {exc}. Verify config/wallets.json."
+        ) from exc
+
+    required = {"name", "address", "private_key"}
+    if not isinstance(wallet, dict) or not required.issubset(wallet):
+        raise RuntimeError("Incomplete wallet data. Verify config/wallets.json.")
+
+    return wallet
 
 
-# 🔓 Fonctions ajoutées pour compatibilité avec swap_reel.py
-def get_wallet_address():
-    return wallet_address
+def get_wallet_address(active_name: str | None = None) -> str:
+    """Renvoie l'adresse du wallet actif."""
+    return load_active_wallet(active_name)["address"]
 
-def get_private_key():
-    return PRIVATE_KEY
+
+def get_private_key(active_name: str | None = None) -> str:
+    """Renvoie la clé privée du wallet actif."""
+    return load_active_wallet(active_name)["private_key"]
+
+
+# --- Exemples d'utilisation (commentés) ---
+# w = load_active_wallet()  # premier wallet de config/wallets.json
+# addr = get_wallet_address()
+# pk = get_private_key()
+# w2 = load_active_wallet("wallet_abonnements")
+# addr2 = get_wallet_address("wallet_abonnements")
+# pk2 = get_private_key("wallet_abonnements")
