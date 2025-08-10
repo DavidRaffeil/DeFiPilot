@@ -57,3 +57,6 @@ _config = charger_config()
 # Variables globales exportées
 PROFIL_ACTIF = _config["profil_defaut"]
 SWAP_REEL = not _config["dry_run"]
+
+# Activation IA – pondération dynamique
+AI_PONDERATION_ACTIVE = True
