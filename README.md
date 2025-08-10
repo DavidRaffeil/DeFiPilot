@@ -31,99 +31,26 @@ Pour la vision complète de l’écosystème et des futurs bots associés, voir 
 
 ## Nouveautés / What's New
 
-### 🔹 Version V3.4 – Correction de l'import "scoring" (2025-08-10)
+### 🔹 Version V3.5 – Multi-wallet (2025-08-10)
 
-– Correction de l'import "scoring" dans `main.py` pour stabiliser l'exécution avant l'intégration du journal de wallet.
-Fixed the "scoring" import in `main.py` to stabilize execution before integrating the wallet journal.
+– Gestion de plusieurs portefeuilles simultanés (lecture seule) pour la simulation.
+Multi-wallet support (read-only) for simulation mode.
+– Journalisation des connexions/déconnexions dans `logs/journal_wallet_actions.csv`.
+Logging of wallet connections/disconnections in `logs/journal_wallet_actions.csv`.
 
 ---
 
-## 📜 Historique des versions / Past Versions
+## 🚀 Roadmap des prochaines versions / Upcoming roadmap
 
-### 🔹 Version V3.3 – Socle pondérations IA (9 août 2025)
+| Version | Contenu prévu / Planned content                                                                                                                                                           |
+| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `v3.6`  | Compatibilité multi-blockchains (Polygon, Avalanche, Fantom…) / Multi-chain compatibility (Polygon, Avalanche, Fantom…)                                                                   |
+| `v3.7`  | Swap réel sur DEX Polygon : gestion du slippage, confirmation avant exécution / Real swap on Polygon DEX: slippage handling, pre-execution confirmation                                   |
+| `v3.8`  | Ajout de liquidité réelle sur DEX, réception de LP tokens / Real liquidity provision on DEX, LP token handling                                                                            |
+| `v3.9`  | Farming LP réel : staking des LP tokens et récolte auto des récompenses / Real LP farming: staking and auto reward collection                                                             |
+| `v4.0`  | Mode réel complet : stratégie automatisée, retraits si non rentable, reprise après coupure / Full real mode: automated strategy, auto-withdraw if unprofitable, resume after interruption |
 
-– Préparation des pondérations dynamiques APR/TVL via IA (flag désactivé pour l'instant)
-Preparation for AI-driven APR/TVL weighting (flag disabled for now)
-– `core/scoring.py` mis à jour : `AI_PONDERATION_ACTIVE=False` (mode off par défaut)
-Updated `core/scoring.py`: `AI_PONDERATION_ACTIVE=False` (off by default)
-– Correctif : appel de `simuler_gains()` sans paramètre superflu
-Fix: call to `simuler_gains()` without extra parameter
-
-### 🔹 Version V3.2 – Journalisation des pools risquées (9 août 2025)
-
-– Ajout de `enregistrer_pools_risquées()` pour tracer automatiquement les pools à risque
-Added `enregistrer_pools_risquées()` to automatically log risky pools
-– Journalisation automatique dans `logs/journal_risques.csv`
-Automatic logging in `logs/journal_risques.csv`
-– Analyse simple du risque via APR et TVL
-Simple risk analysis via APR and TVL
-
-### 🔹 Version V3.1 – Signature des transactions Web3 (7 août 2025)
-
-– Signature locale des swaps via Web3 avec clé privée sécurisée
-Local swap signing via Web3 with secure private key
-– Connexion stable au réseau Polygon via Infura
-Stable connection to Polygon network via Infura
-– Test de signature avec `test_signer_transaction.py`
-Signature test with `test_signer_transaction.py`
-
-### 🔹 Version V3.0 – Simulation LP & Swap simulé (6 août 2025)
-
-– Ajout de `swap_reel.py` pour simuler un swap "réel" avec wallet
-Added `swap_reel.py` to simulate wallet-based swaps
-– Intégration du wallet simulé via `real_wallet.py`
-Simulated wallet integration via `real_wallet.py`
-– Journalisation détaillée des swaps LP dans `journal_swap_lp.csv`
-Detailed LP swap logging in `journal_swap_lp.csv`
-– Préparation à la gestion réelle des transactions
-Preparing for real transaction execution
-
-### 🔹 Version V2.9 – Journalisation du slippage LP (5 août 2025)
-
-– Journalisation automatique du slippage LP simulé dans `journal_slippage_lp.csv`
-Automatic logging of simulated LP slippage in `journal_slippage_lp.csv`
-– Chaque ligne contient 7 colonnes : date, pool, plateforme, montant LP, slippage, profil
-Each line contains 7 columns: date, pool, platform, LP amount, slippage, profile
-– Utilisation de `simuler_farming_lp()` pour tracer les pertes simulées dues au slippage
-Uses `simuler_farming_lp()` to log simulated losses due to slippage
-
-### 🔹 Version V2.8 – Pondération du slippage LP (3 août 2025)
-
-– Intégration du paramètre `poids_slippage` dans les profils
-`poids_slippage` parameter added to profiles
-– Application d’un malus pondéré sur les pools utilisant des tokens LP
-Weighted malus applied to LP-based pools
-– Score final ajusté automatiquement selon le profil
-Final score adjusted automatically based on the active profile
-
-### 🔹 Version V2.7 – Intégration complète farming LP (3 août 2025)
-
-– Simulation complète du farming LP avec APR (rendement annualisé)
-Full simulation of LP farming with APR (annual yield)
-– Nouveau fichier `journal_farming.csv` pour tracer les gains simulés par pool
-New `journal_farming.csv` file to track simulated pool yields
-– Journalisation cumulée des LP dans `journal_lp_cumul.csv`
-Cumulative LP logging in `journal_lp_cumul.csv`
-– Vérification complète des logs avant passage au mode réel
-Full log validation before entering real mode
-
-### 🔹 Version V2.6 – Mode simulateur amélioré (2 août 2025)
-
-– Amélioration du simulateur avec enregistrement du solde LP simulé
-Improved simulator with LP balance logging
-– Nouveau fichier `journal_lp_cumul.csv` pour le suivi des LP
-New `journal_lp_cumul.csv` for LP tracking
-– Nouvelle fonction de journalisation des rendements LP par pool
-New LP farming yield logger by pool
-
-### 🔹 Version V2.5 – Journalisation LP & check système (30 juillet 2025)
-
-– Journalisation CSV complète des deux swaps simulés pour les pools LP
-Full CSV logging of both simulated swaps for LP pools
-– Intégration du fichier check\_setup.py pour vérifier la stabilité avant exécution
-Integration of check\_setup.py for stability checks before running
-– Refonte des logs et résumé journalier pour un meilleur suivi
-Redesigned logs and daily summaries for better tracking
+*La roadmap s’adapte selon l’avancement du projet / The roadmap adapts as the project evolves.*
 
 ---
 
@@ -138,61 +65,46 @@ Redesigned logs and daily summaries for better tracking
 
 ---
 
-## Architecture simplifiée DeFiPilot / Simplified architecture
-
-Utilisateur / User
-│
-▼
-Interface graphique (Tkinter) / GUI (Tkinter)
-│
-▼
-Sélection du profil & chargement des paramètres
-Profile selection & parameter loading
-│
-▼
-Moteur principal DeFiPilot / Main Engine
-│
-├─ Récupération des pools via DefiLlama / Pool retrieval via DefiLlama
-├─ Calcul des scores & simulation / Score calculation & simulation
-├─ Journalisation avancée (logs, CSV) / Advanced logging (logs, CSV)
-│
-▼
-Recommandations à l'utilisateur / User recommendations
-│
-▼
-Historique, fichiers CSV, journal quotidien / History, CSV files, daily log
-
----
-
-## 🚣️ Roadmap des prochaines versions / Upcoming roadmap
-
-| Version    | Contenu prévu / Planned content                                                                                            |
-| ---------- | -------------------------------------------------------------------------------------------------------------------------- |
-| ~~`v3.3`~~ | ✅ Socle pondérations IA (désactivé) + correctifs scoring                                                                   |
-| ~~`v3.4`~~ | ✅ Correction import scoring dans main.py                                                                                   |
-| `v3.5`     | Multi-wallet : gestion de plusieurs portefeuilles simultanés / Multi-wallet support: manage several wallets simultaneously |
-| `v3.6`     | Compatibilité multi-blockchains (Polygon, Avalanche, Fantom…) / Multi-chain compatibility (Polygon, Avalanche, Fantom…)    |
-
-*La roadmap s’adapte selon l’avancement du projet / The roadmap adapts as the project evolves.*
-
----
-
 ## Installation
 
 1. Cloner ce dépôt :
-   `git clone https://github.com/DavidRaffeil/DeFiPilot.git`
+
+   ```bash
+   ```
+
+git clone [https://github.com/DavidRaffeil/DeFiPilot.git](https://github.com/DavidRaffeil/DeFiPilot.git)
+
+````
    Clone this repository:
-   `git clone https://github.com/DavidRaffeil/DeFiPilot.git`
+   ```bash
+git clone https://github.com/DavidRaffeil/DeFiPilot.git
+````
 
 2. Installer les dépendances :
-   `pip install -r requirements.txt`
+
+   ```bash
+   ```
+
+pip install -r requirements.txt
+
+````
    Install dependencies:
-   `pip install -r requirements.txt`
+   ```bash
+pip install -r requirements.txt
+````
 
 3. Lancer le bot en mode simulation :
-   `python main.py`
+
+   ```bash
+   ```
+
+python main.py
+
+````
    Run the bot in simulation mode:
-   `python main.py`
+   ```bash
+python main.py
+````
 
 ---
 
@@ -229,8 +141,8 @@ See full terms in the [License.md](./License.md) file
 
 ### Peut-on utiliser DeFiPilot en mode réel ?
 
-🔒 Pas encore. À partir de la version 2.0, un mode réel avec montants de test sera disponible. Avant cela, tout est simulation.
-🔒 Not yet. From version 2.0, a real mode with test amounts will be available. Until then, everything is simulation only.
+🔒 Pas encore. À partir de la version 4.0, le mode réel complet sera disponible. Avant cela, tout est simulation.
+🔒 Not yet. From version 4.0, the full real mode will be available. Until then, everything is simulation only.
 
 ### Peut-on personnaliser les critères d’analyse des pools ?
 
@@ -248,7 +160,5 @@ See full terms in the [License.md](./License.md) file
 
 Projet initié et développé par **David Raffeil** avec l’assistance de ChatGPT.
 Project initiated and developed by **David Raffeil** with ChatGPT assistance.
-
----
 
 Pour toute question ou suggestion : issues GitHub ou [voir la vision du projet](https://github.com/DavidRaffeil/DeFiPilot/blob/main/VISION.md)
