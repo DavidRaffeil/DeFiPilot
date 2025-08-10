@@ -1,8 +1,8 @@
 # core/swap_reel.py - V3.7
 """
 Swap réel sur DEX Polygon (SushiSwap V2) — DeFiPilot
-FR: API pour exécuter un swap réel (slippage, approve auto, confirmation).
-EN: API to perform a real swap (slippage, auto-approve, confirmation).
+FR: API pour exécuter un swap réel (slippage, approve auto, confirmation, journalisation CSV).
+EN: API to perform a real swap (slippage, auto-approve, confirmation, CSV logging).
 """
 
 from __future__ import annotations
@@ -11,12 +11,14 @@ import os
 import time
 import math
 import logging
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from web3 import Web3
 from web3.exceptions import ContractLogicError
 
 from core.real_wallet import get_wallet_address, get_private_key
+from core.journal_swaps import log_swap_event  # journalisation CSV
 
 # get_polygon_rpc_url est optionnel
 try:
@@ -107,6 +109,10 @@ ROUTER_V2_ABI: List[Dict[str, Any]] = [
 # Helpers
 # ---------------------------------------------------------------------------
 
+def _utc_now_iso() -> str:
+    """ISO 8601 timestamp in UTC."""
+    return datetime.now(timezone.utc).isoformat()
+
 def _get_web3() -> Web3:
     """FR: Retourne une instance Web3 connectée à Polygon. / EN: Return Polygon Web3."""
     rpc_url: Optional[str] = None
@@ -174,6 +180,25 @@ def _ensure_allowance(
     if wait_receipt:
         w3.eth.wait_for_transaction_receipt(tx_hash)
         logger.info("Approve confirmée")
+
+    # log approve as an info event (optional)
+    try:
+        log_swap_event(
+            {
+                "network": "polygon",
+                "dex": "sushiswap_v2",
+                "path": [],  # not a swap, just approve
+                "amount_in_wei": 0,
+                "amount_out_min_wei": 0,
+                "slippage_bps": 0,
+                "recipient": owner,
+                "tx_hash": tx_hash.hex(),
+            },
+            status="approve_sent",
+            timestamp_iso=_utc_now_iso(),
+        )
+    except Exception:
+        pass
 
     return nonce + 1
 
@@ -249,6 +274,16 @@ def effectuer_swap_reel(
         "network": "polygon",
     }
 
+    # Journalisation: dry_run ou awaiting_confirmation
+    try:
+        log_swap_event(
+            preview,
+            status=preview["status"],
+            timestamp_iso=_utc_now_iso(),
+        )
+    except Exception:
+        pass
+
     # Dry-run / confirmation
     if dry_run:
         preview["dry_run"] = True
@@ -299,9 +334,20 @@ def effectuer_swap_reel(
     result["tx_hash"] = tx_hash.hex()
     result["status"] = "sent"
 
+    # Journalisation: sent
+    try:
+        log_swap_event(result, status="sent", timestamp_iso=_utc_now_iso())
+    except Exception:
+        pass
+
     if wait_receipt:
         w3.eth.wait_for_transaction_receipt(tx_hash)
         result["status"] = "confirmed"
+        # Journalisation: confirmed
+        try:
+            log_swap_event(result, status="confirmed", timestamp_iso=_utc_now_iso())
+        except Exception:
+            pass
 
     return result
 
