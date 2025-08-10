@@ -1,147 +1,227 @@
 # DeFiPilot
 
-[![Made with Python](https://img.shields.io/badge/Made%20with-Python-3776AB?logo=python\&logoColor=white)](https://www.python.org/)
+[![Made with Python](https://img.shields.io/badge/Made%20with-Python-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Status](https://img.shields.io/badge/status-stable-brightgreen)]()
 ![License: Personal Use Only](https://img.shields.io/badge/license-Personal--Use--Only-lightgrey)
-[![Built with ChatGPT](https://img.shields.io/badge/built%20with-ChatGPT-10a37f?logo=openai\&logoColor=white)](https://openai.com/chatgpt)
-![Made in France](https://img.shields.io/badge/Made%20in-France-blue?logo=france\&logoColor=white)
+[![Built with ChatGPT](https://img.shields.io/badge/built%20with-ChatGPT-10a37f?logo=openai&logoColor=white)](https://openai.com/chatgpt)
+![Made in France](https://img.shields.io/badge/Made%20in-France-blue)
 
 ---
 
-> Bot personnel d’analyse et d’investissement automatisé en DeFi.
+> Bot personnel d’analyse et d’investissement automatisé en DeFi.  
 > Personal bot for automated analysis and investment in DeFi.
 
 ---
 
 ## Présentation / About
 
-⚠️ *Actuellement, seule la version française du bot est disponible. L’interface et les logs sont en français uniquement.*
+⚠️ *Actuellement, seule la version française du bot est disponible. L’interface et les logs sont en français uniquement.*  
 ⚠️ *Currently, only the French version of the bot is available. The interface and logs are in French only.*
 
-**DeFiPilot** est un projet open-source (usage non commercial) développé par un autodidacte pour apprendre, expérimenter et automatiser l’investissement sur la finance décentralisée (DeFi), en utilisant Python et l’IA.
-**DeFiPilot** is an open-source project (non-commercial use) developed by a self-taught enthusiast to learn, experiment, and automate investment in decentralized finance (DeFi), using Python and AI.
+**DeFiPilot** est un projet open-source (usage non commercial) développé pour apprendre, expérimenter et automatiser l’investissement en finance décentralisée (DeFi), avec **Python** et de l’**IA**.  
+**DeFiPilot** is an open-source project (non-commercial use) to learn, experiment, and automate decentralized finance (DeFi) investing, using **Python** and **AI**.
 
-Ce projet évolue en public, étape par étape, avec une démarche transparente, accessible et progressive.
-This project evolves publicly, step by step, with a transparent, accessible and progressive approach.
+Le projet évolue en public, étape par étape, avec une démarche transparente et progressive.  
+The project evolves publicly, step by step, with a transparent and progressive approach.
 
-Pour la vision complète de l’écosystème et des futurs bots associés, voir :
+Vision complète de l’écosystème et futurs bots :  
 👉 [VISION.md](https://github.com/DavidRaffeil/DeFiPilot/blob/main/VISION.md)
 
 ---
 
 ## Nouveautés / What's New
 
+### 🔹 Version V3.7 – Swap réel sur DEX Polygon (2025-08-10)
+
+- **FR :** Exécution de **swaps réels** sur Polygon via un router **Uniswap V2** (SushiSwap V2), avec **slippage**, **approve automatique**, **confirmation avant envoi**, et **journalisation**.
+- **EN :** Perform **real swaps** on Polygon via an **Uniswap V2**-style router (SushiSwap V2), with **slippage**, **auto-approve**, **pre-send confirmation**, and **logging**.
+
+Fichiers concernés :
+- `core/swap_reel.py` — fonction `effectuer_swap_reel(...)` (slippage_bps, require_confirmation/confirm, dry_run, wait_receipt, gas override).
+- `test_swap_reel_cli.py` — CLI de test (dry-run / envoi réel).
+
 ### 🔹 Version V3.6 – Wallet réel (2025-08-10)
 
-* **FR :** Ajout du wallet réel `core/real_wallet.py` (Polygon RPC), gestion multi-wallets via `wallets_manager`, journalisation `wallet_connect` / `wallet_disconnect`, et signature de message.
-* **EN :** Added real wallet `core/real_wallet.py` (Polygon RPC), basic multi-wallet via `wallets_manager`, `wallet_connect` / `wallet_disconnect` logging, and message signing.
+- **FR :** Wallet réel `core/real_wallet.py` (Polygon RPC), gestion multi-wallets via `wallets_manager`, logs `wallet_connect` / `wallet_disconnect`, signature de message.
+- **EN :** Real wallet `core/real_wallet.py` (Polygon RPC), multi-wallet via `wallets_manager`, `wallet_connect` / `wallet_disconnect` logging, message signing.
 
 ---
 
-## 🚀 Roadmap des prochaines versions / Upcoming roadmap
+## 🚀 Roadmap
 
-| Version | Contenu prévu / Planned content                                                                                                                                                                                   |
-| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `v3.7`  | **FR :** Swap réel sur DEX Polygon : gestion du slippage, confirmation avant exécution.  <br> **EN :** Real swap on Polygon DEX: slippage handling, pre-execution confirmation.                                   |
-| `v3.8`  | **FR :** Ajout de liquidité réelle sur DEX, réception de LP tokens.  <br> **EN :** Real liquidity provision on DEX, LP token handling.                                                                            |
-| `v3.9`  | **FR :** Farming LP réel : staking des LP tokens et récolte auto des récompenses.  <br> **EN :** Real LP farming: staking and auto reward collection.                                                             |
-| `v4.0`  | **FR :** Mode réel complet : stratégie automatisée, retraits si non rentable, reprise après coupure.  <br> **EN :** Full real mode: automated strategy, auto-withdraw if unprofitable, resume after interruption. |
+| Version | État | Contenu FR / EN |
+| ------: | :--: | --------------- |
+| `v3.7`  | ✅   | **FR :** Swap réel sur Polygon (SushiSwap V2). **EN:** Real swap on Polygon (SushiSwap V2). |
+| `v3.8`  | 🛠️  | **FR :** Ajout de liquidité réelle sur DEX (LP). **EN:** Real DEX liquidity add (LP). |
+| `v3.9`  | 🛠️  | **FR :** Farming LP réel (staking, récolte). **EN:** Real LP farming (staking, harvest). |
+| `v4.0`  | 🛠️  | **FR :** Mode réel complet (stratégie auto, retraits, reprise). **EN:** Full real mode (auto strategy, withdrawals, resume). |
 
-*La roadmap s’adapte selon l’avancement du projet.*
-*The roadmap adapts as the project evolves.*
+*La roadmap peut évoluer en fonction de l’avancement.*  
+*Roadmap may change as the project evolves.*
 
 ---
 
-## Fonctionnalités principales / Main features
+## Fonctionnalités / Features
 
-* **FR :** Analyse automatique des pools DeFi via DefiLlama.
-  **EN :** Automatic analysis of DeFi pools via DefiLlama.
-* **FR :** Simulation d’investissement multi-profils avec score pondéré.
-  **EN :** Multi-profile investment simulation with weighted score.
-* **FR :** Journalisation détaillée (résultats, historique CSV, log résumé quotidien).
-  **EN :** Detailed logging (results, CSV history, daily summary log).
-* **FR :** Interface graphique simple (Tkinter).
-  **EN :** Simple graphical interface (Tkinter).
-* **FR :** Sélection des meilleures opportunités selon le profil d’investisseur.
-  **EN :** Selection of best opportunities according to investor profile.
-* **FR :** Préparation à l’intégration multi-blockchains et de fonctions avancées (voir roadmap).
-  **EN :** Preparation for multi-chain integration and advanced features (see roadmap).
+- **FR :** Analyse automatique des pools DeFi (via agrégateurs), simulation multi-profils et scoring.  
+  **EN :** Automatic DeFi pool analysis (via aggregators), multi-profile simulation and scoring.
+- **FR :** Journalisation détaillée (résultats, CSV, résumés).  
+  **EN :** Detailed logging (results, CSV, summaries).
+- **FR :** Wallet réel Polygon, multi-wallets.  
+  **EN :** Real wallet on Polygon, multi-wallet support.
+- **FR :** **Swaps réels** sur Polygon (SushiSwap V2) avec slippage et confirmation.  
+  **EN :** **Real swaps** on Polygon (SushiSwap V2) with slippage and confirmation.
+- **FR :** Interface graphique simple (Tkinter) pour la simulation.  
+  **EN :** Simple GUI (Tkinter) for simulation.
 
 ---
 
 ## Installation
 
-1. **Cloner ce dépôt :**
-
+1) **Cloner le dépôt**
 ```bash
 git clone https://github.com/DavidRaffeil/DeFiPilot.git
-```
+cd DeFiPilot
+Installer les dépendances
 
-2. **Installer les dépendances :**
-
-```bash
+bash
+Copier
+Modifier
 pip install -r requirements.txt
-```
+Configurer l’environnement Polygon
 
-3. **Lancer le bot en mode simulation :**
+Définir POLYGON_RPC_URL (ex : https://polygon-rpc.com ou votre provider).
 
-```bash
+Linux/macOS :
+
+bash
+Copier
+Modifier
+export POLYGON_RPC_URL="https://polygon-rpc.com"
+Windows (Git Bash, session courante) :
+
+bash
+Copier
+Modifier
+export POLYGON_RPC_URL="https://polygon-rpc.com"
+Vérifier :
+
+bash
+Copier
+Modifier
+python -c "import os; print(os.getenv('POLYGON_RPC_URL'))"
+Configurer le wallet par défaut
+
+Éditer config/wallets.json (respecter la casse et le format) :
+
+json
+Copier
+Modifier
+[
+  {
+    "name": "wallet_invest_long_terme",
+    "address": "0xVotreAdresseChecksumIci",
+    "private_key": "0xVotreClePriveeHex66car"
+  }
+]
+Vérifier que l’adresse correspond à la clé :
+
+bash
+Copier
+Modifier
+python - <<'PY'
+from eth_account import Account
+import json, sys
+w = json.load(open("config/wallets.json","r",encoding="utf-8"))[0]
+print(Account.from_key(w["private_key"]).address == w["address"])
+PY
+Utilisation
+Mode simulation (analyse)
+bash
+Copier
+Modifier
 python main.py
-```
+Swaps réels (Polygon, SushiSwap V2)
+Dry-run (aucun envoi) :
 
----
+bash
+Copier
+Modifier
+python test_swap_reel_cli.py --token-in 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174 --token-out 0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619 --amount-in-wei 1000000 --slippage-bps 50 --dry-run
+Aperçu avec confirmation requise :
 
-## Utilisation / Usage
+bash
+Copier
+Modifier
+python test_swap_reel_cli.py --token-in 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174 --token-out 0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619 --amount-in-wei 1000000 --slippage-bps 50
+Envoi réel (confirmation explicite) :
 
-* **FR :** Lancer `main.py` pour démarrer une analyse et une simulation d’investissement selon le profil choisi (modéré par défaut).
-  **EN :** Run `main.py` to start an analysis and investment simulation based on the selected profile (default is moderate).
-* **FR :** Consulter les logs et fichiers CSV générés pour suivre l’évolution des rendements simulés.
-  **EN :** Check logs and generated CSV files to track simulated yield performance.
+bash
+Copier
+Modifier
+python test_swap_reel_cli.py --token-in 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174 --token-out 0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619 --amount-in-wei 1000000 --slippage-bps 50 --confirm
+Notes :
 
----
+--amount-in-wei est exprimé en wei du token d’entrée (USDC a 6 décimales : 1 USDC = 1_000_000).
 
-## Licence / License
+Le script gère l’approve automatique si l’allowance est insuffisante (spender = router SushiSwap V2 en checksum).
 
-**FR :** Ce projet est mis à disposition gratuitement pour un usage personnel et non commercial.
-**EN :** This project is made available free of charge for personal and non-commercial use only.
+slippage_bps=50 => 0,50% de slippage max.
 
-Voir les conditions complètes dans le fichier [License.md](./License.md)
-See full terms in the [License.md](./License.md) file.
+require_confirmation est activé par défaut côté API : sans --confirm, la transaction n’est pas envoyée.
 
----
+Sécurité / Security
+Ne jamais committer la clé privée. Conservez config/wallets.json en privé.
 
-## FAQ – Questions fréquentes / Frequently Asked Questions
+Utilisez des comptes de montants limités pour les tests.
 
-### Peut-on utiliser DeFiPilot avec un exchange centralisé ?
+Vérifiez les adresses checksum (tokens, router, wallet).
 
-* **FR :** ❌ Non. DeFiPilot est dédié exclusivement à la finance décentralisée. Il ne prend pas en charge les plateformes CeFi.
-* **EN :** ❌ No. DeFiPilot is strictly focused on decentralized finance and does not support CeFi platforms.
+Surveillez les allowances et révoquez-les si nécessaire.
 
-### Est-ce que DeFiPilot fonctionne avec tous les wallets ?
+Dépannage / Troubleshooting
+Web3 non connecté → vérifier POLYGON_RPC_URL.
 
-* **FR :** 🧪 Actuellement, seul un wallet en lecture seule (adresse publique) est utilisé pour la simulation. Les intégrations complètes viendront plus tard.
-* **EN :** 🧪 Currently, only read-only (public address) wallets are supported for simulation. Full integration will come later.
+execution reverted: TRANSFER_FROM_FAILED → allowance USDC insuffisante ou incohérente ; refaire approve.
 
-### Peut-on utiliser DeFiPilot en mode réel ?
+only accepts checksum addresses → convertir avec Web3.to_checksum_address(...).
 
-* **FR :** 🔒 Pas encore. À partir de la version 4.0, le mode réel complet sera disponible. Avant cela, tout est simulation.
-* **EN :** 🔒 Not yet. From version 4.0, the full real mode will be available. Until then, everything is simulation only.
+Pas de logs visibles → lancer avec logging.basicConfig(level=logging.INFO) dans vos scripts.
 
-### Peut-on personnaliser les critères d’analyse des pools ?
+Licence / License
+FR : Projet gratuit pour usage personnel uniquement (non commercial).
+EN : Free project for personal use only (non-commercial).
 
-* **FR :** ✅ Oui. Le profil choisi (prudent, modéré, agressif…) influence la pondération APR/TVL et la sélection des pools.
-* **EN :** ✅ Yes. The selected profile (cautious, moderate, aggressive...) influences APR/TVL weighting and pool selection.
+Voir les conditions complètes dans License.md
+See full terms in License.md
 
-### Comment signaler un bug ou une suggestion ?
+FAQ
+Peut-on utiliser DeFiPilot avec un exchange centralisé ?
+FR : ❌ Non, DeFiPilot vise la DeFi uniquement.
 
-* **FR :** 💬 Ouvre une "issue" sur GitHub ou contacte le développeur via le dépôt.
-* **EN :** 💬 Open an issue on GitHub or contact the developer through the repository.
+EN : ❌ No, DeFiPilot targets DeFi only.
 
----
+Est-ce que DeFiPilot fonctionne en mode réel ?
+FR : ✅ Partiellement : swaps réels sur Polygon (SushiSwap V2) sont disponibles. Le reste (LP, farming) arrive dans v3.8–v3.9.
 
-## Développeur / Developer
+EN : ✅ Partially: real swaps on Polygon (SushiSwap V2) are available. LP and farming coming in v3.8–v3.9.
 
-**FR :** Projet initié et développé par **David Raffeil** avec l’assistance de ChatGPT.
-**EN :** Project initiated and developed by **David Raffeil** with ChatGPT assistance.
+Peut-on personnaliser les critères d’analyse des pools ?
+FR : ✅ Oui, via les profils (prudent, modéré, agressif…).
 
-Pour toute question ou suggestion : issues GitHub ou [voir la vision du projet](https://github.com/DavidRaffeil/DeFiPilot/blob/main/VISION.md)
+EN : ✅ Yes, via profiles (cautious, moderate, aggressive…).
+
+Comment signaler un bug ou proposer une idée ?
+FR : Ouvrir une issue GitHub.
+
+EN : Open a GitHub issue.
+
+Développeur / Developer
+FR : Projet initié et développé par David Raffeil avec assistance IA.
+EN : Project initiated and developed by David Raffeil with AI assistance.
+
+Voir aussi : VISION.md
+
+sql
+Copier
+Modifier
