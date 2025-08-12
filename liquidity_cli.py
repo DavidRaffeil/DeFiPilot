@@ -1,5 +1,6 @@
 # liquidity_cli.py – V3.8
 # Fichier NOUVEAU – CLI dry-run pour l'ajout de liquidité (aucune transaction réelle)
+# Mise à jour : arguments conditionnels quand --pool-json est fourni (dry-run)
 
 import argparse
 import json
@@ -41,15 +42,25 @@ def _parse_arguments(argv: Optional[list[str]]) -> argparse.Namespace:
     add_parser = subparsers.add_parser(
         "add_liquidity", help="Simule l'ajout de liquidité (dry-run)"
     )
-    add_parser.add_argument("--platform", required=True, type=str, help="Plateforme DeFi ciblée")
-    add_parser.add_argument("--tokenA", required=True, type=str, help="Symbole du premier token")
-    add_parser.add_argument("--tokenB", required=True, type=str, help="Symbole du second token")
+    # Ces trois arguments sont conditionnels (obligatoires seulement si --pool-json est absent)
+    add_parser.add_argument("--platform", type=str, help="Plateforme DeFi ciblée")
+    add_parser.add_argument("--tokenA", type=str, help="Symbole du premier token")
+    add_parser.add_argument("--tokenB", type=str, help="Symbole du second token")
+
     add_parser.add_argument("--amountA", required=True, type=float, help="Montant du premier token")
     add_parser.add_argument("--amountB", required=True, type=float, help="Montant du second token")
     add_parser.add_argument("--dest", type=str, default=None, help="Adresse destinataire des LP tokens")
     add_parser.add_argument("--pool-json", type=str, default=None, help="JSON décrivant le pool")
 
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+
+    if args.command == "add_liquidity":
+        # Si pas de --pool-json, alors platform/tokenA/tokenB doivent être fournis
+        if not args.pool_json:
+            if not all([args.platform, args.tokenA, args.tokenB]):
+                parser.error("--platform, --tokenA et --tokenB sont requis si --pool-json est absent")
+
+    return args
 
 
 def main(argv: Optional[list[str]] = None) -> int:
@@ -79,8 +90,6 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(f"Erreur lors de l'ajout de liquidité: {exc}", file=sys.stderr)
         return 1
 
-    success: bool
-    message: str
     if isinstance(result, dict):
         success = bool(result.get("success"))
         message = str(result.get("message", ""))
