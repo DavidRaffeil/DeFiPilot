@@ -1,0 +1,14 @@
+date,plateforme,tokenA,montantA,tokenB,montantB,destinataire,statut,message,tx_hash,gas_used,status,slippage_bps,deadline_min
+2025-08-12T16:30:48Z,uniswap,USDC,10.0,ETH,0.01,,success,Simulation d'ajout de liquidité effectuée,,,,100,20
+2025-08-12T16:41:27Z,uniswap,USDC,10.0,ETH,0.01,,success,Simulation d'ajout de liquidité effectuée,,,,100,20
+2025-08-12T16:41:37Z,sushiswap,DAI,1.0,ETH,0.01,,erreur,Echec ajout liquidité: Adresse router manquante,,,,100,20
+2025-08-12T16:42:20Z,uniswap,USDC,1.0,ETH,0.01,,erreur,Echec ajout liquidité: Adresse tokenA/tokenB manquante,,,,100,20
+2025-08-12T16:44:07Z,sushiswap,USDC,10.0,ETH,0.01,,erreur,"Echec ajout liquidité: when sending a str, it must be a hex string. Got: '<WETH_ADDRESS>'",,,,100,20
+2025-08-12T16:44:42Z,sushiswap,USDC,10.0,WETH,0.01,,erreur,"Echec ajout liquidité: ('web3.py only accepts checksum addresses. The software that gave you this non-checksum address should be considered unsafe, please file it as a bug on their platform. Try using an ENS name instead. Or, if you must accept lower safety, use Web3.to_checksum_address(lower_case_address).', '0x1b02da8cb0d097eb8d57a175b88c7d8b47997506')",,,,100,20
+2025-08-12T16:58:59.172190,sushiswap,USDC,10.0,WETH,0.01,0x9A06D2cd867589889A6330d84Ef17414EB2b98f8,success,Simulation d'ajout de liquidité effectuée
+2025-08-12T17:18:49.112102,sushiswap,USDC,10.0,WETH,0.01,0x9A06D2cd867589889A6330d84Ef17414EB2b98f8,success,Simulation d'ajout de liquidité effectuée
+2025-08-12T17:18:49.126108,sushiswap,USDC,10.0,WETH,0.01,0x9A06D2cd867589889A6330d84Ef17414EB2b98f8,success,Simulation d'ajout de liquidité effectuée
+2025-08-20T15:42:56.423425+00:00,sushiswap,polygon,USDC,WETH,10.0,0.01,9.95,0.00995,0.4975,0.5,none,OK
+2025-08-20T15:43:10.119065+00:00,sushiswap,polygon,USDC,WETH,10.0,0.01,9.95,0.00995,0.4975,0.5,none,OK
+2025-08-20T15:54:50.265147+00:00,sushiswap,polygon,USDC,WETH,10.0,0.01,9.95,0.00995,0.4975,0.5,none,OK
+2025-08-20T16:19:26.827389+00:00,af430eee-d97e-472c-9ec9-40df60ad84dc,sushiswap,polygon,USDC,WETH,10.0,0.01,9.95,0.00995,0.4975,0.5,none,OK

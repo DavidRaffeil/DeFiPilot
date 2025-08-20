@@ -1,2 +1,3 @@
 date,run_id,platform,chain,tokenA,tokenB,amountA,amountB,amountA_effectif,amountB_effectif,lp_tokens_estimes,slippage_applique_pct,ratio_contraint,details
 2025-08-20T16:26:38.223697+00:00,3b01bb84-cfea-47bf-8c9d-5dee8cddf300,sushiswap,polygon,USDC,WETH,10.0,0.01,9.95,0.00995,0.4975,0.5,none,OK
+2025-08-20T16:32:35.288125+00:00,9cf50d81-5ada-4ddb-88ae-7d80f473b109,sushiswap,polygon,USDC,WETH,10.0,0.01,9.95,0.00995,0.31464663,0.5,none,approx_bootstrap
