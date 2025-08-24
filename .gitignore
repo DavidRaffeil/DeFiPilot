@@ -35,3 +35,7 @@ wallet_simulation.json
 logs/
 !core/abi/*.json
 
+
+# Fichiers locaux non versionnés
+.env.backup
+journal_liquidite.jsonl
