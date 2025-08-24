@@ -20,9 +20,18 @@ Thumbs.db
 .venv
 env/
 venv/
+# Secrets / wallets (ne jamais pousser)
+real_wallet.json
+config/wallets.json
+data/wallet_simule.json
+wallet.json
+wallet_simulation.json
+.env
+*.env
 
 # Autres fichiers ou dossiers à ignorer (si besoin)
 # /data/
 !config_template.json
 logs/
 !core/abi/*.json
+
