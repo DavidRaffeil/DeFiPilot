@@ -39,3 +39,7 @@ venv/
 # /data/
 !config_template.json
 logs/
+
+# Fichiers locaux non versionnés (main)
+.env.backup
+journal_liquidite.jsonl
