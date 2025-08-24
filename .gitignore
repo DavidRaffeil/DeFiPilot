@@ -39,3 +39,7 @@ logs/
 # Fichiers locaux non versionnés
 .env.backup
 journal_liquidite.jsonl
+
+# Fichiers locaux non versionnés (main)
+.env.backup
+journal_liquidite.jsonl
