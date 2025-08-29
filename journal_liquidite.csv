@@ -1,2 +1,9 @@
-timestamp_iso,run_id,mode,chain,platform,pool_address,tokenA_symbol,tokenB_symbol,tokenA_address,tokenB_address,amountA_in,amountB_in,amountA_used,amountB_used,expected_priceA,expected_priceB,slippage_bps,gas_estimate,router_address,lp_token_address,lp_amount,tx_hash,status,notes
-2025-08-21T16:09:57.351047+00:00,4d281641-5aba-4d43-b820-dd7a41f7d09d,dryrun,polygon,sushiswap,,USDC,WETH,,,10.0,0.01,9.95,0.00995,,,50,,,,0.31464663,,dryrun,approx_bootstrap
+run_id,platform,chain,tokenA_symbol,tokenB_symbol,amountA,amountB,amountA_effectif,amountB_effectif,lp_tokens_estimes,slippage_applique_pct,ratio_contraint,details,timestamp,wallet
+75b2014c-07dc-4448-96c1-cb160c45a879,sushiswap,polygon,USDC,WETH,1.0,0.001,0.995,0.000995,0.04975,0.5,none,OK,1756301967,0xA379289f50FD2aFecf2906c3D47ca9EF98357aDd
+62ce0d74-bb63-44b4-8d16-942a21de7084,sushiswap,polygon,USDC,WETH,2.0,0.002,1.994,0.001994,0.0997,0.3,none,OK,1756302088,0xA379289f50FD2aFecf2906c3D47ca9EF98357aDd
+1c9eedee-6e3d-46b3-8092-3f06bd977fb2,sushiswap,polygon,,,0.0,0.0,0.0,0.0,0.0,0.0,,,0,0xA379289f50FD2aFecf2906c3D47ca9EF98357aDd
+7d41e970-1ffc-4dbd-8166-e3ac135c2621,sushiswap,polygon,,,0.0,0.0,0.0,0.0,0.0,0.0,,,0,0xA379289f50FD2aFecf2906c3D47ca9EF98357aDd
+0780da85-fa40-44ac-978d-f3870adb1162,sushiswap,polygon,USDC,WETH,10.0,0.01,9.95,0.00995,0.0,0.5,,dry_run,1756305247,0xA379289f50FD2aFecf2906c3D47ca9EF98357aDd
+afb6b908-2763-4e62-9ae7-f56cdc4453a6,sushiswap,polygon,USDC,WETH,10.0,0.01,9.95,0.00995,0.0,0.5,,dry_run,1756306228,0xA379289f50FD2aFecf2906c3D47ca9EF98357aDd
+5f6ca6ff-d661-4ad0-bec8-61049dc9d258,sushiswap,polygon,USDC,WETH,10.0,0.01,9.95,0.00995,0.4975,0.5,none,OK,1756306880,0xA379289f50FD2aFecf2906c3D47ca9EF98357aDd
+5f6ca6ff-d661-4ad0-bec8-61049dc9d258,sushiswap,polygon,USDC,WETH,10.0,0.01,9.95,0.00995,0.4975,0.5,none,OK,1756306880,0xA379289f50FD2aFecf2906c3D47ca9EF98357aDd
