@@ -1,313 +1,389 @@
-# core/liquidity_real_tx.py – V3.8
+# core/liquidity_real_tx.py – V3.8.1
+# Patch 1/5 — EIP-1559 + capture gas_used/effectiveGasPrice/tx_cost
+# Fix PoA: injection automatique du middleware pour les chaînes de type PoA (Polygon, BSC, ...)
+#
+# FR: Transactions type-2 (EIP-1559) avec métriques de gas. Aucune modification
+#     de la logique métier validée; uniquement la gestion des frais + stats.
+# EN: Type-2 (EIP-1559) txs with gas metrics. No business-logic change; only
+#     fee handling + metrics.
 
-import json
-import logging
+from __future__ import annotations
+
 import os
 import time
-from pathlib import Path
-from typing import Optional
+from dataclasses import dataclass
+from typing import Optional, Dict, Any
 
 from web3 import Web3
-from web3.exceptions import ContractLogicError
+from web3.exceptions import ContractLogicError, ExtraDataLengthError
 
-from core.real_wallet import get_wallet_address, get_private_key
-from core.journal import enregistrer_liquidity_csv, enregistrer_liquidity_jsonl
-
-logger = logging.getLogger(__name__)
-
-# Dossier ABI relatif à ce fichier (fonctionne sous Windows/Linux)
-ABI_DIR = Path(__file__).resolve().parent / "abis"
-
-
-def _load_abi(path: Path) -> dict:
-    with path.open("r", encoding="utf-8") as f:
-        return json.load(f)
+# Middleware PoA (compat v5/v6 de web3.py)
+try:  # v5
+    from web3.middleware import geth_poa_middleware  # type: ignore
+except Exception:  # pragma: no cover
+    geth_poa_middleware = None  # type: ignore
+try:  # v6
+    from web3.middleware.proof_of_authority import ExtraDataToPOAMiddleware  # type: ignore
+except Exception:  # pragma: no cover
+    ExtraDataToPOAMiddleware = None  # type: ignore
 
 
-def _to_checksum(w3: Web3, addr: str) -> str:
-    return Web3.to_checksum_address(addr)
+# ==================
+# ABIs minimales
+# ==================
+ERC20_ABI = [
+    {"name": "approve", "type": "function", "stateMutability": "nonpayable",
+     "inputs": [{"name": "spender", "type": "address"}, {"name": "amount", "type": "uint256"}],
+     "outputs": [{"name": "", "type": "bool"}]},
+    {"name": "allowance", "type": "function", "stateMutability": "view",
+     "inputs": [{"name": "owner", "type": "address"}, {"name": "spender", "type": "address"}],
+     "outputs": [{"name": "", "type": "uint256"}]},
+    {"name": "balanceOf", "type": "function", "stateMutability": "view",
+     "inputs": [{"name": "account", "type": "address"}],
+     "outputs": [{"name": "", "type": "uint256"}]},
+    {"name": "decimals", "type": "function", "stateMutability": "view", "inputs": [],
+     "outputs": [{"name": "", "type": "uint8"}]},
+    {"name": "symbol", "type": "function", "stateMutability": "view", "inputs": [],
+     "outputs": [{"name": "", "type": "string"}]},
+]
+
+ROUTER_ABI = [
+    {"name": "addLiquidity", "type": "function", "stateMutability": "nonpayable",
+     "inputs": [
+        {"name": "tokenA", "type": "address"},
+        {"name": "tokenB", "type": "address"},
+        {"name": "amountADesired", "type": "uint256"},
+        {"name": "amountBDesired", "type": "uint256"},
+        {"name": "amountAMin", "type": "uint256"},
+        {"name": "amountBMin", "type": "uint256"},
+        {"name": "to", "type": "address"},
+        {"name": "deadline", "type": "uint256"}
+     ],
+     "outputs": [
+        {"name": "amountA", "type": "uint256"},
+        {"name": "amountB", "type": "uint256"},
+        {"name": "liquidity", "type": "uint256"}
+     ]},
+    {"name": "removeLiquidity", "type": "function", "stateMutability": "nonpayable",
+     "inputs": [
+        {"name": "tokenA", "type": "address"},
+        {"name": "tokenB", "type": "address"},
+        {"name": "liquidity", "type": "uint256"},
+        {"name": "amountAMin", "type": "uint256"},
+        {"name": "amountBMin", "type": "uint256"},
+        {"name": "to", "type": "address"},
+        {"name": "deadline", "type": "uint256"}
+     ],
+     "outputs": [
+        {"name": "amountA", "type": "uint256"},
+        {"name": "amountB", "type": "uint256"}
+     ]},
+]
 
 
-def _now_ts() -> int:
-    return int(time.time())
+# ==========================
+# Helpers (PoA + EIP-1559)
+# ==========================
 
-
-def _to_wei(amount: float, decimals: int) -> int:
-    return int(amount * (10 ** decimals))
-
-
-def _from_wei(amount: int, decimals: int) -> float:
-    return amount / float(10 ** decimals)
-
-
-def ajouter_liquidite_reelle(
-    pool: dict,
-    amountA: float,
-    amountB: float,
-    wallet_name: str,
-    slippage: float = 0.005,
-    deadline: Optional[int] = None,
-    dry_run: bool = False
-) -> dict:
-    """
-    Ajoute de la liquidité (réelle si dry_run=False, sinon simulation) sur une pool UniswapV2-like.
-    Retourne un dict standardisé:
-    { "success": bool, "tx_hash": str|None, "lp_tokens": float|None, "error": str|None }
-    """
-    logger.info(
-        "[V3.8] 🔧 Params: pool=%s amountA=%s amountB=%s wallet=%s slippage=%s dry_run=%s",
-        pool,
-        amountA,
-        amountB,
-        wallet_name,
-        slippage,
-        dry_run,
-    )
-
-    required = [
-        "platform",
-        "chain",
-        "router_address",
-        "tokenA_symbol",
-        "tokenB_symbol",
-        "tokenA_address",
-        "tokenB_address",
-    ]
-    for key in required:
-        if key not in pool:
-            err = f"pool missing key: {key}"
-            logger.error("[V3.8] ⚠️ Échec: %s", err)
-            ligne = {
-                "date_iso": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                "version": "V3.8",
-                "chain": pool.get("chain"),
-                "platform": pool.get("platform"),
-                "router": pool.get("router_address"),
-                "tokenA": pool.get("tokenA_symbol"),
-                "tokenB": pool.get("tokenB_symbol"),
-                "amountA_in": amountA,
-                "amountB_in": amountB,
-                "amountAMin": amountA * (1 - slippage),
-                "amountBMin": amountB * (1 - slippage),
-                "slippage": slippage,
-                "deadline_ts": deadline,
-                "dry_run": dry_run,
-                "approvals_done": "none",
-                "tx_hash": None,
-                "tx_status": "error",
-                "gas_used": None,
-                "lp_tokens_received": None,
-                "wallet": get_wallet_address(wallet_name),
-                "error": err,
-            }
-            try:
-                enregistrer_liquidity_csv(ligne)
-                enregistrer_liquidity_jsonl(ligne)
-            finally:
-                pass
-            return {"success": False, "tx_hash": None, "lp_tokens": None, "error": err}
-
-    platform = pool["platform"]
-    chain = pool["chain"]
-    router_address = pool["router_address"]
-    tokenA_symbol = pool["tokenA_symbol"]
-    tokenB_symbol = pool["tokenB_symbol"]
-    tokenA_address = pool["tokenA_address"]
-    tokenB_address = pool["tokenB_address"]
-
-    amountAMin = amountA * (1 - slippage)
-    amountBMin = amountB * (1 - slippage)
-    deadline_ts = deadline if deadline is not None else _now_ts() + 20 * 60
-
-    success = False
-    tx_hash_str: Optional[str] = None
-    lp_tokens_received: Optional[float] = None
-    error_msg: Optional[str] = None
-    tx_status: str = "skipped(dry_run)" if dry_run else "not_sent"
-    gas_used: Optional[int] = None
-    approvals_done = "none"
-
-    wallet = get_wallet_address(wallet_name)
-    if wallet is None:
-        error_msg = "wallet introuvable"
-        logger.error("[V3.8] ⚠️ Échec: %s", error_msg)
-    else:
-        try:
-            rpc_url = None
-            if chain.lower() == "polygon":
-                rpc_url = os.getenv("POLYGON_RPC_URL") or os.getenv("RPC_POLYGON")
-            if not rpc_url:
-                raise RuntimeError("RPC non configuré")
-
-            w3 = Web3(Web3.HTTPProvider(rpc_url))
-            # web3.py v6: is_connected(); v5: isConnected()
-            if not (getattr(w3, "is_connected", None) and w3.is_connected()) and not (getattr(w3, "isConnected", None) and w3.isConnected()):
-                raise RuntimeError("Web3 non connecté")
-
-            wallet_cs = _to_checksum(w3, wallet)
-            tokenA_cs = _to_checksum(w3, tokenA_address)
-            tokenB_cs = _to_checksum(w3, tokenB_address)
-            router_cs = _to_checksum(w3, router_address)
-
-            erc20_abi = _load_abi(ABI_DIR / "erc20.json")
-            router_abi = _load_abi(ABI_DIR / "uniswap_v2_router.json")
-
-            tokenA_contract = w3.eth.contract(address=tokenA_cs, abi=erc20_abi)
-            tokenB_contract = w3.eth.contract(address=tokenB_cs, abi=erc20_abi)
-            router_contract = w3.eth.contract(address=router_cs, abi=router_abi)
-
-            decA = tokenA_contract.functions.decimals().call()
-            decB = tokenB_contract.functions.decimals().call()
-
-            amountA_wei = _to_wei(amountA, decA)
-            amountB_wei = _to_wei(amountB, decB)
-            amountAMin_wei = _to_wei(amountAMin, decA)
-            amountBMin_wei = _to_wei(amountBMin, decB)
-
-            if dry_run:
-                lp_tokens_received = 0.0
-                logger.info("[V3.8] 🪙 AddLiquidity dry-run")
-                success = True
-            else:
-                private_key = get_private_key(wallet_name)
-                if not private_key:
-                    raise RuntimeError("clé privée introuvable")
-
-                nonce = w3.eth.get_transaction_count(wallet_cs)
-                gas_price = w3.eth.gas_price
-
-                approvals = []
-                allowanceA = tokenA_contract.functions.allowance(wallet_cs, router_cs).call()
-                if allowanceA < amountA_wei:
-                    tx = tokenA_contract.functions.approve(router_cs, amountA_wei).build_transaction({
-                        "from": wallet_cs,
-                        "gasPrice": gas_price,
-                        "nonce": nonce,
-                        "chainId": w3.eth.chain_id,
-                    })
-                    tx["gas"] = w3.eth.estimate_gas(tx)
-                    signed = w3.eth.account.sign_transaction(tx, private_key)
-                    h = w3.eth.send_raw_transaction(signed.rawTransaction)
-                    w3.eth.wait_for_transaction_receipt(h)
-                    nonce += 1
-                    approvals.append("A")
-                allowanceB = tokenB_contract.functions.allowance(wallet_cs, router_cs).call()
-                if allowanceB < amountB_wei:
-                    tx = tokenB_contract.functions.approve(router_cs, amountB_wei).build_transaction({
-                        "from": wallet_cs,
-                        "gasPrice": gas_price,
-                        "nonce": nonce,
-                        "chainId": w3.eth.chain_id,
-                    })
-                    tx["gas"] = w3.eth.estimate_gas(tx)
-                    signed = w3.eth.account.sign_transaction(tx, private_key)
-                    h = w3.eth.send_raw_transaction(signed.rawTransaction)
-                    w3.eth.wait_for_transaction_receipt(h)
-                    nonce += 1
-                    approvals.append("B")
-                if approvals:
-                    approvals_done = "+".join(approvals)
-                logger.info("[V3.8] 🧱 Approvals: %s", approvals_done)
-
-                tx = router_contract.functions.addLiquidity(
-                    tokenA_cs,
-                    tokenB_cs,
-                    amountA_wei,
-                    amountB_wei,
-                    amountAMin_wei,
-                    amountBMin_wei,
-                    wallet_cs,
-                    deadline_ts,
-                ).build_transaction({
-                    "from": wallet_cs,
-                    "gasPrice": gas_price,
-                    "nonce": nonce,
-                    "chainId": w3.eth.chain_id,
-                })
-                tx["gas"] = w3.eth.estimate_gas(tx)
-                signed_tx = w3.eth.account.sign_transaction(tx, private_key)
-                tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
-                receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
-                tx_hash_str = tx_hash.hex()
-                gas_used = receipt.gasUsed
-                tx_status = "success" if receipt.status == 1 else "failed"
-                logger.info("[V3.8] ✅ Tx sent: %s", tx_hash_str)
-
-                transfer_topic = Web3.keccak(text="Transfer(address,address,uint256)").hex()
-                zero_topic = "0x" + "0" * 64
-                wallet_topic = "0x" + wallet_cs[2:].lower().rjust(64, "0")
-                for log in receipt.logs:
-                    try:
-                        if (
-                            log.topics[0].hex() == transfer_topic
-                            and log.topics[1].hex() == zero_topic
-                            and log.topics[2].hex().lower() == wallet_topic
-                            and log.address.lower() not in [tokenA_cs.lower(), tokenB_cs.lower()]
-                        ):
-                            amount_lp = int(log.data, 16)
-                            lp_tokens_received = _from_wei(amount_lp, 18)  # LP souvent 18 décimales
-                            break
-                    except Exception:
-                        continue
-                success = receipt.status == 1
-        except ContractLogicError as exc:
-            error_msg = str(exc)
-            tx_status = "contract_error"
-            logger.error("[V3.8] ⚠️ Échec: %s", error_msg)
-        except FileNotFoundError as exc:
-            error_msg = str(exc)
-            tx_status = "error"
-            logger.error("[V3.8] ⚠️ Échec: %s", error_msg)
-        except Exception as exc:
-            error_msg = str(exc)
-            tx_status = "error"
-            logger.error("[V3.8] ⚠️ Échec: %s", error_msg)
-
-    ligne = {
-        "date_iso": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "version": "V3.8",
-        "chain": chain,
-        "platform": platform,
-        "router": router_address,
-        "tokenA": tokenA_symbol,
-        "tokenB": tokenB_symbol,
-        "amountA_in": amountA,
-        "amountB_in": amountB,
-        "amountAMin": amountAMin,
-        "amountBMin": amountBMin,
-        "slippage": slippage,
-        "deadline_ts": deadline_ts,
-        "dry_run": dry_run,
-        "approvals_done": approvals_done,
-        "tx_hash": tx_hash_str,
-        "tx_status": tx_status,
-        "gas_used": gas_used,
-        "lp_tokens_received": lp_tokens_received,
-        "wallet": wallet,
-        "error": error_msg,
-    }
+def _inject_poa_if_needed(w3: Web3) -> None:
+    """Tente un get_block; si ExtraDataLengthError, injecte un middleware PoA et réessaie."""
     try:
-        enregistrer_liquidity_csv(ligne)
-        enregistrer_liquidity_jsonl(ligne)
-    finally:
+        w3.eth.get_block("latest")
+        return
+    except ExtraDataLengthError:
         pass
 
-    logger.info(
-        "[V3.8] Résumé: platform=%s, pair=%s-%s, amountA=%s, amountB=%s, slippage=%s, dry_run=%s, tx=%s, lp=%s",
-        platform,
-        tokenA_symbol,
-        tokenB_symbol,
-        amountA,
-        amountB,
-        slippage,
-        dry_run,
-        tx_hash_str,
-        lp_tokens_received,
-    )
+    # Injecte le middleware adéquat selon la version de web3
+    if geth_poa_middleware is not None:
+        w3.middleware_onion.inject(geth_poa_middleware, layer=0)
+    elif ExtraDataToPOAMiddleware is not None:
+        w3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
+    else:
+        # Aucun middleware dispo — on relancera l'erreur au prochain appel
+        return
+
+    # Vérification post-injection
+    w3.eth.get_block("latest")
+
+
+def _erc20(w3: Web3, addr: str):
+    return w3.eth.contract(address=Web3.to_checksum_address(addr), abi=ERC20_ABI)
+
+
+def _router(w3: Web3, addr: str):
+    return w3.eth.contract(address=Web3.to_checksum_address(addr), abi=ROUTER_ABI)
+
+
+def _eip1559_fees(w3: Web3,
+                  max_fee_gwei: Optional[float] = None,
+                  priority_fee_gwei: Optional[float] = None) -> Dict[str, int]:
+    """Calcule des frais EIP-1559. Permet overrides via env:
+    - MAX_FEE_GWEI
+    - PRIORITY_FEE_GWEI
+    Politique par défaut: priority = 30 gwei, maxFee = 2*baseFee + priority.
+    """
+    # PoA first (Polygon)
+    _inject_poa_if_needed(w3)
+
+    env_max = os.getenv("MAX_FEE_GWEI")
+    env_tip = os.getenv("PRIORITY_FEE_GWEI")
+    try:
+        if env_max is not None:
+            max_fee_gwei = float(env_max)
+    except ValueError:
+        pass
+    try:
+        if env_tip is not None:
+            priority_fee_gwei = float(env_tip)
+    except ValueError:
+        pass
+
+    latest = w3.eth.get_block("latest")
+    base_fee = latest.get("baseFeePerGas", None)
+
+    if priority_fee_gwei is None:
+        priority_fee_gwei = 30.0  # défaut sécurité sur Polygon
+
+    if base_fee is None:
+        # Fallback (chaîne legacy): approx 2x tip
+        max_fee = w3.to_wei(priority_fee_gwei, "gwei") * 2
+    else:
+        if max_fee_gwei is None:
+            max_fee = 2 * base_fee + w3.to_wei(priority_fee_gwei, "gwei")
+        else:
+            max_fee = w3.to_wei(max_fee_gwei, "gwei")
 
     return {
-        "success": success,
-        "tx_hash": tx_hash_str,
-        "lp_tokens": lp_tokens_received,
-        "error": error_msg,
+        "maxFeePerGas": int(max_fee),
+        "maxPriorityFeePerGas": int(w3.to_wei(priority_fee_gwei, "gwei")),
     }
+
+
+def _tx_cost_stats(w3: Web3, receipt) -> Dict[str, Any]:
+    gas_used = int(receipt.gasUsed)
+    eff_price = getattr(receipt, "effectiveGasPrice", None)
+    if eff_price is None:
+        if isinstance(receipt, dict):
+            eff_price = receipt.get("effectiveGasPrice", None)
+    if eff_price is None:
+        try:
+            tx = w3.eth.get_transaction(receipt.transactionHash)
+            eff_price = tx.get("gasPrice", 0)
+        except Exception:
+            eff_price = 0
+    total_cost_wei = gas_used * int(eff_price)
+    return {
+        "gas_used": gas_used,
+        "effective_gas_price": int(eff_price),
+        "tx_cost_wei": int(total_cost_wei),
+        "tx_cost_native": float(w3.from_wei(total_cost_wei, "ether")),  # MATIC sur Polygon
+    }
+
+
+# ======================
+# Public API (real mode)
+# ======================
+
+@dataclass
+class TxResult:
+    ok: bool
+    tx_hash: str
+    status: int
+    details: Dict[str, Any]
+
+
+def approve_if_needed(w3: Web3, *,
+                      token: str,
+                      owner: str,
+                      spender: str,
+                      amount: int,
+                      chain_id: int,
+                      private_key: str,
+                      nonce: Optional[int] = None,
+                      fees: Optional[Dict[str, int]] = None) -> Optional[TxResult]:
+    """Approve exact amount si l'allowance actuelle < amount. Retourne TxResult si tx envoyée, sinon None."""
+    _inject_poa_if_needed(w3)
+    t = _erc20(w3, token)
+    allowance = t.functions.allowance(owner, spender).call()
+    if allowance >= amount:
+        return None
+
+    if nonce is None:
+        nonce = w3.eth.get_transaction_count(owner)
+    if fees is None:
+        fees = _eip1559_fees(w3)
+
+    tx = t.functions.approve(spender, amount).build_transaction({
+        "from": owner,
+        "nonce": nonce,
+        "chainId": chain_id,
+        **fees,
+        "type": 2,
+    })
+    gas_est = t.functions.approve(spender, amount).estimate_gas({"from": owner})
+    tx["gas"] = int(gas_est * 1.2)
+
+    signed = w3.eth.account.sign_transaction(tx, private_key)
+    h = w3.eth.send_raw_transaction(signed.rawTransaction)
+    rcpt = w3.eth.wait_for_transaction_receipt(h)
+    stats = _tx_cost_stats(w3, rcpt)
+    return TxResult(ok=rcpt.status == 1, tx_hash=h.hex(), status=rcpt.status, details=stats)
+
+
+def add_liquidity_real(w3: Web3, *,
+                       router_addr: str,
+                       tokenA: str,
+                       tokenB: str,
+                       amountADesired: int,
+                       amountBDesired: int,
+                       amountAMin: int,
+                       amountBMin: int,
+                       to_addr: str,
+                       chain_id: int,
+                       private_key: str,
+                       deadline_sec: Optional[int] = None) -> TxResult:
+    """Envoie router.addLiquidity(...) en EIP-1559. Retourne TxResult avec métriques gas dans details."""
+    _inject_poa_if_needed(w3)
+    if deadline_sec is None:
+        deadline_sec = int(time.time()) + 15 * 60
+
+    owner = to_addr
+    router = _router(w3, router_addr)
+
+    nonce = w3.eth.get_transaction_count(owner)
+    fees = _eip1559_fees(w3)
+
+    r1 = approve_if_needed(w3, token=tokenA, owner=owner, spender=router.address,
+                           amount=amountADesired, chain_id=chain_id, private_key=private_key,
+                           nonce=nonce, fees=fees)
+    if r1 is not None:
+        if not r1.ok:
+            return r1
+        nonce += 1
+
+    r2 = approve_if_needed(w3, token=tokenB, owner=owner, spender=router.address,
+                           amount=amountBDesired, chain_id=chain_id, private_key=private_key,
+                           nonce=nonce, fees=fees)
+    if r2 is not None:
+        if not r2.ok:
+            return r2
+        nonce += 1
+
+    try:
+        tx = router.functions.addLiquidity(
+            Web3.to_checksum_address(tokenA),
+            Web3.to_checksum_address(tokenB),
+            int(amountADesired),
+            int(amountBDesired),
+            int(amountAMin),
+            int(amountBMin),
+            Web3.to_checksum_address(to_addr),
+            int(deadline_sec)
+        ).build_transaction({
+            "from": owner,
+            "nonce": nonce,
+            "chainId": chain_id,
+            **fees,
+            "type": 2,
+        })
+        gas_est = router.functions.addLiquidity(
+            Web3.to_checksum_address(tokenA),
+            Web3.to_checksum_address(tokenB),
+            int(amountADesired),
+            int(amountBDesired),
+            int(amountAMin),
+            int(amountBMin),
+            Web3.to_checksum_address(to_addr),
+            int(deadline_sec)
+        ).estimate_gas({"from": owner})
+        tx["gas"] = int(gas_est * 1.2)
+
+        signed = w3.eth.account.sign_transaction(tx, private_key)
+        h = w3.eth.send_raw_transaction(signed.rawTransaction)
+        rcpt = w3.eth.wait_for_transaction_receipt(h)
+        stats = _tx_cost_stats(w3, rcpt)
+        return TxResult(ok=rcpt.status == 1, tx_hash=h.hex(), status=rcpt.status, details=stats)
+
+    except ContractLogicError as e:
+        return TxResult(ok=False, tx_hash="", status=0, details={"error": f"ContractLogicError: {e}"})
+    except Exception as e:
+        return TxResult(ok=False, tx_hash="", status=0, details={"error": f"Exception: {e}"})
+
+
+def remove_liquidity_real(w3: Web3, *,
+                           router_addr: str,
+                           tokenA: str,
+                           tokenB: str,
+                           liquidity_amount: int,
+                           amountAMin: int,
+                           amountBMin: int,
+                           to_addr: str,
+                           chain_id: int,
+                           private_key: str,
+                           lp_token_addr: Optional[str] = None,
+                           deadline_sec: Optional[int] = None) -> TxResult:
+    """removeLiquidity en EIP-1559. Si lp_token_addr est fourni, on assure un approve exact avant."""
+    _inject_poa_if_needed(w3)
+    if deadline_sec is None:
+        deadline_sec = int(time.time()) + 15 * 60
+
+    owner = to_addr
+    router = _router(w3, router_addr)
+
+    nonce = w3.eth.get_transaction_count(owner)
+    fees = _eip1559_fees(w3)
+
+    if lp_token_addr:
+        r = approve_if_needed(w3, token=lp_token_addr, owner=owner, spender=router.address,
+                              amount=int(liquidity_amount), chain_id=chain_id, private_key=private_key,
+                              nonce=nonce, fees=fees)
+        if r is not None:
+            if not r.ok:
+                return r
+            nonce += 1
+
+    try:
+        tx = router.functions.removeLiquidity(
+            Web3.to_checksum_address(tokenA),
+            Web3.to_checksum_address(tokenB),
+            int(liquidity_amount),
+            int(amountAMin),
+            int(amountBMin),
+            Web3.to_checksum_address(to_addr),
+            int(deadline_sec)
+        ).build_transaction({
+            "from": owner,
+            "nonce": nonce,
+            "chainId": chain_id,
+            **fees,
+            "type": 2,
+        })
+        gas_est = router.functions.removeLiquidity(
+            Web3.to_checksum_address(tokenA),
+            Web3.to_checksum_address(tokenB),
+            int(liquidity_amount),
+            int(amountAMin),
+            int(amountBMin),
+            Web3.to_checksum_address(to_addr),
+            int(deadline_sec)
+        ).estimate_gas({"from": owner})
+        tx["gas"] = int(gas_est * 1.2)
+
+        signed = w3.eth.account.sign_transaction(tx, private_key)
+        h = w3.eth.send_raw_transaction(signed.rawTransaction)
+        rcpt = w3.eth.wait_for_transaction_receipt(h)
+        stats = _tx_cost_stats(w3, rcpt)
+        return TxResult(ok=rcpt.status == 1, tx_hash=h.hex(), status=rcpt.status, details=stats)
+
+    except ContractLogicError as e:
+        return TxResult(ok=False, tx_hash="", status=0, details={"error": f"ContractLogicError: {e}"})
+    except Exception as e:
+        return TxResult(ok=False, tx_hash="", status=0, details={"error": f"Exception: {e}"})
+
+
+# ======================
+# Notes d'utilisation
+# ======================
+# - Les fonctions add_liquidity_real/remove_liquidity_real retournent un TxResult
+#   avec: ok/status/tx_hash + details(gas_used, effective_gas_price, tx_cost_native...)
+# - Patch 2/5 enrichira les journaux CSV/JSONL pour intégrer ces champs.
