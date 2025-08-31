@@ -47,3 +47,18 @@ journal_liquidite.jsonl
 # Python cache
 __pycache__/
 *.pyc
+
+# Secrets (ne pas versionner)
+.env
+.env.*
+real_wallet.json
+config/wallets.json
+
+# Logs & artefacts (ne pas versionner)
+logs/
+*.log
+*.jsonl
+journal_liquidite.backup*.csv
+
+# Journal CSV local, ne pas versionner
+journal_liquidite.csv
