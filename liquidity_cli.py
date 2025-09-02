@@ -1,81 +1,148 @@
-# liquidity_cli.py — Patch 3/5 (garde-fous exécution réelle) – V3.8.1
-# ✅ FICHIER COMPLET
-# Ce fichier contient maintenant l'intégralité du patch 3/5 :
-# - Ajout des flags CLI (--send et --confirm)
-# - Fonction validate_real_execution()
-# - Documentation d'intégration et messages utilisateurs
+# liquidity_cli.py – V3.8 R9-CLI-3
+"""
+DeFiPilot — CLI d'ajout de liquidité (R9-CLI-3)
+FR: Options complètes + branchement du mode réel sans exécution.
+EN: Full CLI options with real mode wired but execution disabled in this step.
+"""
 
 from __future__ import annotations
-import os, sys
-from typing import Optional
+
 import argparse
+import json
+import sys
+from typing import Any, Dict, List, Optional
 
-# Création du parser principal
-parser = argparse.ArgumentParser(description="Outil de gestion de liquidité DeFiPilot")
-subparsers = parser.add_subparsers(dest="command")
+# Imports EXACTS (respect de la casse et des signatures)
+from core.liquidity_dryrun import simuler_ajout_liquidite as add_liquidity_dryrun
+from core.journal import enregistrer_liquidity_csv as enregistrer_liquidite_dryrun
+try:
+    from core.liquidity_real_tx import add_liquidity_real_safe  # câblé, NON appelé ici
+except Exception:  # module optionnel selon l'état du repo
+    add_liquidity_real_safe = None  # type: ignore
 
-# Sous-commande add_liquidity
-add_liq_parser = subparsers.add_parser("add_liquidity", help="Ajouter de la liquidité")
-add_liq_parser.add_argument("--amountA", type=float, required=True, help="Montant du token A")
-add_liq_parser.add_argument("--amountB", type=float, required=True, help="Montant du token B")
-add_liq_parser.add_argument("--dry-run", action="store_true", help="Mode simulation, pas d'envoi réel")
-add_liq_parser.add_argument("--send", action="store_true", help="Exécute EN RÉEL (sinon dry-run)")
-add_liq_parser.add_argument("--confirm", type=str, default="", help="Texte de confirmation explicite. Exiger 'ADD_LIQUIDITY'")
 
-# Fonction pour vérifier les variables d'environnement
-def _env_var_present(*names: str) -> bool:
-    for n in names:
-        v = os.getenv(n)
-        if v and v.strip():
-            return True
-    return False
+# ------------------------------ Helpers ------------------------------------
 
-# Fonction de validation avant envoi réel
-def validate_real_execution(*, is_dry_run: bool, send_flag: bool, confirm_text: str,
-                            expected_confirm: str = "ADD_LIQUIDITY",
-                            chain_hint: Optional[str] = None) -> None:
-    if is_dry_run:
-        return
+def _parse_pool_json(raw: str) -> Dict[str, Any]:
+    """Parse et valide un objet JSON représentant la pool."""
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"pool-json invalide: {exc}") from exc
+    if not isinstance(data, dict):
+        raise ValueError("pool-json doit être un objet JSON")
+    return data
 
-    if not send_flag:
-        print("Refusé: exécution réelle sans --send.\nAjoutez --send pour autoriser l'envoi.", file=sys.stderr)
-        raise SystemExit(2)
 
-    if confirm_text != expected_confirm:
-        print(f"Refusé: confirmation invalide. Attendu: {expected_confirm!r}.\nUtilisez: --confirm \"{expected_confirm}\"", file=sys.stderr)
-        raise SystemExit(2)
+# ------------------------------ Commands -----------------------------------
 
-    has_rpc = _env_var_present("POLYGON_RPC_URL", "RPC_POLYGON", "RPC_URL", "RPC")
-    if not has_rpc:
-        hint = f" pour la chaîne {chain_hint}" if chain_hint else ""
-        print(f"Refusé: aucune variable RPC détectée{hint}. Définissez-la dans .env", file=sys.stderr)
-        raise SystemExit(2)
+def cmd_selftest(_: argparse.Namespace) -> int:
+    ok_dry = callable(add_liquidity_dryrun)
+    ok_real = (add_liquidity_real_safe is not None)
+    if ok_dry and ok_real:
+        print("[V3.8] ✅ Imports OK: add_liquidity_dryrun & add_liquidity_real_safe")
+        return 0
+    if ok_dry and not ok_real:
+        print("[V3.8] ⚠️ Import dry-run OK ; import real optionnel absent (normal si module non présent)")
+        return 0
+    print("[V3.8] ❌ Import dry-run manquant")
+    return 2
 
-    if not _env_var_present("PRIVATE_KEY", "WALLET_PRIVATE_KEY"):
-        print("Refusé: aucune PRIVATE_KEY détectée dans .env.", file=sys.stderr)
-        raise SystemExit(2)
 
-# Exemple d'utilisation (à placer dans la fonction qui gère add_liquidity)
-def execute_add_liquidity(args):
-    validate_real_execution(
-        is_dry_run=args.dry_run,
-        send_flag=args.send,
-        confirm_text=args.confirm,
-        expected_confirm="ADD_LIQUIDITY",
-        chain_hint="polygon"
+def cmd_add_liquidity(args: argparse.Namespace) -> int:
+    # Exclusivité des modes
+    if args.dry_run and args.real:
+        print("[V3.8] ⚠️ Conflit: --dry-run et --real ne peuvent pas être utilisés ensemble")
+        return 2
+
+    # Validations de base
+    if args.amountA <= 0 or args.amountB <= 0:
+        print("[V3.8] ⚠️ Échec: amountA et amountB doivent être > 0")
+        return 2
+    if args.slippage_bps < 0:
+        print("[V3.8] ⚠️ Échec: slippage-bps doit être >= 0")
+        return 2
+
+    # Parse du JSON de pool
+    try:
+        pool = _parse_pool_json(args.pool_json)
+    except ValueError as exc:
+        print(f"[V3.8] ⚠️ Erreur parsing pool: {exc}")
+        return 2
+
+    # Mode dry-run (exécute la simulation + journalisation)
+    if args.dry_run or not args.real:
+        try:
+            res = add_liquidity_dryrun(
+                pool=pool,
+                amountA=float(args.amountA),
+                amountB=float(args.amountB),
+                slippage_bps=int(args.slippage_bps),
+            )
+        except Exception as exc:  # garde-fou
+            print(f"[V3.8] ❌ Dry-run a échoué: {exc}")
+            return 1
+        # Journalisation (meilleure-effort)
+        try:
+            enregistrer_liquidite_dryrun(res)
+        except Exception as jexc:
+            print(f"[V3.8] ⚠️ Journalisation dry-run échouée: {jexc}")
+        print(json.dumps(res, ensure_ascii=False, indent=2))
+        return 0
+
+    # Mode réel câblé mais non exécuté à cette étape
+    if args.real:
+        print("[V3.8] Mode réel câblé (import OK) mais non exécuté à cette étape (R9-CLI-3).")
+        print('Utilisez --confirm "ADD_LIQUIDITY" et passez à l\'étape suivante pour activer l\'exécution.')
+        return 2
+
+    # Sécurité par défaut
+    print("[V3.8] Rien à faire (ni --dry-run ni --real)")
+    return 2
+
+
+# ------------------------------ Parser -------------------------------------
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="liquidity_cli",
+        description="DeFiPilot — CLI add_liquidity (V3.8 R9-CLI-3)",
     )
-    if args.dry_run:
-        print("[DRY-RUN] Ajout de liquidité simulé.")
-    else:
-        print("[RÉEL] Ajout de liquidité lancé.")
+    parser.add_argument(
+        "--version",
+        action="version",
+        version="DeFiPilot liquidity CLI V3.8 R9-CLI-3",
+    )
 
-# Main
-def main():
-    args = parser.parse_args()
-    if args.command == "add_liquidity":
-        execute_add_liquidity(args)
-    else:
+    subparsers = parser.add_subparsers(dest="command")
+
+    # selftest
+    p_self = subparsers.add_parser("selftest", help="Vérifie les imports (dry-run & real)")
+    p_self.set_defaults(func=cmd_selftest)
+
+    # add_liquidity
+    p_add = subparsers.add_parser("add_liquidity", help="Ajouter de la liquidité")
+    mode = p_add.add_mutually_exclusive_group(required=False)
+    mode.add_argument("--dry-run", action="store_true", help="Simulation sans envoi (par défaut)")
+    mode.add_argument("--real", action="store_true", help="Mode réel câblé (non exécuté ici)")
+    p_add.add_argument("--amountA", type=float, required=True, help="Montant token A")
+    p_add.add_argument("--amountB", type=float, required=True, help="Montant token B")
+    p_add.add_argument("--slippage-bps", type=int, default=50, help="Tolérance slippage en bps (50 = 0.5%)")
+    p_add.add_argument("--pool-json", type=str, required=True, help="Objet JSON décrivant la pool")
+    p_add.add_argument("--confirm", type=str, default="", help="Confirmation explicite pour le mode réel (étape suivante)")
+    p_add.set_defaults(func=cmd_add_liquidity)
+
+    return parser
+
+
+def main(argv: Optional[List[str]] = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    if not hasattr(args, "func"):
         parser.print_help()
+        return 2
+    return args.func(args)
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
