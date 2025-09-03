@@ -99,7 +99,7 @@ def _estimate_lp(
 
 # -------------------------------- Fonction publique --------------------------------
 
-def simuler_ajout_liquidite(
+def ajouter_liquidite_dryrun(
     pool: Dict[str, Any],
     amountA: float,
     amountB: float,
@@ -170,3 +170,4 @@ if __name__ == "__main__":
     }
     result = simuler_ajout_liquidite(exemple_pool, 10.0, 0.01, slippage_bps=50)
     print(result)
+simuler_ajout_liquidite = ajouter_liquidite_dryrun
