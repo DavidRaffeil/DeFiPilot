@@ -14,7 +14,7 @@ from typing import Any, Dict, List, Optional
 
 # ------------------------------ Imports -------------------------------------
 # Dry-run exact import (keep alias for CLI coherence)
-from core.liquidity_dryrun import simuler_ajout_liquidite as add_liquidity_dryrun
+from core.liquidity_dryrun import ajouter_liquidite_dryrun as add_liquidity_dryrun
 # Journalisation CSV (alias conservé pour compatibilité interne)
 from core.journal import enregistrer_liquidity_csv as enregistrer_liquidite_dryrun
 
