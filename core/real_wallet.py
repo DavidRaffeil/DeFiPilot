@@ -1,4 +1,4 @@
-# core/real_wallet.py – V3.8 (patch dotenv explicite + dérivation adresse sans RPC)
+# core/real_wallet.py – V3.8.5 (patch signature get_wallet_address)
 """
 Gestion du wallet réel (lecture .env, récupération adresse et clé privée).
 """
@@ -14,6 +14,7 @@ load_dotenv(dotenv_path=_ENV_PATH, override=True)
 
 from eth_account import Account
 from web3 import Web3
+from typing import Optional
 
 # (Re)lire les variables d'env après chargement
 _DEF_RPC = os.getenv("POLYGON_RPC_URL") or os.getenv("WEB3_PROVIDER_URL")
@@ -36,8 +37,9 @@ def get_private_key() -> str:
     return _normalize_pk(pk)
 
 
-def get_wallet_address() -> str:
+def get_wallet_address(name: Optional[str] = None) -> str:
     """Retourne l'adresse publique checksum du wallet.
+    Paramètre `name` toléré pour compatibilité (non utilisé ici).
 
     - Si PRIVATE_KEY est définie, dérive l'adresse à partir de la clé (sans besoin de RPC).
     - Sinon, utilise WALLET_ADDRESS (variable d'environnement).
