@@ -62,3 +62,21 @@ journal_liquidite.backup*.csv
 
 # Journal CSV local, ne pas versionner
 journal_liquidite.csv
+
+cat >> .gitignore << 'EOF'
+# --- Local artifacts ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Dev backups
+*.backup.*.py
+
+# Local CSV logs
+journal_*.csv
+
+# OS junk
+.DS_Store
+Thumbs.db
+EOF
