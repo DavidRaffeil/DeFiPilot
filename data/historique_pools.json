@@ -1,0 +1,14 @@
+{
+  "uniswap | USDC-ETH": {
+    "count": 5,
+    "total_gain": 2.8600000000000003
+  },
+  "sushiswap | DAI-ETH": {
+    "count": 4,
+    "total_gain": 2.06
+  },
+  "curve | USDT-BTC": {
+    "count": 4,
+    "total_gain": 1.42
+  }
+}
