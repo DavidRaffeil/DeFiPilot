@@ -1,198 +1,101 @@
-# liquidity_cli.py – V3.8.2-CLI
-"""DeFiPilot — CLI add_liquidity (dry-run ou réel via wrapper)
+# liquidity_cli.py – V3.8 R9-CLI-2
+"""DeFiPilot – CLI pour simuler un ajout de liquidité (dry-run seulement).
 
-Usage (dry-run):
-  python liquidity_cli.py add_liquidity \
-    --dry-run \
-    --amountA 10 \
-    --amountB 0.01 \
-    --slippage-bps 50 \
-    --deadline 15 \
-    --pool-json '{"platform":"sushiswap","chain":"polygon","tokenA_symbol":"USDC","tokenB_symbol":"WETH","decimalsA":6,"decimalsB":18}'
+Exemples d'usage :
+    python liquidity_cli.py add_liquidity --amountA 10 --amountB 0.01
+    python liquidity_cli.py add_liquidity --amountA 0.5 --amountB 0.00012 --slippage-bps 50 --deadline 15
+    python liquidity_cli.py add_liquidity --amountA 1 --amountB 0.001 --pool-json '{"platform":"sushiswap","chain":"polygon","router_address":"0x...","tokenA_symbol":"USDC","tokenB_symbol":"WETH","tokenA_address":"0x...","tokenB_address":"0x..."}'
 
-Usage (réel placeholder via wrapper):
-  python liquidity_cli.py add_liquidity \
-    --real \
-    --amountA 0.50 \
-    --amountB 0.00012 \
-    --slippage-bps 50 \
-    --deadline 15 \
-    --pool-json '{"platform":"sushiswap","chain":"polygon","tokenA_symbol":"USDC","tokenB_symbol":"WETH","decimalsA":6,"decimalsB":18}'
+Note : cette étape R9-CLI-2 gère UNIQUEMENT le dry-run.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import logging
 import sys
-from decimal import Decimal
-from pathlib import Path
 from typing import Any, Dict, Optional, List
 
-# Dry-run
-from core.liquidity_dryrun import simuler_ajout_liquidite
-from core.journal import enregistrer_liquidite_dryrun
+# Import dry-run EXACT (exigé par R9-CLI-2)
+from core.liquidity_dryrun import ajouter_liquidite_dryrun as add_liquidity_dryrun
 
-# Journalisation optionnelle (CSV/JSONL) — tolérant si absent ou renommé
-try:
-    from core.journal import enregistrer_liquidity_csv, enregistrer_liquidity_jsonl  # type: ignore
-except Exception:  # pragma: no cover
-    def enregistrer_liquidity_csv(*args: Any, **kwargs: Any) -> None:  # type: ignore
-        pass
-    def enregistrer_liquidity_jsonl(*args: Any, **kwargs: Any) -> None:  # type: ignore
-        pass
-
-# Wrapper réel moderne (pool en 1er)
-try:
-    from core.liquidity_real_tx import add_liquidity_real_safe  # type: ignore
-except Exception:  # pragma: no cover
-    add_liquidity_real_safe = None  # type: ignore
+# Pool par défaut si --pool-json non fourni (placeholders sûrs)
+DEFAULT_POOL: Dict[str, Any] = {
+    "platform": "sushiswap",
+    "chain": "polygon",
+    "router_address": "0x0000000000000000000000000000000000000000",
+    "tokenA_symbol": "USDC",
+    "tokenB_symbol": "WETH",
+    "tokenA_address": "0x0000000000000000000000000000000000000000",
+    "tokenB_address": "0x0000000000000000000000000000000000000000",
+}
 
 
-# ---------------------------------------------------------------------------
-# Utilitaires
-# ---------------------------------------------------------------------------
+def parse_pool_json(value: Optional[str]) -> Dict[str, Any]:
+    """Parse un JSON inline ou depuis un fichier ; retourne DEFAULT_POOL si absent.
+    Lève ValueError si le contenu fourni est invalide.
+    """
+    if not value:
+        return dict(DEFAULT_POOL)
+    try:
+        # JSON inline ?
+        v = value.strip()
+        if v.startswith("{"):
+            return json.loads(v)
+        # Sinon, chemin de fichier
+        with open(v, "r", encoding="utf-8") as fh:
+            return json.load(fh)
+    except Exception as exc:
+        raise ValueError(f"pool-json invalide: {exc}") from exc
 
-def _decimalize(value: str | float | int) -> Decimal:
-    return Decimal(str(value))
 
-
-def _load_pool_json(content: str) -> Dict[str, Any]:
-    """Accepte soit un chemin de fichier JSON, soit une chaîne JSON inline."""
-    p = Path(content)
-    if p.exists():
-        with p.open("r", encoding="utf-8") as f:
-            return json.load(f)
-    return json.loads(content)
-
-
-def _print_result(title: str, res: Any) -> None:
+def print_json(title: str, payload: Any) -> None:
     print(f"\n—— {title} ——")
     try:
-        print(json.dumps(res, indent=2, ensure_ascii=False, default=str))
+        print(json.dumps(payload, indent=2, ensure_ascii=False, default=str))
     except Exception:
-        print(res)
-
-
-def _log_add_liquidity(
-    platform: str,
-    chain: str,
-    tokenA_symbol: str,
-    tokenB_symbol: str,
-    amountA: Decimal,
-    amountB: Decimal,
-) -> None:
-    ligne = {
-        "platform": platform,
-        "chain": chain,
-        "tokenA": tokenA_symbol,
-        "tokenB": tokenB_symbol,
-        "amountA": float(amountA),
-        "amountB": float(amountB),
-    }
-    try:
-        enregistrer_liquidity_csv(ligne)
-    except Exception:
-        pass
-    try:
-        enregistrer_liquidity_jsonl(ligne)
-    except Exception:
-        pass
+        print(str(payload))
 
 
 # ---------------------------------------------------------------------------
-# Implémentations commandes
+# Commande: add_liquidity (dry-run)
 # ---------------------------------------------------------------------------
 
-def add_liquidity_dryrun(
-    pool: Dict[str, Any],
-    amountA: Decimal,
-    amountB: Decimal,
-    slippage_bps: int,
-) -> Dict[str, Any]:
-    res = simuler_ajout_liquidite(
-        pool=pool,
-        amountA=float(amountA),
-        amountB=float(amountB),
-        slippage_bps=int(slippage_bps),
-    )
-    try:
-        enregistrer_liquidite_dryrun(res)
-    finally:
-        pass
-    return res
-
-
-def run_add_liquidity(args: argparse.Namespace) -> int:
+def run_add_liquidity_dryrun(args: argparse.Namespace) -> int:
     # Lecture/validation des arguments
-    mode_real = bool(args.real)
     try:
-        amountA = _decimalize(args.amountA)
-        amountB = _decimalize(args.amountB)
+        amountA = float(args.amountA)
+        amountB = float(args.amountB)
+        if amountA <= 0 or amountB <= 0:
+            raise ValueError("amountA et amountB doivent être > 0")
         slippage_bps = int(args.slippage_bps)
-        deadline_minutes = int(args.deadline)
-        deadline_seconds = deadline_minutes * 60
-        pool = _load_pool_json(args.pool_json)
-    except Exception as e:
-        print(f"⛔ Args invalides: {e}")
+        # deadline conservée pour compat future, non utilisée par le dry-run
+        _deadline_minutes = int(args.deadline)
+        pool = parse_pool_json(args.pool_json)
+    except Exception as exc:
+        print_json("Args invalides", {"ok": False, "error": str(exc)})
         return 2
 
-    platform = pool.get("platform", "?")
-    chain = pool.get("chain", "?")
-    tokenA_symbol = pool.get("tokenA_symbol", "?")
-    tokenB_symbol = pool.get("tokenB_symbol", "?")
-
-    print("================ DeFiPilot CLI ================")
-    print(f"Mode: {'RÉEL' if mode_real else 'SIMULATION'}")
-    print(f"Plateforme: {platform} | Réseau: {chain} | Paire: {tokenA_symbol}/{tokenB_symbol}")
-
-    # Mode dry-run inchangé
-    if not mode_real:
-        try:
-            result = add_liquidity_dryrun(
-                pool=pool,
-                amountA=amountA,
-                amountB=amountB,
-                slippage_bps=slippage_bps,
-            )
-            _print_result("Résultat (dry-run)", result)
-            return 0
-        except Exception as e:
-            print(f"⛔ Dry-run échoué: {e}")
-            return 1
-
-    # Mode réel — via wrapper moderne (pool en 1er)
+    # Appel du dry-run (respect strict de la signature)
     try:
-        if add_liquidity_real_safe is None:
-            raise RuntimeError("add_liquidity_real_safe indisponible")
-        res = add_liquidity_real_safe(
+        result = add_liquidity_dryrun(
             pool=pool,
-            amountA=float(amountA),
-            amountB=float(amountB),
+            amountA=amountA,
+            amountB=amountB,
             slippage_bps=slippage_bps,
-            deadline=deadline_seconds,
-            dry_run=False,
         )
-        success = False
-        if hasattr(res, "ok"):
-            success = bool(res.ok)
-        elif isinstance(res, dict):
-            success = bool(res.get("success"))
-        if success:
-            _log_add_liquidity(
-                platform,
-                chain,
-                tokenA_symbol,
-                tokenB_symbol,
-                amountA,
-                amountB,
-            )
-        _print_result("Résultat (réel)", res)
-        return 0 if success else 2
-    except Exception as e:
-        print(f"⛔ Opération échouée: {e}")
+    except Exception as exc:
+        print_json("Dry-run échoué", {"ok": False, "error": str(exc)})
         return 1
+
+    # Sortie utilisateur
+    print_json("Résultat (dry-run)", result)
+
+    # Code de sortie basé sur clés usuelles
+    ok = True
+    if isinstance(result, dict):
+        ok = bool(result.get("ok", result.get("success", True)))
+    return 0 if ok else 1
 
 
 # ---------------------------------------------------------------------------
@@ -200,24 +103,17 @@ def run_add_liquidity(args: argparse.Namespace) -> int:
 # ---------------------------------------------------------------------------
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        prog="liquidity_cli",
-        description="DeFiPilot — CLI add_liquidity (V3.8.2)",
-    )
-    subparsers = parser.add_subparsers(dest="command")
+    parser = argparse.ArgumentParser(prog="liquidity_cli", description="CLI DeFiPilot (dry-run)")
+    sub = parser.add_subparsers(dest="command")
 
-    add_parser = subparsers.add_parser("add_liquidity", help="Ajouter de la liquidité")
-    mx = add_parser.add_mutually_exclusive_group(required=True)
-    mx.add_argument("--dry-run", action="store_true", help="Simulation sans envoi")
-    mx.add_argument("--real", action="store_true", help="Transaction réelle")
+    add_p = sub.add_parser("add_liquidity", help="Simule un ajout de liquidité (dry-run)")
+    add_p.add_argument("--amountA", type=float, required=True, help="Montant du token A")
+    add_p.add_argument("--amountB", type=float, required=True, help="Montant du token B")
+    add_p.add_argument("--slippage-bps", type=int, default=50, help="Tolérance de slippage en basis points")
+    add_p.add_argument("--deadline", type=int, default=15, help="Deadline en minutes (compat)")
+    add_p.add_argument("--pool-json", type=str, help="Objet JSON inline ou chemin vers fichier JSON pour la pool")
+    add_p.set_defaults(func=run_add_liquidity_dryrun)
 
-    add_parser.add_argument("--amountA", type=float, required=True, help="Montant token A")
-    add_parser.add_argument("--amountB", type=float, required=True, help="Montant token B")
-    add_parser.add_argument("--slippage-bps", type=int, default=50, help="Tolérance slippage en basis points (50 = 0.5%)")
-    add_parser.add_argument("--deadline", type=int, default=20, help="Deadline en minutes")
-    add_parser.add_argument("--pool-json", type=str, required=True, help="Objet JSON décrivant la pool ou chemin de fichier JSON")
-
-    add_parser.set_defaults(func=run_add_liquidity)
     return parser
 
 
@@ -226,12 +122,11 @@ def build_parser() -> argparse.ArgumentParser:
 # ---------------------------------------------------------------------------
 
 def main(argv: Optional[List[str]] = None) -> int:
-    logging.basicConfig(level=logging.INFO)
     parser = build_parser()
     args = parser.parse_args(argv)
     if not hasattr(args, "func"):
         parser.print_help()
-        return 2
+        return 0
     return args.func(args)
 
 
