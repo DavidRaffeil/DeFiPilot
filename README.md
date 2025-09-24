@@ -31,14 +31,25 @@ Vision complète de l’écosystème et futurs bots :
 
 ## Nouveautés / What's New
 
+### 🔹 Version V3.8 – Ajout de liquidité réel (2025-09-24)
+
+- **FR :** Première exécution réussie d’**ajout de liquidité réel** sur Polygon (SushiSwap, paire USDC/WETH), avec réception de tokens LP. Intégration des **approvals**, du **contrôle du ratio et slippage**, du **post-check des soldes** et de la **journalisation CSV/JSONL**. Ajout d’un **CLI** (dry-run et réel).
+- **EN :** First successful **real liquidity add** on Polygon (SushiSwap, USDC/WETH pair), with LP tokens received. Includes **approvals**, **ratio and slippage checks**, **post-check of balances**, and **CSV/JSONL logging**. Added a **CLI** (dry-run and real).
+
+Fichiers concernés / Related files :
+- `core/liquidity_real_tx.py` — fonction `ajouter_liquidite_reelle(...)`
+- `core/liquidity_dryrun.py` — fonction `ajouter_liquidite_dryrun(...)`
+- `core/journal.py` — journaux enrichis (CSV + JSONL)
+- `liquidity_cli.py` — CLI pour dry-run et réel
+
 ### 🔹 Version V3.7 – Swap réel sur DEX Polygon (2025-08-10)
 
 - **FR :** Exécution de **swaps réels** sur Polygon via un router **Uniswap V2** (SushiSwap V2), avec **slippage**, **approve automatique**, **confirmation avant envoi**, et **journalisation**.
 - **EN :** Perform **real swaps** on Polygon via an **Uniswap V2**-style router (SushiSwap V2), with **slippage**, **auto-approve**, **pre-send confirmation**, and **logging**.
 
-Fichiers concernés :
-- `core/swap_reel.py` — fonction `effectuer_swap_reel(...)` (slippage_bps, require_confirmation/confirm, dry_run, wait_receipt, gas override).
-- `test_swap_reel_cli.py` — CLI de test (dry-run / envoi réel).
+Fichiers concernés / Related files :
+- `core/swap_reel.py` — fonction `effectuer_swap_reel(...)`
+- `test_swap_reel_cli.py` — CLI de test (dry-run / envoi réel)
 
 ### 🔹 Version V3.6 – Wallet réel (2025-08-10)
 
@@ -51,8 +62,7 @@ Fichiers concernés :
 
 | Version | État | Contenu FR / EN |
 | ------: | :--: | --------------- |
-| `v3.7`  | ✅   | **FR :** Swap réel sur Polygon (SushiSwap V2). **EN:** Real swap on Polygon (SushiSwap V2). |
-| `v3.8`  | 🛠️  | **FR :** Ajout de liquidité réelle sur DEX (LP). **EN:** Real DEX liquidity add (LP). |
+| `v3.8`  | ✅   | **FR :** Ajout de liquidité réelle sur DEX (LP). **EN:** Real DEX liquidity add (LP). |
 | `v3.9`  | 🛠️  | **FR :** Farming LP réel (staking, récolte). **EN:** Real LP farming (staking, harvest). |
 | `v4.0`  | 🛠️  | **FR :** Mode réel complet (stratégie auto, retraits, reprise). **EN:** Full real mode (auto strategy, withdrawals, resume). |
 
@@ -71,6 +81,8 @@ Fichiers concernés :
   **EN :** Real wallet on Polygon, multi-wallet support.
 - **FR :** **Swaps réels** sur Polygon (SushiSwap V2) avec slippage et confirmation.  
   **EN :** **Real swaps** on Polygon (SushiSwap V2) with slippage and confirmation.
+- **FR :** **Ajout de liquidité réel** (SushiSwap V2, Polygon) avec tokens LP reçus et post-check.  
+  **EN :** **Real liquidity add** (SushiSwap V2, Polygon) with LP tokens received and post-check.
 - **FR :** Interface graphique simple (Tkinter) pour la simulation.  
   **EN :** Simple GUI (Tkinter) for simulation.
 
@@ -82,41 +94,34 @@ Fichiers concernés :
 ```bash
 git clone https://github.com/DavidRaffeil/DeFiPilot.git
 cd DeFiPilot
-Installer les dépendances
+```
 
-bash
-Copier
-Modifier
+2) **Installer les dépendances**
+```bash
 pip install -r requirements.txt
-Configurer l’environnement Polygon
+```
 
-Définir POLYGON_RPC_URL (ex : https://polygon-rpc.com ou votre provider).
+3) **Configurer l’environnement Polygon**
+
+Définir `POLYGON_RPC_URL` (ex : https://polygon-rpc.com ou votre provider).
 
 Linux/macOS :
-
-bash
-Copier
-Modifier
+```bash
 export POLYGON_RPC_URL="https://polygon-rpc.com"
+```
 Windows (Git Bash, session courante) :
-
-bash
-Copier
-Modifier
+```bash
 export POLYGON_RPC_URL="https://polygon-rpc.com"
+```
 Vérifier :
-
-bash
-Copier
-Modifier
+```bash
 python -c "import os; print(os.getenv('POLYGON_RPC_URL'))"
-Configurer le wallet par défaut
+```
 
-Éditer config/wallets.json (respecter la casse et le format) :
+4) **Configurer le wallet par défaut**
 
-json
-Copier
-Modifier
+Éditer `config/wallets.json` (respecter la casse et le format) :
+```json
 [
   {
     "name": "wallet_invest_long_terme",
@@ -124,104 +129,114 @@ Modifier
     "private_key": "0xVotreClePriveeHex66car"
   }
 ]
+```
 Vérifier que l’adresse correspond à la clé :
-
-bash
-Copier
-Modifier
+```bash
 python - <<'PY'
 from eth_account import Account
-import json, sys
+import json
 w = json.load(open("config/wallets.json","r",encoding="utf-8"))[0]
 print(Account.from_key(w["private_key"]).address == w["address"])
 PY
-Utilisation
-Mode simulation (analyse)
-bash
-Copier
-Modifier
+```
+
+---
+
+## Utilisation
+
+### Mode simulation (analyse)
+```bash
 python main.py
-Swaps réels (Polygon, SushiSwap V2)
+```
+
+### Swaps réels (Polygon, SushiSwap V2)
+
 Dry-run (aucun envoi) :
-
-bash
-Copier
-Modifier
+```bash
 python test_swap_reel_cli.py --token-in 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174 --token-out 0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619 --amount-in-wei 1000000 --slippage-bps 50 --dry-run
-Aperçu avec confirmation requise :
+```
 
-bash
-Copier
-Modifier
-python test_swap_reel_cli.py --token-in 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174 --token-out 0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619 --amount-in-wei 1000000 --slippage-bps 50
 Envoi réel (confirmation explicite) :
-
-bash
-Copier
-Modifier
+```bash
 python test_swap_reel_cli.py --token-in 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174 --token-out 0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619 --amount-in-wei 1000000 --slippage-bps 50 --confirm
-Notes :
+```
 
---amount-in-wei est exprimé en wei du token d’entrée (USDC a 6 décimales : 1 USDC = 1_000_000).
+### Ajout de liquidité (Polygon, SushiSwap V2)
 
-Le script gère l’approve automatique si l’allowance est insuffisante (spender = router SushiSwap V2 en checksum).
+Dry-run :
+```bash
+python liquidity_cli.py add_liquidity --platform sushiswap --chain polygon \
+  --tokenA USDC --tokenB WETH --amountA 1 --amountB 0.001080405 \
+  --slippage-bps 50 --dry-run
+```
 
-slippage_bps=50 => 0,50% de slippage max.
+Envoi réel (confirmation explicite) :
+```bash
+python liquidity_cli.py add_liquidity --platform sushiswap --chain polygon \
+  --tokenA USDC --tokenB WETH --amountA 1 --amountB 0.001080405 \
+  --slippage-bps 50 --confirm
+```
 
-require_confirmation est activé par défaut côté API : sans --confirm, la transaction n’est pas envoyée.
+---
 
-Sécurité / Security
-Ne jamais committer la clé privée. Conservez config/wallets.json en privé.
+## Sécurité / Security
 
-Utilisez des comptes de montants limités pour les tests.
+- **FR :** Ne jamais committer la clé privée. Conservez `config/wallets.json` en privé.
+- **EN :** Never commit your private key. Keep `config/wallets.json` private.
 
-Vérifiez les adresses checksum (tokens, router, wallet).
+- **FR :** Utilisez des comptes de montants limités pour les tests.
+- **EN :** Use low-balance accounts for testing.
 
-Surveillez les allowances et révoquez-les si nécessaire.
+- **FR :** Vérifiez les adresses checksum (tokens, router, wallet).
+- **EN :** Verify checksum addresses (tokens, router, wallet).
 
-Dépannage / Troubleshooting
-Web3 non connecté → vérifier POLYGON_RPC_URL.
+- **FR :** Surveillez les allowances et révoquez-les si nécessaire.
+- **EN :** Monitor allowances and revoke if needed.
 
-execution reverted: TRANSFER_FROM_FAILED → allowance USDC insuffisante ou incohérente ; refaire approve.
+---
 
-only accepts checksum addresses → convertir avec Web3.to_checksum_address(...).
+## Dépannage / Troubleshooting
 
-Pas de logs visibles → lancer avec logging.basicConfig(level=logging.INFO) dans vos scripts.
+- **Web3 non connecté** → vérifier `POLYGON_RPC_URL`.
+- **execution reverted: TRANSFER_FROM_FAILED** → allowance USDC insuffisante ou incohérente ; refaire approve.
+- **only accepts checksum addresses** → convertir avec `Web3.to_checksum_address(...)`.
+- **Pas de logs visibles** → lancer avec `logging.basicConfig(level=logging.INFO)` dans vos scripts.
 
-Licence / License
-FR : Projet gratuit pour usage personnel uniquement (non commercial).
-EN : Free project for personal use only (non-commercial).
+---
 
-Voir les conditions complètes dans License.md
+## Licence / License
+
+- **FR :** Projet gratuit pour usage personnel uniquement (non commercial).
+- **EN :** Free project for personal use only (non-commercial).
+
+Voir les conditions complètes dans License.md  
 See full terms in License.md
 
-FAQ
-Peut-on utiliser DeFiPilot avec un exchange centralisé ?
-FR : ❌ Non, DeFiPilot vise la DeFi uniquement.
+---
 
+## FAQ
+
+**Peut-on utiliser DeFiPilot avec un exchange centralisé ?**  
+FR : ❌ Non, DeFiPilot vise la DeFi uniquement.  
 EN : ❌ No, DeFiPilot targets DeFi only.
 
-Est-ce que DeFiPilot fonctionne en mode réel ?
-FR : ✅ Partiellement : swaps réels sur Polygon (SushiSwap V2) sont disponibles. Le reste (LP, farming) arrive dans v3.8–v3.9.
+**Est-ce que DeFiPilot fonctionne en mode réel ?**  
+FR : ✅ Oui, partiellement : swaps réels et ajout de liquidité sur Polygon (SushiSwap V2) sont disponibles. Farming LP arrive dans v3.9.  
+EN : ✅ Yes, partially: real swaps and liquidity add on Polygon (SushiSwap V2) are available. LP farming coming in v3.9.
 
-EN : ✅ Partially: real swaps on Polygon (SushiSwap V2) are available. LP and farming coming in v3.8–v3.9.
-
-Peut-on personnaliser les critères d’analyse des pools ?
-FR : ✅ Oui, via les profils (prudent, modéré, agressif…).
-
+**Peut-on personnaliser les critères d’analyse des pools ?**  
+FR : ✅ Oui, via les profils (prudent, modéré, agressif…).  
 EN : ✅ Yes, via profiles (cautious, moderate, aggressive…).
 
-Comment signaler un bug ou proposer une idée ?
-FR : Ouvrir une issue GitHub.
-
+**Comment signaler un bug ou proposer une idée ?**  
+FR : Ouvrir une issue GitHub.  
 EN : Open a GitHub issue.
 
-Développeur / Developer
-FR : Projet initié et développé par David Raffeil avec assistance IA.
+---
+
+## Développeur / Developer
+
+FR : Projet initié et développé par David Raffeil avec assistance IA.  
 EN : Project initiated and developed by David Raffeil with AI assistance.
 
 Voir aussi : VISION.md
-
-sql
-Copier
-Modifier
