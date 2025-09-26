@@ -42,6 +42,10 @@ Fichiers concernés / Related files :
 - `core/journal.py` — journaux enrichis (CSV + JSONL)
 - `liquidity_cli.py` — CLI pour dry-run et réel
 
+---
+
+## Historique des versions / Past Versions
+
 ### 🔹 Version V3.7 – Swap réel sur DEX Polygon (2025-08-10)
 
 - **FR :** Exécution de **swaps réels** sur Polygon via un router **Uniswap V2** (SushiSwap V2), avec **slippage**, **approve automatique**, **confirmation avant envoi**, et **journalisation**.
