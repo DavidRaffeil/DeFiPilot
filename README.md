@@ -29,36 +29,36 @@ Vision complète de l’écosystème et futurs bots :
 
 ---
 
-## Nouveautés / What's New
+## 🆕 Nouveautés / What's New – V3.9
 
-### 🔹 Version V3.8 – Ajout de liquidité réel (2025-09-24)
+### Version française
+- Finalisation du **farming LP réel complet** sur **SushiSwap (Polygon)** : **stake, harvest et unstake** opérationnels.  
+- Journalisation enrichie avec `tx_hash`, `gas_used`, `tx_cost_native` et suivi automatique dans les CSV/JSONL.  
+- Ajout du **journal des risques** (`journal_risques.csv`).  
+- Validation complète du module CLI `farming_cli.py`.  
+- Nettoyage et stabilisation des tests dry-run / réels.
 
-- **FR :** Première exécution réussie d’**ajout de liquidité réel** sur Polygon (SushiSwap, paire USDC/WETH), avec réception de tokens LP. Intégration des **approvals**, du **contrôle du ratio et slippage**, du **post-check des soldes** et de la **journalisation CSV/JSONL**. Ajout d’un **CLI** (dry-run et réel).
-- **EN :** First successful **real liquidity add** on Polygon (SushiSwap, USDC/WETH pair), with LP tokens received. Includes **approvals**, **ratio and slippage checks**, **post-check of balances**, and **CSV/JSONL logging**. Added a **CLI** (dry-run and real).
-
-Fichiers concernés / Related files :
-- `core/liquidity_real_tx.py` — fonction `ajouter_liquidite_reelle(...)`
-- `core/liquidity_dryrun.py` — fonction `ajouter_liquidite_dryrun(...)`
-- `core/journal.py` — journaux enrichis (CSV + JSONL)
-- `liquidity_cli.py` — CLI pour dry-run et réel
+### English version
+- Completion of **full real LP farming** on **SushiSwap (Polygon)**: **stake, harvest, and unstake** all operational.  
+- Enhanced logging with `tx_hash`, `gas_used`, `tx_cost_native` and automatic tracking in CSV/JSONL.  
+- Added **risk journal** (`journal_risques.csv`).  
+- Full validation of the `farming_cli.py` CLI module.  
+- Cleanup and stabilization of dry-run and real tests.
 
 ---
 
 ## Historique des versions / Past Versions
 
-### 🔹 Version V3.7 – Swap réel sur DEX Polygon (2025-08-10)
+### 🔹 Version V3.8 – Ajout de liquidité réel (2025-09-24)
 
-- **FR :** Exécution de **swaps réels** sur Polygon via un router **Uniswap V2** (SushiSwap V2), avec **slippage**, **approve automatique**, **confirmation avant envoi**, et **journalisation**.
-- **EN :** Perform **real swaps** on Polygon via an **Uniswap V2**-style router (SushiSwap V2), with **slippage**, **auto-approve**, **pre-send confirmation**, and **logging**.
+- **FR :** Première exécution réussie d’**ajout de liquidité réel** sur Polygon (SushiSwap, paire USDC/WETH), avec réception de tokens LP. Intégration des **approvals**, du **contrôle du ratio et slippage**, du **post-check des soldes** et de la **journalisation CSV/JSONL**. Ajout d’un **CLI** (dry-run et réel).  
+- **EN :** First successful **real liquidity add** on Polygon (SushiSwap, USDC/WETH pair), with LP tokens received. Includes **approvals**, **ratio and slippage checks**, **post-check of balances**, and **CSV/JSONL logging**. Added a **CLI** (dry-run and real).
 
-Fichiers concernés / Related files :
-- `core/swap_reel.py` — fonction `effectuer_swap_reel(...)`
-- `test_swap_reel_cli.py` — CLI de test (dry-run / envoi réel)
-
-### 🔹 Version V3.6 – Wallet réel (2025-08-10)
-
-- **FR :** Wallet réel `core/real_wallet.py` (Polygon RPC), gestion multi-wallets via `wallets_manager`, logs `wallet_connect` / `wallet_disconnect`, signature de message.
-- **EN :** Real wallet `core/real_wallet.py` (Polygon RPC), multi-wallet via `wallets_manager`, `wallet_connect` / `wallet_disconnect` logging, message signing.
+Fichiers concernés / Related files :  
+- `core/liquidity_real_tx.py` — fonction `ajouter_liquidite_reelle(...)`  
+- `core/liquidity_dryrun.py` — fonction `ajouter_liquidite_dryrun(...)`  
+- `core/journal.py` — journaux enrichis (CSV + JSONL)  
+- `liquidity_cli.py` — CLI pour dry-run et réel
 
 ---
 
@@ -67,7 +67,7 @@ Fichiers concernés / Related files :
 | Version | État | Contenu FR / EN |
 | ------: | :--: | --------------- |
 | `v3.8`  | ✅   | **FR :** Ajout de liquidité réelle sur DEX (LP). **EN:** Real DEX liquidity add (LP). |
-| `v3.9`  | 🛠️  | **FR :** Farming LP réel (staking, récolte). **EN:** Real LP farming (staking, harvest). |
+| `v3.9`  | ✅   | **FR :** Farming LP réel complet (staking, récolte, unstake). **EN:** Full real LP farming (staking, harvest, unstake). |
 | `v4.0`  | 🛠️  | **FR :** Mode réel complet (stratégie auto, retraits, reprise). **EN:** Full real mode (auto strategy, withdrawals, resume). |
 
 *La roadmap peut évoluer en fonction de l’avancement.*  
@@ -87,6 +87,8 @@ Fichiers concernés / Related files :
   **EN :** **Real swaps** on Polygon (SushiSwap V2) with slippage and confirmation.
 - **FR :** **Ajout de liquidité réel** (SushiSwap V2, Polygon) avec tokens LP reçus et post-check.  
   **EN :** **Real liquidity add** (SushiSwap V2, Polygon) with LP tokens received and post-check.
+- **FR :** **Farming LP réel complet** (MiniChef SushiSwap, Polygon) avec staking, harvest et unstake réels.  
+  **EN :** **Full real LP farming** (MiniChef SushiSwap, Polygon) including staking, harvest and unstake.
 - **FR :** Interface graphique simple (Tkinter) pour la simulation.  
   **EN :** Simple GUI (Tkinter) for simulation.
 
@@ -185,32 +187,32 @@ python liquidity_cli.py add_liquidity --platform sushiswap --chain polygon \
 
 ## Sécurité / Security
 
-- **FR :** Ne jamais committer la clé privée. Conservez `config/wallets.json` en privé.
+- **FR :** Ne jamais committer la clé privée. Conservez `config/wallets.json` en privé.  
 - **EN :** Never commit your private key. Keep `config/wallets.json` private.
 
-- **FR :** Utilisez des comptes de montants limités pour les tests.
+- **FR :** Utilisez des comptes de montants limités pour les tests.  
 - **EN :** Use low-balance accounts for testing.
 
-- **FR :** Vérifiez les adresses checksum (tokens, router, wallet).
+- **FR :** Vérifiez les adresses checksum (tokens, router, wallet).  
 - **EN :** Verify checksum addresses (tokens, router, wallet).
 
-- **FR :** Surveillez les allowances et révoquez-les si nécessaire.
+- **FR :** Surveillez les allowances et révoquez-les si nécessaire.  
 - **EN :** Monitor allowances and revoke if needed.
 
 ---
 
 ## Dépannage / Troubleshooting
 
-- **Web3 non connecté** → vérifier `POLYGON_RPC_URL`.
-- **execution reverted: TRANSFER_FROM_FAILED** → allowance USDC insuffisante ou incohérente ; refaire approve.
-- **only accepts checksum addresses** → convertir avec `Web3.to_checksum_address(...)`.
+- **Web3 non connecté** → vérifier `POLYGON_RPC_URL`.  
+- **execution reverted: TRANSFER_FROM_FAILED** → allowance USDC insuffisante ou incohérente ; refaire approve.  
+- **only accepts checksum addresses** → convertir avec `Web3.to_checksum_address(...)`.  
 - **Pas de logs visibles** → lancer avec `logging.basicConfig(level=logging.INFO)` dans vos scripts.
 
 ---
 
 ## Licence / License
 
-- **FR :** Projet gratuit pour usage personnel uniquement (non commercial).
+- **FR :** Projet gratuit pour usage personnel uniquement (non commercial).  
 - **EN :** Free project for personal use only (non-commercial).
 
 Voir les conditions complètes dans License.md  
@@ -225,8 +227,8 @@ FR : ❌ Non, DeFiPilot vise la DeFi uniquement.
 EN : ❌ No, DeFiPilot targets DeFi only.
 
 **Est-ce que DeFiPilot fonctionne en mode réel ?**  
-FR : ✅ Oui, partiellement : swaps réels et ajout de liquidité sur Polygon (SushiSwap V2) sont disponibles. Farming LP arrive dans v3.9.  
-EN : ✅ Yes, partially: real swaps and liquidity add on Polygon (SushiSwap V2) are available. LP farming coming in v3.9.
+FR : ✅ Oui, en partie : swaps, ajout de liquidité et farming LP sont maintenant réels.  
+EN : ✅ Yes, partially: swaps, liquidity add and LP farming are now real.
 
 **Peut-on personnaliser les critères d’analyse des pools ?**  
 FR : ✅ Oui, via les profils (prudent, modéré, agressif…).  

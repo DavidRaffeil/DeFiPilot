@@ -36,7 +36,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--token-in", required=True, help="Adresse checksum du token entrant")
     p.add_argument("--token-out", required=True, help="Adresse checksum du token sortant")
     p.add_argument("--amount-in-wei", type=int, required=True, help="Montant entrant en wei du token_in")
-    p.add_argument("--slippage-bps", type=int, default=50, help="Slippage en basis points (50 = 0.50%)")
+    p.add_argument("--slippage-bps", type=int, default=50, help="Slippage en basis points (50 = 0.50%%)")
     p.add_argument("--confirm", action="store_true", default=False, help="Exécuter réellement la transaction")
     p.add_argument("--dry-run", action="store_true", default=False, help="Ne pas envoyer, juste prévisualiser")
     args = p.parse_args(argv)
