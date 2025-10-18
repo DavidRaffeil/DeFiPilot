@@ -1,0 +1,4 @@
+[
+  {"pool": "USDC-WETH", "apr": 0.12, "volume": 250000, "tvl": 5000000},
+  {"pool": "WMATIC-USDT", "apr": 0.08, "volume": 180000, "tvl": 4200000}
+]

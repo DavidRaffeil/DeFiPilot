@@ -1,12 +1,14 @@
-from . import config_loader
-from . import logger
-from . import profil
-from . import scoring
-from . import blacklist
-from . import historique
-from . import wallet
-from . import defi_sources  # ✅ Ajouté pour corriger l'import dans main.py
-from . import simulation
-from . import journal
-from . import env
-from . import simulateur_wallet
+# __init__.py – V4.0.4 (package core)
+
+"""
+Package 'core' simplifié pour la branche stratégie de marché (V4.0.x).
+Ce fichier rend 'core' importable sans dépendances inutiles.
+Aucune logique métier, aucun import croisé, pas d'effets de bord.
+"""
+
+from __future__ import annotations
+
+__all__ = [
+    "market_signals",
+    "market_signals_adapter",
+]

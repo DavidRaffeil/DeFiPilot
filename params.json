@@ -1,0 +1,7 @@
+{
+  "apr_weight": 0.45,
+  "volume_weight": 0.35,
+  "tvl_weight": 0.20,
+  "favorable_threshold": 0.66,
+  "unfavorable_threshold": 0.34
+}
