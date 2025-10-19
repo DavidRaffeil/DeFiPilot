@@ -1,5 +1,5 @@
 # test_strategy_adapter.py
-from core.strategy_adapter import calculer_contexte_et_policy
+from core.engine.strategy_adapter import calculer_contexte_et_policy
 
 # Jeux de données simples (comme le smoke test)
 pools_stats = [

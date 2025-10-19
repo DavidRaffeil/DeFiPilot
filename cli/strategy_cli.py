@@ -16,7 +16,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, MutableMapping, Sequence, Mapping
 
-from core.strategy_adapter import calculer_contexte_et_policy
+from core.engine.strategy_adapter import calculer_contexte_et_policy
 
 VERSION: str = "V4.0.17"
 DEFAULT_JOURNAL: str = "journal_signaux.jsonl"

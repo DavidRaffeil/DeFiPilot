@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import simulateur_wallet
 from core import config_loader, profil
 from defi_sources import defillama
-from core import scoring, blacklist
+from core.engine import scoring, blacklist
 
 dernier_top3 = []
 zone_resultats = None  # défini globalement

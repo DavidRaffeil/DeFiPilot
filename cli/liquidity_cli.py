@@ -20,10 +20,10 @@ import traceback
 from typing import Any, Dict
 
 # Imports EXACTS (ne pas modifier les chemins/noms)
-from core.liquidity_dryrun import (
+from core.execution.liquidity_dryrun import (
     ajouter_liquidite_dryrun as add_liquidity_dryrun,
 )
-from core.liquidity_real_tx import (
+from core.execution.liquidity_real_tx import (
     add_liquidity_real_safe,
 )
 

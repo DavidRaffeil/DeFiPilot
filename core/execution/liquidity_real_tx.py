@@ -22,7 +22,7 @@ from web3 import Web3
 from web3.exceptions import ContractLogicError, ABIFunctionNotFound
 
 from core.real_wallet import get_wallet_address, get_private_key
-from core.journal import enregistrer_liquidity_csv, enregistrer_liquidity_jsonl
+from core.execution.journal import enregistrer_liquidity_csv, enregistrer_liquidity_jsonl
 
 logger = logging.getLogger(__name__)
 
