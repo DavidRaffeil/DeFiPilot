@@ -1,0 +1,17 @@
+{
+  "favorable": {
+    "risque": 0.6,
+    "modéré": 0.3,
+    "prudent": 0.1
+  },
+  "neutre": {
+    "risque": 0.4,
+    "modéré": 0.4,
+    "prudent": 0.2
+  },
+  "defavorable": {
+    "risque": 0.2,
+    "modéré": 0.3,
+    "prudent": 0.5
+  }
+}

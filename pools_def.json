@@ -1,0 +1,5 @@
+[
+  {"pool": "USDC-DAI",  "apr": 0.03,  "volume": 90000, "tvl": 4500000},
+  {"pool": "USDT-DAI",  "apr": 0.025, "volume": 80000, "tvl": 5200000},
+  {"pool": "USDC-USDT","apr": 0.02,  "volume": 70000, "tvl": 6000000}
+]

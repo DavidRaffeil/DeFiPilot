@@ -1,6 +1,6 @@
 # simulateur_multi.py
 
-from core import profil, scoring, config_loader
+from core.engine import profil, scoring, config_loader
 import core.historique_rendements as historique_rendements
 from defi_sources import defillama
 from graphiques import gains_profils

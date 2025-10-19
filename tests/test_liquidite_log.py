@@ -1,6 +1,6 @@
 import csv
 
-from core import journal
+from core.execution import journal
 
 
 def test_enregistrer_liquidite_dryrun(tmp_path, monkeypatch):

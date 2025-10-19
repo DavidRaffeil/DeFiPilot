@@ -1,0 +1,36 @@
+{
+  "profile_default": "modere",
+  "allocations": {
+    "max_concurrent": 3,
+    "min_pct": 0.10,
+    "max_pct": 0.40
+  },
+  "rebalance": {
+    "threshold_pct": 0.08,
+    "cooldown_minutes": 60
+  },
+  "market_guardrails": {
+    "FAVORABLE": {
+      "risk_caps": {
+        "agressif": 0.7,
+        "modere": 0.25,
+        "prudent": 0.05
+      }
+    },
+    "NEUTRE": {
+      "risk_caps": {
+        "agressif": 0.4,
+        "modere": 0.4,
+        "prudent": 0.2
+      }
+    },
+    "DEFAVORABLE": {
+      "risk_caps": {
+        "agressif": 0.1,
+        "modere": 0.3,
+        "prudent": 0.6
+      }
+    }
+  },
+  "market_state_override": null
+}
