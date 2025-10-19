@@ -1,248 +1,393 @@
 # DeFiPilot
 
-[![Made with Python](https://img.shields.io/badge/Made%20with-Python-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![Status](https://img.shields.io/badge/status-stable-brightgreen)]()
-![License: Personal Use Only](https://img.shields.io/badge/license-Personal--Use--Only-lightgrey)
-[![Built with ChatGPT](https://img.shields.io/badge/built%20with-ChatGPT-10a37f?logo=openai&logoColor=white)](https://openai.com/chatgpt)
-![Made in France](https://img.shields.io/badge/Made%20in-France-blue)
+![Version](https://img.shields.io/badge/Version-V4.0%20Stable-blue)
+![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
+![Made in France](https://img.shields.io/badge/Made%20in-France-lightgrey)
+![Developed with ChatGPT](https://img.shields.io/badge/Developed%20with-ChatGPT-orange)
+![Open Source](https://img.shields.io/badge/Open%20Source-Non%20Commercial-green)
+![Polygon Network](https://img.shields.io/badge/Network-Polygon-purple)
 
 ---
 
-> Bot personnel d’analyse et d’investissement automatisé en DeFi.  
-> Personal bot for automated analysis and investment in DeFi.
+## 📚 Sommaire / Table of Contents
+
+1. [Introduction / Introduction](#-introduction--introduction)  
+2. [Installation / Installation](#️-installation--installation)  
+3. [Fonctionnalités principales / Key Features](#-fonctionnalités-principales--key-features)  
+4. [Nouveautés / What's New — Version 4.0](#-nouveautés--whats-new--version-40)  
+5. [Feuille de route / Roadmap](#-feuille-de-route--roadmap-évolution-prévue--planned-evolution)  
+6. [Vision complète du projet / Complete Project Vision](#-vision-complète-du-projet--complete-project-vision)  
+7. [FAQ / FAQ](#-faq--faq)  
+8. [À propos / About](#-à-propos--about)  
 
 ---
 
-## Présentation / About
+## 🚀 Introduction / Introduction
 
-⚠️ *Actuellement, seule la version française du bot est disponible. L’interface et les logs sont en français uniquement.*  
-⚠️ *Currently, only the French version of the bot is available. The interface and logs are in French only.*
+**FR :**  
+**DeFiPilot** est un bot d’investissement automatisé conçu pour interagir directement avec la finance décentralisée (**DeFi**).  
+Il exécute des opérations réelles sur la blockchain, notamment les **swaps de tokens**, l’**ajout de liquidité** et le **farming des tokens LP**, tout en appliquant une stratégie de gestion des risques fondée sur le contexte de marché.  
 
-**DeFiPilot** est un projet open-source (usage non commercial) développé pour apprendre, expérimenter et automatiser l’investissement en finance décentralisée (DeFi), avec **Python** et de l’**IA**.  
-**DeFiPilot** is an open-source project (non-commercial use) to learn, experiment, and automate decentralized finance (DeFi) investing, using **Python** and **AI**.
+Le projet repose sur une **architecture modulaire**, composée de :  
+- un moteur de stratégie adaptatif,  
+- un module d’analyse du marché (signaux et contexte),  
+- un moteur d’exécution pour les opérations réelles,  
+- un système complet de **journalisation CSV/JSONL** pour la traçabilité.  
 
-Le projet évolue en public, étape par étape, avec une démarche transparente et progressive.  
-The project evolves publicly, step by step, with a transparent and progressive approach.
+L’objectif est double : offrir un outil **fiable et transparent** pour automatiser la gestion de pools de liquidité,  
+et poser les bases d’un **écosystème intelligent** capable d’analyser la rentabilité, de réallouer automatiquement les ressources et de s’adapter à la dynamique des marchés.  
 
-Vision complète de l’écosystème et futurs bots :  
-👉 [VISION.md](https://github.com/DavidRaffeil/DeFiPilot/blob/main/VISION.md)
+Développé entièrement en **Python**, DeFiPilot fonctionne actuellement sur **Polygon**, avec compatibilité multi-chaînes prévue.  
+L’architecture suit des standards sécurisés (Web3, RPC Infura, transactions validées et confirmées)  
+et chaque version progresse vers une intégration complète de l’IA (via **ControlPilot**, **LabPilot** et **ArbiPilot**).  
 
----
+•••
 
-## 🆕 Nouveautés / What's New – V3.9
+**EN :**  
+**DeFiPilot** is an automated investment bot built to interact directly with decentralized finance (**DeFi**).  
+It performs real blockchain operations such as **token swaps**, **liquidity addition**, and **LP token farming**,  
+while applying a risk-based market strategy.  
 
-### Version française
-- Finalisation du **farming LP réel complet** sur **SushiSwap (Polygon)** : **stake, harvest et unstake** opérationnels.  
-- Journalisation enrichie avec `tx_hash`, `gas_used`, `tx_cost_native` et suivi automatique dans les CSV/JSONL.  
-- Ajout du **journal des risques** (`journal_risques.csv`).  
-- Validation complète du module CLI `farming_cli.py`.  
-- Nettoyage et stabilisation des tests dry-run / réels.
+The project relies on a **modular architecture** that includes :  
+- an adaptive strategy engine,  
+- a market signal and context analysis module,  
+- a real transaction execution engine,  
+- and a complete **CSV/JSONL logging system** for transparency.  
 
-### English version
-- Completion of **full real LP farming** on **SushiSwap (Polygon)**: **stake, harvest, and unstake** all operational.  
-- Enhanced logging with `tx_hash`, `gas_used`, `tx_cost_native` and automatic tracking in CSV/JSONL.  
-- Added **risk journal** (`journal_risques.csv`).  
-- Full validation of the `farming_cli.py` CLI module.  
-- Cleanup and stabilization of dry-run and real tests.
+Its goal is to provide a **reliable and transparent tool** for liquidity pool automation  
+and to establish the foundation of an **intelligent DeFi ecosystem** capable of analyzing profitability,  
+reallocating funds, and adapting to market dynamics.  
 
----
-
-## Historique des versions / Past Versions
-
-### 🔹 Version V3.8 – Ajout de liquidité réel (2025-09-24)
-
-- **FR :** Première exécution réussie d’**ajout de liquidité réel** sur Polygon (SushiSwap, paire USDC/WETH), avec réception de tokens LP. Intégration des **approvals**, du **contrôle du ratio et slippage**, du **post-check des soldes** et de la **journalisation CSV/JSONL**. Ajout d’un **CLI** (dry-run et réel).  
-- **EN :** First successful **real liquidity add** on Polygon (SushiSwap, USDC/WETH pair), with LP tokens received. Includes **approvals**, **ratio and slippage checks**, **post-check of balances**, and **CSV/JSONL logging**. Added a **CLI** (dry-run and real).
-
-Fichiers concernés / Related files :  
-- `core/liquidity_real_tx.py` — fonction `ajouter_liquidite_reelle(...)`  
-- `core/liquidity_dryrun.py` — fonction `ajouter_liquidite_dryrun(...)`  
-- `core/journal.py` — journaux enrichis (CSV + JSONL)  
-- `liquidity_cli.py` — CLI pour dry-run et réel
+Developed entirely in **Python**, DeFiPilot currently runs on **Polygon**,  
+with future multi-chain support planned.  
+The system follows secure standards (Web3, Infura RPC, validated transactions),  
+and each release advances toward full AI integration (via **ControlPilot**, **LabPilot**, and **ArbiPilot**).  
 
 ---
 
-## 🚀 Roadmap
+## ⚙️ Installation / Installation
 
-| Version | État | Contenu FR / EN |
-| ------: | :--: | --------------- |
-| `v3.8`  | ✅   | **FR :** Ajout de liquidité réelle sur DEX (LP). **EN:** Real DEX liquidity add (LP). |
-| `v3.9`  | ✅   | **FR :** Farming LP réel complet (staking, récolte, unstake). **EN:** Full real LP farming (staking, harvest, unstake). |
-| `v4.0`  | 🛠️  | **FR :** Mode réel complet (stratégie auto, retraits, reprise). **EN:** Full real mode (auto strategy, withdrawals, resume). |
+**FR :**  
+Suivez ces étapes pour installer et exécuter **DeFiPilot** localement :  
 
-*La roadmap peut évoluer en fonction de l’avancement.*  
-*Roadmap may change as the project evolves.*
+1. **Cloner le dépôt :**  
+   ```bash
+   git clone https://github.com/DavidRaffeil/DeFiPilot.git
+   cd DeFiPilot
+   ```
+2. **Créer un environnement virtuel (recommandé) :**  
+   ```bash
+   python -m venv venv
+   source venv/bin/activate   # sous Linux/macOS
+   venv\\Scripts\\activate      # sous Windows
+   ```
+3. **Installer les dépendances :**  
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. **Lancer le mode simulation :**  
+   ```bash
+   python main.py --dry-run
+   ```
 
----
-
-## Fonctionnalités / Features
-
-- **FR :** Analyse automatique des pools DeFi (via agrégateurs), simulation multi-profils et scoring.  
-  **EN :** Automatic DeFi pool analysis (via aggregators), multi-profile simulation and scoring.
-- **FR :** Journalisation détaillée (résultats, CSV, résumés).  
-  **EN :** Detailed logging (results, CSV, summaries).
-- **FR :** Wallet réel Polygon, multi-wallets.  
-  **EN :** Real wallet on Polygon, multi-wallet support.
-- **FR :** **Swaps réels** sur Polygon (SushiSwap V2) avec slippage et confirmation.  
-  **EN :** **Real swaps** on Polygon (SushiSwap V2) with slippage and confirmation.
-- **FR :** **Ajout de liquidité réel** (SushiSwap V2, Polygon) avec tokens LP reçus et post-check.  
-  **EN :** **Real liquidity add** (SushiSwap V2, Polygon) with LP tokens received and post-check.
-- **FR :** **Farming LP réel complet** (MiniChef SushiSwap, Polygon) avec staking, harvest et unstake réels.  
-  **EN :** **Full real LP farming** (MiniChef SushiSwap, Polygon) including staking, harvest and unstake.
-- **FR :** Interface graphique simple (Tkinter) pour la simulation.  
-  **EN :** Simple GUI (Tkinter) for simulation.
-
----
-
-## Installation
-
-1) **Cloner le dépôt**
-```bash
-git clone https://github.com/DavidRaffeil/DeFiPilot.git
-cd DeFiPilot
+**Exemple de sortie console :**  
+```
+Simulation en cours...
+Analyse des pools Polygon...
+Pool USDC/WETH détectée — Score : 0.87
+Simulation terminée : aucun fonds réel utilisé.
 ```
 
-2) **Installer les dépendances**
-```bash
-pip install -r requirements.txt
+**Compatibilité :**  
+Fonctionne sur Windows, Linux, macOS, **Orange Pi** et **Raspberry Pi**.  
+
+•••
+
+**EN :**  
+Follow these steps to install and run **DeFiPilot** locally :  
+
+1. **Clone the repository:**  
+   ```bash
+   git clone https://github.com/DavidRaffeil/DeFiPilot.git
+   cd DeFiPilot
+   ```
+2. **Create a virtual environment (recommended):**  
+   ```bash
+   python -m venv venv
+   source venv/bin/activate   # Linux/macOS
+   venv\\Scripts\\activate      # Windows
+   ```
+3. **Install dependencies:**  
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. **Run in simulation mode:**  
+   ```bash
+   python main.py --dry-run
+   ```
+
+**Example console output:**  
+```
+Simulation running...
+Analyzing Polygon pools...
+USDC/WETH pool detected — Score: 0.87
+Simulation complete: no real funds used.
 ```
 
-3) **Configurer l’environnement Polygon**
+**Compatibility:**  
+Works on Windows, Linux, macOS, **Orange Pi**, and **Raspberry Pi** SBCs.  
 
-Définir `POLYGON_RPC_URL` (ex : https://polygon-rpc.com ou votre provider).
+---
+## 🧩 Fonctionnalités principales / Key Features
 
-Linux/macOS :
-```bash
-export POLYGON_RPC_URL="https://polygon-rpc.com"
-```
-Windows (Git Bash, session courante) :
-```bash
-export POLYGON_RPC_URL="https://polygon-rpc.com"
-```
-Vérifier :
-```bash
-python -c "import os; print(os.getenv('POLYGON_RPC_URL'))"
-```
+**FR :**  
+Les fonctionnalités de **DeFiPilot** sont structurées autour de trois axes : **sécurité**, **analyse** et **automatisation**.  
 
-4) **Configurer le wallet par défaut**
+### 🔐 1. Connexion et sécurité
+- Connexion à un **wallet réel** via RPC sécurisé (Polygon / Infura).  
+- Gestion **multi-wallets** pour répartir les fonds selon le profil d’investissement.  
+- Vérification des autorisations (**allowances**) avant chaque transaction.  
+- Validation complète des transactions (statut, gas, coût, confirmation).  
 
-Éditer `config/wallets.json` (respecter la casse et le format) :
-```json
-[
-  {
-    "name": "wallet_invest_long_terme",
-    "address": "0xVotreAdresseChecksumIci",
-    "private_key": "0xVotreClePriveeHex66car"
-  }
-]
-```
-Vérifier que l’adresse correspond à la clé :
-```bash
-python - <<'PY'
-from eth_account import Account
-import json
-w = json.load(open("config/wallets.json","r",encoding="utf-8"))[0]
-print(Account.from_key(w["private_key"]).address == w["address"])
-PY
-```
+### 📊 2. Analyse et stratégie
+- Calcul du **contexte de marché** (favorable, neutre, défavorable) à partir de données de pools.  
+- Détermination d’une **allocation dynamique** selon le profil d’investisseur (prudent, modéré, risqué).  
+- Intégration d’un moteur de **scoring pondéré** pour classer les pools selon leur rentabilité.  
+- Préparation d’une intégration future avec un moteur **IA** pour l’optimisation des décisions.  
+
+### ⚙️ 3. Exécution et journalisation
+- **Swaps réels** sur DEX (ex. SushiSwap) avec gestion du slippage et des confirmations.  
+- **Ajout et retrait de liquidité** automatisé, avec suivi précis des LP tokens reçus.  
+- **Farming LP réel** : stake, harvest et unstake sur SushiSwap MiniChef (Polygon).  
+- **Mode simulation complet** (dry-run) pour tester toutes les stratégies sans risque.  
+- **Journaux CSV/JSONL détaillés** (exécution, gas, statuts, contexte, allocation).  
+- **Interface CLI** claire et intégralement en français.  
+
+**Exigences système minimales :**  
+- Python **3.11+**  
+- Accès RPC Polygon (ex. Infura, Alchemy)  
+- Environnement local ou SBC (Orange Pi, Raspberry Pi) compatible  
+
+•••
+
+**EN :**  
+The features of **DeFiPilot** are organized around three key areas: **security**, **analysis**, and **automation**.  
+
+### 🔐 1. Connection and Security
+- Connect to a **real wallet** via secure RPC (Polygon / Infura).  
+- **Multi-wallet management** to allocate funds per investment profile.  
+- Authorization checks (**allowances**) before every transaction.  
+- Full transaction validation (status, gas, cost, confirmation).  
+
+### 📊 2. Analysis and Strategy
+- Calculation of **market context** (favorable, neutral, unfavorable) from pool data.  
+- Determination of **dynamic allocation** based on investor profile (prudent, moderate, risky).  
+- Integration of a **weighted scoring engine** to rank pools by profitability.  
+- Prepared for future integration with an **AI engine** for decision optimization.  
+
+### ⚙️ 3. Execution and Logging
+- **Real swaps** on DEXs (e.g., SushiSwap) with slippage control and confirmations.  
+- **Automated add/remove liquidity** with precise tracking of received LP tokens.  
+- **Real LP farming**: stake, harvest, and unstake on SushiSwap MiniChef (Polygon).  
+- Full **simulation mode** (dry-run) to test all strategies safely.  
+- Detailed **CSV/JSONL logs** (execution, gas, status, context, allocation).  
+- **CLI interface** fully in French.  
+
+**Minimum system requirements:**  
+- Python **3.11+**  
+- Polygon RPC access (e.g., Infura, Alchemy)  
+- Compatible local or SBC environment (Orange Pi, Raspberry Pi)  
 
 ---
 
-## Utilisation
+## 🆕 Nouveautés / What's New — Version 4.0
 
-### Mode simulation (analyse)
-```bash
-python main.py
-```
+**FR :**  
+La version **4.0** marque une étape clé : le passage du **mode simulation** à l’**exécution réelle** sur la blockchain.  
+Elle introduit de nouvelles briques fonctionnelles, un moteur de stratégie amélioré et une refonte complète de la structure de journalisation.  
 
-### Swaps réels (Polygon, SushiSwap V2)
+### 🧠 Principales améliorations techniques
+- **Mode réel complet** : toutes les opérations principales (swap, ajout de liquidité, farming) sont désormais exécutées directement sur la blockchain Polygon avec vérification des statuts de transaction.  
+- **Gestion du slippage et validation de prix** : calcul automatique des tolérances et vérifications des ratios avant chaque opération.  
+- **Moteur de stratégie adaptatif** : détecte le contexte de marché et ajuste dynamiquement l’allocation selon le profil d’investisseur.  
+- **Journalisation unifiée** : chaque opération génère une entrée structurée dans les fichiers CSV et JSONL, incluant le run_id, le gas utilisé, le coût, le statut et le contexte de décision.  
+- **Renforcement de la robustesse** : contrôles d’erreur étendus, validation des entrées et gestion propre des échecs de transaction.  
+- **Préparation de l’interface graphique (GUI)** : la base de données des pools et la couche de stratégie sont désormais prêtes pour l’intégration visuelle prévue en V4.1.  
 
-Dry-run (aucun envoi) :
-```bash
-python test_swap_reel_cli.py --token-in 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174 --token-out 0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619 --amount-in-wei 1000000 --slippage-bps 50 --dry-run
-```
+**Impact global :**  
+La V4.0 transforme DeFiPilot d’un simple simulateur d’investissement en un **bot DeFi réellement opérationnel**, capable d’exécuter, vérifier et enregistrer des opérations en temps réel.  
+Cette transition constitue la base du futur moteur de décision intelligent.  
 
-Envoi réel (confirmation explicite) :
-```bash
-python test_swap_reel_cli.py --token-in 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174 --token-out 0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619 --amount-in-wei 1000000 --slippage-bps 50 --confirm
-```
+•••
 
-### Ajout de liquidité (Polygon, SushiSwap V2)
+**EN :**  
+Version **4.0** represents a key milestone: the transition from **simulation mode** to **real on-chain execution**.  
+It introduces new functional modules, an improved strategy engine, and a complete overhaul of the logging structure.  
 
-Dry-run :
-```bash
-python liquidity_cli.py add_liquidity --platform sushiswap --chain polygon \
-  --tokenA USDC --tokenB WETH --amountA 1 --amountB 0.001080405 \
-  --slippage-bps 50 --dry-run
-```
+### 🧠 Main Technical Improvements
+- **Full real mode:** all core operations (swap, add liquidity, farming) are now executed directly on the Polygon blockchain with full transaction verification.  
+- **Slippage and price validation management:** automatic calculation of tolerances and pre-check of ratios before each transaction.  
+- **Adaptive strategy engine:** detects market context and dynamically adjusts allocation based on investor profile.  
+- **Unified logging:** every operation produces a structured entry in CSV and JSONL logs, including run_id, gas used, cost, status, and decision context.  
+- **Improved robustness:** extended error handling, input validation, and clean transaction failure management.  
+- **Graphical Interface (GUI) preparation:** pool database and strategy layer are now ready for integration in V4.1.  
 
-Envoi réel (confirmation explicite) :
-```bash
-python liquidity_cli.py add_liquidity --platform sushiswap --chain polygon \
-  --tokenA USDC --tokenB WETH --amountA 1 --amountB 0.001080405 \
-  --slippage-bps 50 --confirm
-```
+**Overall impact:**  
+V4.0 transforms DeFiPilot from a simple investment simulator into a **fully operational DeFi bot**, capable of executing, validating, and logging real-time blockchain operations.  
+This marks the foundation of the future intelligent decision engine.  
+
+---
+## 🗺️ Feuille de route / Roadmap (évolution prévue / Planned Evolution)
+
+**FR :**  
+La feuille de route de **DeFiPilot** est conçue pour une progression claire et maîtrisée, version après version. Chaque mise à jour introduit une nouvelle brique fonctionnelle ou une amélioration majeure en stabilité, performance ou autonomie.  
+
+### 🔸 V4.1 — Interface graphique (GUI) initiale
+Ajout d’une interface utilisateur simple permettant de visualiser les pools, les scores et les allocations en temps réel. Cette version introduira les premiers éléments d’affichage dynamique et la gestion visuelle des profils d’investissement.  
+
+### 🔸 V4.2 — Optimisation du moteur de stratégie et signaux de marché
+Amélioration de la détection du contexte de marché et intégration de métriques avancées (volatilité, tendance des APR, TVL global). Consolidation du moteur de stratégie et préparation de la communication inter-module.  
+
+### 🔸 V4.3 — Interface complète et monitoring
+Déploiement d’une interface complète avec suivi temps réel des transactions, affichage des journaux et tableaux de bord personnalisables. Le système deviendra un véritable poste de pilotage visuel du bot.  
+
+### 🔸 V4.4 — Développement de ControlPilot (IA de supervision)
+Création d’un agent de surveillance intelligent collectant les métriques du bot, du marché et du wallet. Il permettra de générer des signaux de risque ou d’opportunité en temps réel.  
+
+### 🔸 V4.5 – V5.0 — Intégration IA et multi-bots
+Connexion de DeFiPilot à un réseau d’agents IA capables d’analyser, recommander et coordonner les décisions entre plusieurs bots (DeFiPilot, ArbiPilot, LabPilot). Passage progressif vers un cluster DeFi autonome et intelligent.  
+
+•••
+
+**EN :**  
+The **DeFiPilot** roadmap is designed for a clear, controlled progression — version by version. Each release introduces a new core feature or major improvement in stability, performance, or autonomy.  
+
+### 🔸 V4.1 — Initial Graphical Interface (GUI)
+Adds a simple user interface to visualize pools, scores, and real-time allocations. This version introduces the first dynamic display elements and visual management of investment profiles.  
+
+### 🔸 V4.2 — Strategy Engine and Market Signal Optimization
+Improves market context detection and integrates advanced metrics (volatility, APR trends, global TVL). Strengthens the strategy engine and prepares for inter-module communication.  
+
+### 🔸 V4.3 — Full Interface and Monitoring
+Deploys a complete GUI with real-time transaction tracking, log visualization, and customizable dashboards. The system will become a true control center for bot activity.  
+
+### 🔸 V4.4 — Development of ControlPilot (AI Supervision)
+Creates an intelligent monitoring agent that collects metrics from the bot, market, and wallet. It will generate real-time risk and opportunity signals.  
+
+### 🔸 V4.5 – V5.0 — AI Integration and Multi-Bot Network
+Connects DeFiPilot to an AI-driven network of agents capable of analyzing, recommending, and coordinating decisions across multiple bots (DeFiPilot, ArbiPilot, LabPilot). Progressive transition toward an autonomous and intelligent DeFi cluster.  
 
 ---
 
-## Sécurité / Security
+## 🌐 Vision complète du projet / Complete Project Vision
 
-- **FR :** Ne jamais committer la clé privée. Conservez `config/wallets.json` en privé.  
-- **EN :** Never commit your private key. Keep `config/wallets.json` private.
+**FR :**  
+**DeFiPilot** s’inscrit dans une démarche ouverte et progressive : **apprendre, tester, partager et inspirer**.  
+Le projet évolue au sein d’un écosystème plus large comprenant :  
+- **ControlPilot** — centre de commande intelligent et agent d’observation IA ;  
+- **ArbiPilot** — bot d’arbitrage inter-DEX et inter-chaînes ;  
+- **LabPilot** — laboratoire d’expérimentation et d’optimisation IA.  
 
-- **FR :** Utilisez des comptes de montants limités pour les tests.  
-- **EN :** Use low-balance accounts for testing.
+Cet écosystème vise à créer un **cluster de bots DeFi autonomes**, coopératifs et adaptatifs, capable de gérer plusieurs stratégies simultanément selon les conditions du marché.  
+Chaque composant communiquera via une couche d’échange de données sécurisée, orchestrée par **ControlPilot**.  
 
-- **FR :** Vérifiez les adresses checksum (tokens, router, wallet).  
-- **EN :** Verify checksum addresses (tokens, router, wallet).
+> 📘 Pour découvrir l’architecture complète, la philosophie et la vision long terme du projet, consultez le document [VISION.md](VISION.md).  
 
-- **FR :** Surveillez les allowances et révoquez-les si nécessaire.  
-- **EN :** Monitor allowances and revoke if needed.
+•••
+
+**EN :**  
+**DeFiPilot** follows an open and progressive philosophy: **learn, experiment, share, and inspire**.  
+The project evolves within a broader ecosystem including:  
+- **ControlPilot** — intelligent command center and AI observation agent;  
+- **ArbiPilot** — inter-DEX and cross-chain arbitrage bot;  
+- **LabPilot** — AI experimentation and optimization lab.  
+
+This ecosystem aims to create an **autonomous cluster of DeFi bots** that are cooperative and adaptive, able to manage multiple strategies simultaneously based on market conditions.  
+Each component will communicate through a secure data exchange layer, orchestrated by **ControlPilot**.  
+
+> 📘 For the full architecture, philosophy, and long-term vision of the project, see [VISION.md](VISION.md).  
+
+---
+## ❓ FAQ / FAQ
+
+**FR :**  
+### 🔹 1. DeFiPilot est-il sûr à utiliser ?
+Oui. Toutes les opérations sont validées avant exécution (balances, allowances, statuts des transactions). Le mode **simulation (dry-run)** permet de tout tester sans utiliser de fonds réels.  
+
+### 🔹 2. Peut-on perdre de l’argent ?
+En mode simulation : non.  
+En mode réel : comme tout investissement DeFi, les risques existent (slippage, baisse de valeur, erreurs de configuration). DeFiPilot minimise ces risques par une vérification stricte des opérations et un suivi complet des logs.  
+
+### 🔹 3. Quelles blockchains sont supportées ?
+Actuellement : **Polygon**.  
+Les prochaines versions ajouteront la compatibilité multi-chaînes (Avalanche, Fantom, etc.).  
+
+### 🔹 4. Peut-on personnaliser les profils d’investissement ?
+Oui. Les profils (prudent, modéré, risqué) peuvent être ajustés via le fichier de configuration JSON pour modifier les pondérations et seuils de rentabilité.  
+
+### 🔹 5. Quelle est la différence entre simulation et mode réel ?
+- **Simulation** : aucune transaction réelle, tous les swaps et investissements sont simulés et consignés dans les journaux.  
+- **Mode réel** : transactions vérifiées, envoyées et confirmées sur la blockchain.  
+
+•••
+
+**EN :**  
+### 🔹 1. Is DeFiPilot safe to use?
+Yes. All operations are validated before execution (balances, allowances, transaction status). The **simulation (dry-run)** mode allows testing everything without using real funds.  
+
+### 🔹 2. Can I lose money?
+In simulation mode: no.  
+In real mode: as with any DeFi investment, risks exist (slippage, token value drops, configuration errors). DeFiPilot minimizes them through strict verification and full transaction logging.  
+
+### 🔹 3. Which blockchains are supported?
+Currently: **Polygon**.  
+Upcoming versions will add multi-chain compatibility (Avalanche, Fantom, etc.).  
+
+### 🔹 4. Can investment profiles be customized?
+Yes. Profiles (prudent, moderate, risky) can be edited via the JSON configuration file to adjust weightings and profitability thresholds.  
+
+### 🔹 5. What’s the difference between simulation and real mode?
+- **Simulation**: no real transaction, all swaps and investments are simulated and logged.  
+- **Real mode**: transactions are verified, sent, and confirmed on-chain.  
 
 ---
 
-## Dépannage / Troubleshooting
+## 🧾 À propos / About
 
-- **Web3 non connecté** → vérifier `POLYGON_RPC_URL`.  
-- **execution reverted: TRANSFER_FROM_FAILED** → allowance USDC insuffisante ou incohérente ; refaire approve.  
-- **only accepts checksum addresses** → convertir avec `Web3.to_checksum_address(...)`.  
-- **Pas de logs visibles** → lancer avec `logging.basicConfig(level=logging.INFO)` dans vos scripts.
+**FR :**  
+**Auteur :** David RAFFEIL  
+**Projet :** DeFiPilot (open source, usage personnel et éducatif)  
+**Développé avec :** l’IA **ChatGPT (OpenAI)** pour la rédaction, la structuration et le support technique.  
 
----
+DeFiPilot est un projet open source non commercial, conçu pour apprendre, expérimenter et documenter l’automatisation des stratégies DeFi. Il n’est pas destiné à un usage institutionnel ou commercial.  
 
-## Licence / License
+### ⚖️ Licence / License
 
-- **FR :** Projet gratuit pour usage personnel uniquement (non commercial).  
-- **EN :** Free project for personal use only (non-commercial).
-
-Voir les conditions complètes dans License.md  
-See full terms in License.md
-
----
-
-## FAQ
-
-**Peut-on utiliser DeFiPilot avec un exchange centralisé ?**  
-FR : ❌ Non, DeFiPilot vise la DeFi uniquement.  
-EN : ❌ No, DeFiPilot targets DeFi only.
-
-**Est-ce que DeFiPilot fonctionne en mode réel ?**  
-FR : ✅ Oui, en partie : swaps, ajout de liquidité et farming LP sont maintenant réels.  
-EN : ✅ Yes, partially: swaps, liquidity add and LP farming are now real.
-
-**Peut-on personnaliser les critères d’analyse des pools ?**  
-FR : ✅ Oui, via les profils (prudent, modéré, agressif…).  
-EN : ✅ Yes, via profiles (cautious, moderate, aggressive…).
-
-**Comment signaler un bug ou proposer une idée ?**  
-FR : Ouvrir une issue GitHub.  
-EN : Open a GitHub issue.
+> #### 🧱 Licence Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)
+> 
+> **FR :**  
+> Ce projet est distribué sous licence **Creative Commons Attribution – Pas d’Utilisation Commerciale 4.0 International (CC BY-NC 4.0)**.  
+> Vous êtes libre de partager, modifier et réutiliser le code à condition de :  
+> - Mentionner l’auteur original (**David RAFFEIL**) ;  
+> - Fournir un lien vers ce dépôt GitHub ;  
+> - Ne pas l’utiliser à des fins commerciales ;  
+> - Indiquer clairement les modifications apportées.  
+>  
+> Le projet est fourni **“tel quel”**, sans garantie explicite ni implicite. L’auteur ne saurait être tenu responsable d’éventuelles pertes, erreurs de transaction, ou dommages résultant de l’utilisation du code.  
+> 
+> **EN :**  
+> This project is licensed under the **Creative Commons Attribution – NonCommercial 4.0 International (CC BY-NC 4.0)** license.  
+> You are free to share, adapt, and reuse the code provided that you:  
+> - Give appropriate credit to the original author (**David RAFFEIL**);  
+> - Include a link to this GitHub repository;  
+> - Do not use the code for commercial purposes;  
+> - Clearly indicate any modifications made.  
+>  
+> The project is provided **“as is”**, without warranty of any kind. The author assumes no liability for any loss, failed transactions, or damages resulting from its use.  
 
 ---
 
-## Développeur / Developer
+*Développé en France avec passion et curiosité.*  
+*Developed in France with passion and curiosity.*  
 
-FR : Projet initié et développé par David Raffeil avec assistance IA.  
-EN : Project initiated and developed by David Raffeil with AI assistance.
-
-Voir aussi : VISION.md
+---
