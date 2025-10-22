@@ -1,4 +1,10 @@
-# DeFiPilot
+<p align="center">
+  <img src="assets/defipilot_banner.png" alt="DeFiPilot banner" width="100%">
+</p>
+
+> 🗣️ **Langue / Language :** le bot fonctionne uniquement en **français** pour le moment.  
+> The bot currently works **in French only** for the moment.
+
 
 ![Version](https://img.shields.io/badge/Version-V4.0%20Stable-blue)
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
@@ -6,7 +12,6 @@
 ![Developed with ChatGPT](https://img.shields.io/badge/Developed%20with-ChatGPT-orange)
 ![Open Source](https://img.shields.io/badge/Open%20Source-Non%20Commercial-green)
 ![Polygon Network](https://img.shields.io/badge/Network-Polygon-purple)
-
 ---
 
 ## 📚 Sommaire / Table of Contents
