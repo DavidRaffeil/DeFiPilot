@@ -1,20 +1,23 @@
-# gui/main_window.py — V4.1.3
-"""Interface graphique minimale de DeFiPilot avec barre de statut dynamique.
+# gui/main_window.py — V4.1.4
+"""Interface graphique minimale de DeFiPilot avec barre de statut dynamique
+et cartes alimentées par le dernier enregistrement du journal.
 
-Objectif V4.1.3 :
+Objectif V4.1.4 :
 - Afficher dans la barre de statut (bas de fenêtre) :
-  "Dernière donnée lue : HH:MM:SS | Mise à jour interface : HH:MM:SS"
+  "Dernière donnée lue : HH:MM:SS | Mise à jour interface : HH:MM:SS".
 - Lecture robuste du dernier événement de `journal_signaux.jsonl` (format JSONL).
 - Repli sur l'heure de modification du fichier si aucun timestamp exploitable.
 - Rafraîchissement automatique via `after()` (toutes les 1s).
+- Mise à jour des cartes principales avec la dernière entrée du journal :
+  * Contexte du marché → champ `context` (favorable / neutre / défavorable)
+  * Allocation active (policy) → dict formaté (prudent / modéré / risque)
+  * Exécution en cours → `run_id` (ou `—`)
 - Aucune dépendance externe (Tkinter + standard lib).
 """
 
 from __future__ import annotations
 
-import io
 import json
-import os
 import re
 from dataclasses import dataclass
 from datetime import datetime
@@ -25,7 +28,7 @@ import tkinter as tk
 from tkinter import ttk
 
 
-VERSION = "V4.1.3"
+VERSION = "V4.1.4"
 APP_TITLE = "DeFiPilot — Dashboard (min)"
 MIN_WIDTH = 860
 MIN_HEIGHT = 540
@@ -34,6 +37,7 @@ MIN_HEIGHT = 540
 @dataclass(slots=True)
 class UiState:
     """État d'affichage minimal (lecture seule au départ)."""
+
     contexte: str = "—"
     policy: str = "—"
     nb_pools: int = 0
@@ -41,8 +45,38 @@ class UiState:
     mode: str = "Simulation"  # ou "Réel"
 
 
+def _read_last_entry(path: str = "journal_signaux.jsonl") -> dict[str, object] | None:
+    """Retourne la dernière entrée JSON valide du journal ou None en cas d'échec.
+
+    - Ignore les lignes vides.
+    - Ne lève pas d'exception : renvoie None en cas de problème.
+    """
+    try:
+        last_line = ""
+        with open(path, "r", encoding="utf-8") as handle:
+            for raw_line in handle:
+                line = raw_line.strip()
+                if line:
+                    last_line = line
+        if not last_line:
+            return None
+        try:
+            payload = json.loads(last_line)
+        except json.JSONDecodeError:
+            return None
+        return payload if isinstance(payload, dict) else None
+    except FileNotFoundError:
+        return None
+    except OSError as exc:
+        print(f"[MainWindow] Erreur ouverture journal {path}: {exc}")
+        return None
+    except Exception as exc:
+        print(f"[MainWindow] Erreur inattendue lecture journal {path}: {exc}")
+        return None
+
+
 class MainWindow(tk.Tk):
-    """Fenêtre principale Tkinter avec barre de statut rafraîchie automatiquement."""
+    """Fenêtre principale Tkinter avec barre de statut et cartes dynamiques."""
 
     _ISO_PATTERN = re.compile(
         r"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?)"
@@ -63,6 +97,7 @@ class MainWindow(tk.Tk):
         # Construction de l’interface
         self._build_layout()
         self._populate_placeholders()
+        self._update_cards_from_last_journal()
         self._ensure_status_label()
 
         # Démarrage de la boucle de mise à jour de la barre de statut
@@ -93,44 +128,32 @@ class MainWindow(tk.Tk):
 
         content.columnconfigure(0, weight=1)
         content.columnconfigure(1, weight=1)
-        content.rowconfigure(0, weight=1)
-        content.rowconfigure(1, weight=1)
 
-        # Cartes d'infos (placeholders)
+        # Colonne gauche
         self.card_contexte = self._make_card(content, "Contexte du marché")
-        self.card_policy = self._make_card(content, "Allocation active (policy)")
-        self.card_pools = self._make_card(content, "Pools surveillées")
-        self.card_run = self._make_card(content, "Exécution en cours")
-
         self.card_contexte.grid(row=0, column=0, sticky="nsew", padx=(0, 8), pady=(0, 8))
-        self.card_policy.grid(row=0, column=1, sticky="nsew", padx=(8, 0), pady=(0, 8))
-        self.card_pools.grid(row=1, column=0, sticky="nsew", padx=(0, 8), pady=(8, 0))
-        self.card_run.grid(row=1, column=1, sticky="nsew", padx=(8, 0), pady=(8, 0))
 
-        # Barre de statut (création unique)
-        self.status: ttk.Label = ttk.Label(
-            self,
-            anchor="w",
-            text="Dernière donnée lue : --:--:-- | Mise à jour interface : --:--:--",
-        )
-        self.status.pack(fill=tk.X, side=tk.BOTTOM)
+        self.card_policy = self._make_card(content, "Allocation active (policy)")
+        self.card_policy.grid(row=1, column=0, sticky="nsew", padx=(0, 8), pady=(0, 8))
+
+        # Colonne droite
+        self.card_run = self._make_card(content, "Exécution en cours")
+        self.card_run.grid(row=0, column=1, sticky="nsew", padx=(8, 0), pady=(0, 8))
+
+        self.card_pools = self._make_card(content, "Pools surveillées")
+        self.card_pools.grid(row=1, column=1, sticky="nsew", padx=(8, 0), pady=(0, 8))
 
     def _ensure_status_label(self) -> None:
-        """Réutilise une barre de statut existante connue, sinon conserve self.status."""
-        label_types = (tk.Label, ttk.Label)
-        if hasattr(self, "status_label") and isinstance(self.status_label, label_types):
-            self.status = self.status_label  # type: ignore[assignment]
+        """Crée la barre de statut en bas si absente."""
+        if getattr(self, "status", None) is not None:
             return
-        if hasattr(self, "status_bar") and isinstance(self.status_bar, label_types):
-            self.status = self.status_bar  # type: ignore[assignment]
-            return
-        if hasattr(self, "footer_label") and isinstance(self.footer_label, label_types):
-            self.status = self.footer_label  # type: ignore[assignment]
-            return
-        # par défaut : self.status créé dans _build_layout
+        status_frame = ttk.Frame(self)
+        status_frame.pack(fill=tk.X, side=tk.BOTTOM)
+        self.status = ttk.Label(status_frame, text="—")
+        self.status.pack(fill=tk.X, padx=8, pady=6)
 
-    def _make_card(self, parent: tk.Widget, title: str) -> ttk.Frame:
-        """Crée un cadre stylé simple (carte)."""
+    def _make_card(self, parent: ttk.Frame, title: str) -> ttk.Frame:
+        """Fabrique une carte simple avec un titre et un label de contenu."""
         frame = ttk.Frame(parent, padding=12, relief=tk.GROOVE)
         lbl_title = ttk.Label(frame, text=title, font=("Segoe UI", 12, "bold"))
         lbl_title.pack(anchor="w", pady=(0, 8))
@@ -146,7 +169,7 @@ class MainWindow(tk.Tk):
         self._set_card_text(self.card_policy, f"Policy: {self.state.policy}")
         self._set_card_text(self.card_pools, f"Nb de pools surveillées: {self.state.nb_pools}")
         run = self.state.run_id or "—"
-        self._set_card_text(self.card_run, f"run_id: {run}\nMode: {self.state.mode}")
+        self._set_card_text(self.card_run, f"{run}\nMode: {self.state.mode}")
 
     def _set_card_text(self, card: ttk.Frame, text: str) -> None:
         """Met à jour le texte d'une carte."""
@@ -155,7 +178,8 @@ class MainWindow(tk.Tk):
 
     # -- Actions -----------------------------------------------------------
     def _on_refresh_clicked(self) -> None:
-        """Bouton 'Actualiser' : force un rafraîchissement immédiat de la barre."""
+        """Bouton 'Actualiser' : force un rafraîchissement immédiat."""
+        self._update_cards_from_last_journal()
         self._update_status_bar()
 
     # -- Barre de statut ---------------------------------------------------
@@ -176,77 +200,51 @@ class MainWindow(tk.Tk):
             return "--:--:--"
 
     def _read_last_data_time_from_journal(self, path: Path = Path("journal_signaux.jsonl")) -> str | None:
-        """Lit le dernier horodatage exploitable du journal fourni (JSONL).
+        """Lit un horodatage exploitable du journal fourni (JSONL).
         Ordre :
           1) 'timestamp' / 'time' / 'ts' si présent dans la dernière ligne JSON valide,
           2) Sinon regex ISO-8601 dans la ligne,
           3) Sinon repli sur mtime du fichier.
+        Renvoie l'heure locale au format HH:MM:SS ou None.
         """
         try:
-            if not path.exists():
-                return None
-
             last_line = ""
-            stat_result = None
-            try:
-                stat_result = path.stat()
-            except OSError:
-                stat_result = None
-
-            with path.open("r", encoding="utf-8") as handle:
-                for raw_line in handle:
-                    line = raw_line.strip()
-                    if line:
-                        last_line = line
-
+            with open(path, "r", encoding="utf-8") as h:
+                for raw in h:
+                    s = raw.strip()
+                    if s:
+                        last_line = s
             if not last_line:
-                if stat_result is not None:
-                    return self._format_hhmmss(stat_result.st_mtime)
-                return None
+                raise FileNotFoundError
 
-            timestamp_dt = self._extract_datetime_from_line(last_line)
-            if timestamp_dt is not None:
-                return self._format_hhmmss(timestamp_dt)
+            try:
+                data = json.loads(last_line)
+            except json.JSONDecodeError:
+                data = None
 
-            if stat_result is not None:
-                return self._format_hhmmss(stat_result.st_mtime)
+            # 1) Clé explicite
+            if isinstance(data, dict):
+                for k in ("timestamp", "time", "ts"):
+                    v = data.get(k) if k in data else None
+                    dt = self._parse_iso_dt(v)
+                    if dt is not None:
+                        return self._format_hhmmss(dt)
 
+            # 2) Regex ISO-8601 dans la ligne brute
+            m = self._ISO_PATTERN.search(last_line)
+            if m:
+                dt = self._parse_iso_dt(m.group(1))
+                if dt is not None:
+                    return self._format_hhmmss(dt)
+
+            # 3) Repli : mtime du fichier
+            mtime = path.stat().st_mtime
+            return self._format_hhmmss(mtime)
+        except Exception:
             return None
 
-        except FileNotFoundError:
-            return None
-        except Exception as exc:
-            print(f"[MainWindow] Erreur lecture journal {os.fspath(path)}: {exc}")
-            return None
-
-    def _extract_datetime_from_line(self, line: str) -> datetime | float | None:
-        """Tente d'extraire un horodatage d'une ligne JSON ou texte."""
-        try:
-            payload = json.loads(line)
-        except json.JSONDecodeError:
-            payload = None
-
-        if isinstance(payload, dict):
-            for key in ("timestamp", "time", "ts"):
-                if key in payload:
-                    parsed = self._coerce_to_datetime(payload.get(key))
-                    if parsed is not None:
-                        return parsed
-
-        match = self._ISO_PATTERN.search(line)
-        if match:
-            parsed = self._coerce_to_datetime(match.group(1))
-            if parsed is not None:
-                return parsed
-
-        return None
-
-    def _coerce_to_datetime(self, value: object) -> datetime | float | None:
-        """Convertit différents formats de timestamp en datetime ou timestamp."""
-        if value is None:
-            return None
-        if isinstance(value, (int, float)):
-            return float(value)
+    def _parse_iso_dt(self, value: object) -> datetime | None:
+        """Parsage résilient d'un timestamp ISO-8601 (supporte Z et ±HHMM)."""
         if isinstance(value, str) and value:
             iso_value = value.strip()
             if iso_value.endswith("Z"):
@@ -272,6 +270,9 @@ class MainWindow(tk.Tk):
             print(f"[MainWindow] Erreur inattendue lecture journal: {exc}")
             self._last_data_time = None
 
+        # Met à jour aussi les cartes périodiquement
+        self._update_cards_from_last_journal()
+
         self._last_ui_update_time = datetime.now()
         status_line = (
             "Dernière donnée lue : "
@@ -291,10 +292,84 @@ class MainWindow(tk.Tk):
 
         self._status_after_id = self.after(1000, self._update_status_bar)
 
+    def _update_cards_from_last_journal(self) -> None:
+        """Actualise les cartes principales avec la dernière entrée du journal."""
+        entry = _read_last_entry("journal_signaux.jsonl")
+
+        contexte_display = "—"
+        policy_display = "—"
+        run_display = "—"
+
+        if isinstance(entry, dict):
+            # Contexte
+            raw_context = entry.get("context")
+            if isinstance(raw_context, str):
+                cleaned_context = raw_context.strip()
+                if cleaned_context:
+                    normalized = cleaned_context.lower()
+                    mapping = {
+                        "favorable": "favorable",
+                        "neutre": "neutre",
+                        "défavorable": "défavorable",
+                        "defavorable": "défavorable",
+                    }
+                    contexte_display = mapping.get(normalized, cleaned_context)
+
+            # Policy
+            raw_policy = entry.get("policy")
+            if isinstance(raw_policy, dict):
+                normalized_policy = {str(k).lower(): v for k, v in raw_policy.items()}
+                order = ("prudent", "modéré", "risque")
+                label_map = {
+                    "prudent": "Prudent",
+                    "modéré": "Modéré",
+                    "risque": "Risque",
+                }
+
+                lines: list[str] = []
+                for key in order:
+                    value = normalized_policy.get(key)
+                    if value is None and key == "modéré":
+                        value = normalized_policy.get("modere")  # tolère sans accent
+                    if value is None:
+                        continue
+
+                    if isinstance(value, (int, float)):
+                        number = float(value)
+                        if 0.0 <= number <= 1.0:
+                            percent = round(number * 100.0, 1)
+                            formatted_value = (
+                                f"{int(percent)} %" if percent.is_integer() else f"{percent:.1f} %"
+                            )
+                        else:
+                            formatted_value = str(value)
+                    else:
+                        formatted_value = str(value)
+
+                    lines.append(f"{label_map[key]} : {formatted_value}")
+
+                if lines:
+                    policy_display = "\n".join(lines)
+
+            # run_id
+            raw_run = entry.get("run_id")
+            if isinstance(raw_run, str):
+                cleaned_run = raw_run.strip()
+                if cleaned_run:
+                    run_display = cleaned_run
+            elif raw_run not in (None, ""):
+                run_display = str(raw_run)
+
+        # Écriture dans les cartes
+        self._set_card_text(self.card_contexte, contexte_display)
+        self._set_card_text(self.card_policy, policy_display)
+        self._set_card_text(self.card_run, f"{run_display}\nMode: {self.state.mode}")
+
 
 # ---------------------------------------------------------------------------
 # Lancement autonome
 # ---------------------------------------------------------------------------
+
 def run() -> None:
     """Point d'entrée programme pour lancer la fenêtre principale."""
     app = MainWindow()
