@@ -1,305 +1,317 @@
-# gui/main_window.py — V4.1.3
-"""Interface graphique minimale de DeFiPilot avec barre de statut dynamique.
+# gui/main_window.py — V4.1.16
+"""DeFiPilot — Tableau de bord (V4.1.16)
 
-Objectif V4.1.3 :
-- Afficher dans la barre de statut (bas de fenêtre) :
-  "Dernière donnée lue : HH:MM:SS | Mise à jour interface : HH:MM:SS"
-- Lecture robuste du dernier événement de `journal_signaux.jsonl` (format JSONL).
-- Repli sur l'heure de modification du fichier si aucun timestamp exploitable.
-- Rafraîchissement automatique via `after()` (toutes les 1s).
-- Aucune dépendance externe (Tkinter + standard lib).
+Amélioration :
+- Colonne « Clé » désormais fixe (désactivation du redimensionnement manuel).
+- Conserve la largeur 200 px pour stabilité visuelle.
 """
 
 from __future__ import annotations
-
-import io
+import csv
 import json
 import os
-import re
+import sys
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
-
+from typing import Any, Dict, Optional
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, filedialog, messagebox
+import tkinter.font as tkfont
 
+# ============================
+# Configuration
+# ============================
+JSONL_ENV_KEYS: tuple[str, ...] = (
+    "DEFIPILOT_JOURNAL",
+    "DEFIPILOT_SIGNALS_JSONL",
+    "SIGNALS_JSONL_PATH",
+    "MARKET_SIGNALS_JSONL",
+)
+DEFAULT_JSONL_PATH = Path("journal_signaux.jsonl")
+REFRESH_MS = 1000
 
-VERSION = "V4.1.3"
-APP_TITLE = "DeFiPilot — Dashboard (min)"
-MIN_WIDTH = 860
-MIN_HEIGHT = 540
+APP_TITLE = "DeFiPilot — Tableau de bord (V4.1.16)"
+MIN_SIZE = (1024, 640)
 
+# ============================
+# Fonctions utilitaires
+# ============================
+def _resolve_jsonl_path() -> Path:
+    for key in JSONL_ENV_KEYS:
+        val = os.getenv(key)
+        if val:
+            try:
+                return Path(val).expanduser().resolve()
+            except Exception:
+                return Path(val).expanduser()
+    return DEFAULT_JSONL_PATH
 
-@dataclass(slots=True)
-class UiState:
-    """État d'affichage minimal (lecture seule au départ)."""
-    contexte: str = "—"
-    policy: str = "—"
-    nb_pools: int = 0
-    run_id: Optional[str] = None
-    mode: str = "Simulation"  # ou "Réel"
+def _now_tz() -> datetime:
+    return datetime.now(timezone.utc).astimezone()
 
+def _fmt_hms(dt: Optional[datetime]) -> str:
+    if not isinstance(dt, datetime):
+        return "--:--:--"
+    return dt.astimezone().strftime("%H:%M:%S")
+
+def _fmt_compact(value: Any) -> str:
+    try:
+        val = float(value)
+    except Exception:
+        return str(value)
+    abs_val = abs(val)
+    if abs_val >= 1_000_000_000:
+        return f"{val/1_000_000_000:.2f} B"
+    elif abs_val >= 1_000_000:
+        return f"{val/1_000_000:.2f} M"
+    elif abs_val >= 1_000:
+        return f"{val/1_000:.2f} K"
+    return f"{val:.2f}"
+
+# ============================
+# Lecture JSONL simplifiée
+# ============================
+@dataclass
+class LastEvent:
+    timestamp: Optional[datetime]
+    context: Optional[str]
+    last_context: Optional[str]
+    policy: Optional[Dict[str, float]]
+    score: Optional[float]
+    version: Optional[str]
+    run_id: Optional[str]
+    metrics: Optional[Dict[str, float]]
+    journal_path_label: Optional[str]
+    raw_line: Optional[str]
+
+def read_last_event(path: Path) -> LastEvent:
+    if not path.exists():
+        return LastEvent(None, None, None, None, None, None, None, None, None, None)
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            lines = [line.strip() for line in f if line.strip()]
+        raw = lines[-1] if lines else None
+        if not raw:
+            return LastEvent(None, None, None, None, None, None, None, None, str(path), None)
+        obj = json.loads(raw)
+        return LastEvent(
+            timestamp=_now_tz(),
+            context=obj.get("context"),
+            last_context=obj.get("last_context"),
+            policy=obj.get("policy"),
+            score=obj.get("score"),
+            version=obj.get("version"),
+            run_id=obj.get("run_id"),
+            metrics=obj.get("metrics_locales"),
+            journal_path_label=str(path),
+            raw_line=raw,
+        )
+    except Exception:
+        return LastEvent(None, None, None, None, None, None, None, None, str(path), None)
+
+# ============================
+# UI
+# ============================
+class Card(ttk.Frame):
+    def __init__(self, master: tk.Misc, title: str) -> None:
+        super().__init__(master, padding=(12, 10))
+        self.columnconfigure(0, weight=1)
+        self.configure(borderwidth=1, relief="groove")
+        self._title = ttk.Label(self, text=title, font=("Segoe UI", 11, "bold"))
+        self._title.grid(row=0, column=0, sticky="w")
+        self._value = ttk.Label(self, text="—", font=("Segoe UI", 12), wraplength=460, justify="left")
+        self._value.grid(row=1, column=0, sticky="w", pady=(6, 0))
+    def set_value(self, text: str) -> None:
+        self._value.configure(text=text)
+
+class StatusBar(ttk.Frame):
+    def __init__(self, master: tk.Misc) -> None:
+        super().__init__(master, padding=(6, 3))
+        self.columnconfigure(0, weight=1)
+        self._label = ttk.Label(self, text="", anchor="w")
+        self._label.grid(row=0, column=0, sticky="ew")
+    def set_status(self, last_data: Optional[datetime], last_ui: Optional[datetime], *, indicator: str = "") -> None:
+        txt = f"Dernière donnée lue : {_fmt_hms(last_data)} | Mise à jour interface : {_fmt_hms(last_ui)}"
+        if indicator:
+            txt += f"   •   {indicator}"
+        self._label.configure(text=txt)
 
 class MainWindow(tk.Tk):
-    """Fenêtre principale Tkinter avec barre de statut rafraîchie automatiquement."""
-
-    _ISO_PATTERN = re.compile(
-        r"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?)"
-    )
-
     def __init__(self) -> None:
         super().__init__()
         self.title(APP_TITLE)
-        self.minsize(MIN_WIDTH, MIN_HEIGHT)
-        # self.iconbitmap(...)  # TODO: icône personnalisée (plus tard)
+        self.geometry(f"{MIN_SIZE[0]}x{MIN_SIZE[1]}")
+        self.minsize(*MIN_SIZE)
+        self._setup_theme()
+        self._build_menu()
 
-        # État UI + timers
-        self.state = UiState()
-        self._last_data_time: str | None = None
-        self._last_ui_update_time: datetime | float | None = None
-        self._status_after_id: str | None = None
+        root = ttk.Frame(self, padding=12)
+        root.grid(row=0, column=0, sticky="nsew")
+        self.rowconfigure(0, weight=1)
+        self.columnconfigure(0, weight=1)
 
-        # Construction de l’interface
-        self._build_layout()
-        self._populate_placeholders()
-        self._ensure_status_label()
+        grid = ttk.Frame(root)
+        grid.grid(row=0, column=0, sticky="nsew")
+        for i in range(2):
+            grid.columnconfigure(i, weight=1, uniform="card")
+            grid.rowconfigure(i, weight=1)
 
-        # Démarrage de la boucle de mise à jour de la barre de statut
-        self._update_status_bar()
-
-    # -- Construction UI --------------------------------------------------
-    def _build_layout(self) -> None:
-        """Construit le squelette d'interface minimal."""
-        root = ttk.Frame(self, padding=16)
-        root.pack(fill=tk.BOTH, expand=True)
-
-        # Barre supérieure (actions minimales)
-        toolbar = ttk.Frame(root)
-        toolbar.pack(fill=tk.X, side=tk.TOP)
-
-        self.btn_refresh = ttk.Button(
-            toolbar,
-            text="Actualiser",
-            command=self._on_refresh_clicked,
-        )
-        self.btn_refresh.pack(side=tk.LEFT)
-
-        ttk.Separator(root, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=(8, 12))
-
-        # Zone de contenu (grid 2 colonnes)
-        content = ttk.Frame(root)
-        content.pack(fill=tk.BOTH, expand=True)
-
-        content.columnconfigure(0, weight=1)
-        content.columnconfigure(1, weight=1)
-        content.rowconfigure(0, weight=1)
-        content.rowconfigure(1, weight=1)
-
-        # Cartes d'infos (placeholders)
-        self.card_contexte = self._make_card(content, "Contexte du marché")
-        self.card_policy = self._make_card(content, "Allocation active (policy)")
-        self.card_pools = self._make_card(content, "Pools surveillées")
-        self.card_run = self._make_card(content, "Exécution en cours")
-
-        self.card_contexte.grid(row=0, column=0, sticky="nsew", padx=(0, 8), pady=(0, 8))
+        self.card_context = Card(grid, "Contexte")
+        self.card_context.grid(row=0, column=0, sticky="nsew", padx=(0, 8), pady=(0, 8))
+        self.card_policy = Card(grid, "Allocation (policy)")
         self.card_policy.grid(row=0, column=1, sticky="nsew", padx=(8, 0), pady=(0, 8))
-        self.card_pools.grid(row=1, column=0, sticky="nsew", padx=(0, 8), pady=(8, 0))
-        self.card_run.grid(row=1, column=1, sticky="nsew", padx=(8, 0), pady=(8, 0))
+        self.card_score = Card(grid, "Score")
+        self.card_score.grid(row=1, column=0, sticky="nsew", padx=(0, 8), pady=(8, 0))
+        self.card_journal = Card(grid, "Journal")
+        self.card_journal.grid(row=1, column=1, sticky="nsew", padx=(8, 0), pady=(8, 0))
 
-        # Barre de statut (création unique)
-        self.status: ttk.Label = ttk.Label(
-            self,
-            anchor="w",
-            text="Dernière donnée lue : --:--:-- | Mise à jour interface : --:--:--",
+        summary = ttk.Frame(root, padding=(0, 12, 0, 0))
+        summary.grid(row=1, column=0, sticky="nsew")
+        summary.columnconfigure(0, weight=1)
+        summary.rowconfigure(0, weight=1)
+
+        self._summary_tree = ttk.Treeview(
+            summary,
+            columns=("col_key", "col_value"),
+            show="headings",
+            height=10,
+            selectmode="browse",
         )
-        self.status.pack(fill=tk.X, side=tk.BOTTOM)
+        self._summary_tree.heading("col_key", text="Clé")
+        self._summary_tree.heading("col_value", text="Valeur")
+        self._summary_tree.column("col_key", width=200, anchor="w", stretch=False)  # fixe
+        self._summary_tree.column("col_value", anchor="e", stretch=True)
 
-    def _ensure_status_label(self) -> None:
-        """Réutilise une barre de statut existante connue, sinon conserve self.status."""
-        label_types = (tk.Label, ttk.Label)
-        if hasattr(self, "status_label") and isinstance(self.status_label, label_types):
-            self.status = self.status_label  # type: ignore[assignment]
-            return
-        if hasattr(self, "status_bar") and isinstance(self.status_bar, label_types):
-            self.status = self.status_bar  # type: ignore[assignment]
-            return
-        if hasattr(self, "footer_label") and isinstance(self.footer_label, label_types):
-            self.status = self.footer_label  # type: ignore[assignment]
-            return
-        # par défaut : self.status créé dans _build_layout
+        yscroll = ttk.Scrollbar(summary, orient=tk.VERTICAL, command=self._summary_tree.yview)
+        xscroll = ttk.Scrollbar(summary, orient=tk.HORIZONTAL, command=self._summary_tree.xview)
+        self._summary_tree.configure(yscrollcommand=yscroll.set, xscrollcommand=xscroll.set)
 
-    def _make_card(self, parent: tk.Widget, title: str) -> ttk.Frame:
-        """Crée un cadre stylé simple (carte)."""
-        frame = ttk.Frame(parent, padding=12, relief=tk.GROOVE)
-        lbl_title = ttk.Label(frame, text=title, font=("Segoe UI", 12, "bold"))
-        lbl_title.pack(anchor="w", pady=(0, 8))
-        body = ttk.Label(frame, text="—", justify=tk.LEFT)
-        body.pack(anchor="w")
-        frame._body = body  # type: ignore[attr-defined]
-        return frame
+        self._summary_tree.grid(row=0, column=0, sticky="nsew")
+        yscroll.grid(row=0, column=1, sticky="ns")
+        xscroll.grid(row=1, column=0, sticky="ew")
 
-    # -- Données d'exemple (placeholders) ---------------------------------
-    def _populate_placeholders(self) -> None:
-        """Alimente les cartes avec les valeurs par défaut."""
-        self._set_card_text(self.card_contexte, f"Contexte: {self.state.contexte}")
-        self._set_card_text(self.card_policy, f"Policy: {self.state.policy}")
-        self._set_card_text(self.card_pools, f"Nb de pools surveillées: {self.state.nb_pools}")
-        run = self.state.run_id or "—"
-        self._set_card_text(self.card_run, f"run_id: {run}\nMode: {self.state.mode}")
+        self.status = StatusBar(self)
+        self.status.grid(row=2, column=0, sticky="ew")
 
-    def _set_card_text(self, card: ttk.Frame, text: str) -> None:
-        """Met à jour le texte d'une carte."""
-        body: ttk.Label = card._body  # type: ignore[attr-defined]
-        body.configure(text=text)
+        self._jsonl_path = _resolve_jsonl_path()
+        self._last_ui_dt: Optional[datetime] = None
+        self.after(100, self._tick)
 
-    # -- Actions -----------------------------------------------------------
-    def _on_refresh_clicked(self) -> None:
-        """Bouton 'Actualiser' : force un rafraîchissement immédiat de la barre."""
-        self._update_status_bar()
-
-    # -- Barre de statut ---------------------------------------------------
-    def _format_hhmmss(self, dt: datetime | float | None) -> str:
-        """Formate un instant en HH:MM:SS local ou renvoie un placeholder."""
-        if dt is None:
-            return "--:--:--"
-        try:
-            if isinstance(dt, (int, float)):
-                local_dt = datetime.fromtimestamp(float(dt))
-            else:
-                local_dt = dt
-                if local_dt.tzinfo is not None:
-                    local_dt = local_dt.astimezone()
-            return local_dt.strftime("%H:%M:%S")
-        except Exception as exc:  # robustesse ultime
-            print(f"[MainWindow] Erreur formatage heure: {exc}")
-            return "--:--:--"
-
-    def _read_last_data_time_from_journal(self, path: Path = Path("journal_signaux.jsonl")) -> str | None:
-        """Lit le dernier horodatage exploitable du journal fourni (JSONL).
-        Ordre :
-          1) 'timestamp' / 'time' / 'ts' si présent dans la dernière ligne JSON valide,
-          2) Sinon regex ISO-8601 dans la ligne,
-          3) Sinon repli sur mtime du fichier.
-        """
-        try:
-            if not path.exists():
-                return None
-
-            last_line = ""
-            stat_result = None
+    def _setup_theme(self) -> None:
+        style = ttk.Style(self)
+        for name in ("clam", "vista", "default"):
             try:
-                stat_result = path.stat()
-            except OSError:
-                stat_result = None
-
-            with path.open("r", encoding="utf-8") as handle:
-                for raw_line in handle:
-                    line = raw_line.strip()
-                    if line:
-                        last_line = line
-
-            if not last_line:
-                if stat_result is not None:
-                    return self._format_hhmmss(stat_result.st_mtime)
-                return None
-
-            timestamp_dt = self._extract_datetime_from_line(last_line)
-            if timestamp_dt is not None:
-                return self._format_hhmmss(timestamp_dt)
-
-            if stat_result is not None:
-                return self._format_hhmmss(stat_result.st_mtime)
-
-            return None
-
-        except FileNotFoundError:
-            return None
-        except Exception as exc:
-            print(f"[MainWindow] Erreur lecture journal {os.fspath(path)}: {exc}")
-            return None
-
-    def _extract_datetime_from_line(self, line: str) -> datetime | float | None:
-        """Tente d'extraire un horodatage d'une ligne JSON ou texte."""
-        try:
-            payload = json.loads(line)
-        except json.JSONDecodeError:
-            payload = None
-
-        if isinstance(payload, dict):
-            for key in ("timestamp", "time", "ts"):
-                if key in payload:
-                    parsed = self._coerce_to_datetime(payload.get(key))
-                    if parsed is not None:
-                        return parsed
-
-        match = self._ISO_PATTERN.search(line)
-        if match:
-            parsed = self._coerce_to_datetime(match.group(1))
-            if parsed is not None:
-                return parsed
-
-        return None
-
-    def _coerce_to_datetime(self, value: object) -> datetime | float | None:
-        """Convertit différents formats de timestamp en datetime ou timestamp."""
-        if value is None:
-            return None
-        if isinstance(value, (int, float)):
-            return float(value)
-        if isinstance(value, str) and value:
-            iso_value = value.strip()
-            if iso_value.endswith("Z"):
-                iso_value = iso_value[:-1] + "+00:00"
-            # normaliser ±HHMM -> ±HH:MM
-            if re.search(r"[+-]\d{4}$", iso_value):
-                iso_value = f"{iso_value[:-5]}{iso_value[-5:-2]}:{iso_value[-2:]}"
-            iso_value = iso_value.replace(" ", "T")
-            try:
-                dt = datetime.fromisoformat(iso_value)
-            except ValueError:
-                return None
-            if dt.tzinfo is not None:
-                dt = dt.astimezone()
-            return dt
-        return None
-
-    def _update_status_bar(self) -> None:
-        """Met à jour la barre de statut et replanifie le rafraîchissement."""
-        try:
-            self._last_data_time = self._read_last_data_time_from_journal()
-        except Exception as exc:
-            print(f"[MainWindow] Erreur inattendue lecture journal: {exc}")
-            self._last_data_time = None
-
-        self._last_ui_update_time = datetime.now()
-        status_line = (
-            "Dernière donnée lue : "
-            f"{self._last_data_time or '--:--:--'}"
-            " | Mise à jour interface : "
-            f"{self._format_hhmmss(self._last_ui_update_time)}"
-        )
-        self.status.configure(text=status_line)
-
-        if self._status_after_id is not None:
-            try:
-                self.after_cancel(self._status_after_id)
+                style.theme_use(name)
+                break
             except Exception:
-                pass
-            finally:
-                self._status_after_id = None
+                continue
+        style.configure("TFrame", background="#f6f7fb")
+        style.configure("TLabel", background="#f6f7fb")
+        style.configure("Treeview", background="white", fieldbackground="white", padding=(6, 3))
+        style.configure("Treeview.Heading", font=("Segoe UI", 10, "bold"))
 
-        self._status_after_id = self.after(1000, self._update_status_bar)
+    def _build_menu(self) -> None:
+        menubar = tk.Menu(self)
+        filemenu = tk.Menu(menubar, tearoff=0)
+        filemenu.add_command(label="Actualiser maintenant", command=self._refresh_now)
+        filemenu.add_command(label="Exporter le tableau en CSV…", command=self._export_table_csv)
+        filemenu.add_separator()
+        filemenu.add_command(label="Quitter", command=self.destroy)
+        menubar.add_cascade(label="Fichier", menu=filemenu)
+        self.config(menu=menubar)
 
+    def _tick(self) -> None:
+        last = read_last_event(self._jsonl_path)
+        self._set_cards_from_last(last)
+        indicator = "🟢 JSONL OK" if last.raw_line else ("🟡 JSONL vide" if self._jsonl_path.exists() else "🔴 JSONL introuvable")
+        self._last_ui_dt = _now_tz()
+        self.status.set_status(last.timestamp, self._last_ui_dt, indicator=indicator)
+        self._update_summary_table(last, last.raw_line)
+        self.after(REFRESH_MS, self._tick)
 
-# ---------------------------------------------------------------------------
-# Lancement autonome
-# ---------------------------------------------------------------------------
-def run() -> None:
-    """Point d'entrée programme pour lancer la fenêtre principale."""
+    def _refresh_now(self) -> None:
+        last = read_last_event(self._jsonl_path)
+        indicator = "🟢 JSONL OK" if last.raw_line else ("🟡 JSONL vide" if self._jsonl_path.exists() else "🔴 JSONL introuvable")
+        self._last_ui_dt = _now_tz()
+        self.status.set_status(last.timestamp, self._last_ui_dt, indicator=indicator)
+        self._update_summary_table(last, last.raw_line)
+
+    def _export_table_csv(self) -> None:
+        try:
+            default_name = f"defipilot_recap_{_now_tz().strftime('%Y%m%d_%H%M%S')}.csv"
+            path = filedialog.asksaveasfilename(
+                title="Exporter en CSV",
+                defaultextension=".csv",
+                initialfile=default_name,
+                filetypes=(("CSV", "*.csv"), ("Tous les fichiers", "*.*")),
+            )
+            if not path:
+                return
+            rows = [("Clé", "Valeur")]
+            for iid in self._summary_tree.get_children(""):
+                vals = self._summary_tree.item(iid, "values")
+                if len(vals) >= 2:
+                    rows.append((str(vals[0]), str(vals[1])))
+            with open(path, "w", newline="", encoding="utf-8") as f:
+                csv.writer(f).writerows(rows)
+        except Exception as exc:
+            messagebox.showerror("Export CSV", f"Échec de l'export : {exc}")
+            return
+        messagebox.showinfo("Export CSV", f"Exporté avec succès :\n{path}")
+
+    def _set_cards_from_last(self, last: LastEvent) -> None:
+        ctx_txt = last.context or "—"
+        if last.last_context:
+            ctx_txt = f"{ctx_txt}\nlast_context : {last.last_context}"
+        self.card_context.set_value(ctx_txt)
+        if last.policy:
+            parts = [f"{k}: {v:.2f}" for k, v in sorted(last.policy.items(), key=lambda kv: -kv[1])]
+            policy_txt = ", ".join(parts)
+        else:
+            policy_txt = "—"
+        self.card_policy.set_value(policy_txt)
+        score_txt = f"{last.score:.4f}" if last.score else "—"
+        ts_txt = _fmt_hms(last.timestamp)
+        lines = [f"Score : {score_txt}"]
+        if last.version:
+            lines.append(f"Version : {last.version}")
+        lines.append(f"Horodatage : {ts_txt}")
+        self.card_score.set_value("\n".join(lines))
+        j_label = last.journal_path_label or str(self._jsonl_path)
+        status = "OK" if (self._jsonl_path.exists() and last.raw_line) else ("vide" if self._jsonl_path.exists() else "introuvable")
+        self.card_journal.set_value(f"{j_label} ({status})\nSource JSONL : {self._jsonl_path}")
+
+    def _update_summary_table(self, last: LastEvent, raw: Optional[str]) -> None:
+        tree = self._summary_tree
+        for iid in tree.get_children():
+            tree.delete(iid)
+        metrics = last.metrics or {}
+        rows = [
+            ("contexte", last.context or "—"),
+            ("last_context", last.last_context or "—"),
+            ("score", f"{last.score:.4f}" if last.score else "—"),
+            ("policy", ", ".join([f"{k}: {v:.2f}" for k, v in sorted((last.policy or {}).items(), key=lambda kv: -kv[1])]) if last.policy else "—"),
+            ("version", last.version or "—"),
+            ("run_id", last.run_id or "—"),
+            ("timestamp", _fmt_hms(last.timestamp)),
+            ("metrics.apr_mean", f"{metrics.get('apr_mean', '—'):.4f}" if metrics.get('apr_mean') else "—"),
+            ("metrics.volume_sum", _fmt_compact(metrics.get('volume_sum', '—'))),
+            ("metrics.tvl_sum", _fmt_compact(metrics.get('tvl_sum', '—'))),
+            ("journal_path", last.journal_path_label or str(self._jsonl_path)),
+            ("json_raw", raw or "—"),
+        ]
+        for key, value in rows:
+            tree.insert("", "end", values=(key, value))
+
+# ============================
+# Main
+# ============================
+def main(argv: Optional[list[str]] = None) -> int:
+    _ = argv or sys.argv[1:]
     app = MainWindow()
     app.mainloop()
-
+    return 0
 
 if __name__ == "__main__":
-    run()
+    raise SystemExit(main())
