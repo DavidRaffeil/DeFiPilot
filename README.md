@@ -203,72 +203,58 @@ The features of **DeFiPilot** are organized around three key areas: **security**
 - Polygon RPC access (e.g., Infura, Alchemy)  
 - Compatible local or SBC environment (Orange Pi, Raspberry Pi)  
 
----
+🆕 Nouveautés / What's New — Version 4.1
+🖥️ Interface graphique / Graphical Interface
 
-## 🆕 Nouveautés / What's New — Version 4.0
----
+Note : cette version introduit l’interface graphique minimale de DeFiPilot, affichant les informations de marché et de stratégie en temps réel.
+Note: this version introduces DeFiPilot’s minimal graphical interface, showing real-time market and strategy data.
 
-## 🖼️ Aperçu visuel / Visual Preview
+FR :
+La version 4.1 marque la première apparition de l’interface graphique (GUI) de DeFiPilot.
+Cette interface, basée uniquement sur Tkinter, permet de visualiser en direct le contexte de marché, la stratégie active et les derniers signaux du bot.
+Elle reste volontairement sobre et légère pour assurer la stabilité et la compatibilité sur toutes les machines.
 
-> **Note :** ces aperçus sont affichés en français car le bot ne fonctionne qu’en français pour le moment.  
-> **Note:** these previews are shown in French because the bot currently works in French only.
+🎛️ Principales nouveautés
 
-**FR :**  
-Exemples d’exécution réelle de **DeFiPilot** en ligne de commande (CLI).  
-Ces aperçus montrent le fonctionnement du bot en mode réel et en simulation.
+Fenêtre principale avec quatre cartes : Contexte, Policy (allocation), Score, et Journal.
 
-```
-$ python strategy_cli.py --pools data/pools_sample.json --cfg config/defipilot_config.json
-Contexte détecté : favorable
-Allocation cible : Risqué 60% | Modéré 30% | Prudent 10%
-Score global : 0.67
-Journal mis à jour : journal_signaux.jsonl
-```
+Barre de statut dynamique mise à jour chaque seconde : Dernière donnée lue | Mise à jour interface.
 
-```
-$ python liquidity_cli.py --dry-run
-Simulation d’ajout de liquidité...
-Pair USDC/WETH détectée (SushiSwap)
-Montant simulé : 0.50 USDC + 0.00012 WETH
-Aucune transaction réelle effectuée.
-```
+Lecture robuste du fichier journal_signaux.jsonl (vide, corrompu ou valide).
 
----
+Export CSV du tableau récapitulatif (clé/valeur).
 
-**FR :**  
-La version **4.0** marque une étape clé : le passage du **mode simulation** à l’**exécution réelle** sur la blockchain.  
-Elle introduit de nouvelles briques fonctionnelles, un moteur de stratégie amélioré et une refonte complète de la structure de journalisation.  
+Colonne “Clé” fixe pour une meilleure stabilité visuelle.
 
-### 🧠 Principales améliorations techniques
-- **Mode réel complet** : toutes les opérations principales (swap, ajout de liquidité, farming) sont désormais exécutées directement sur la blockchain Polygon avec vérification des statuts de transaction.  
-- **Gestion du slippage et validation de prix** : calcul automatique des tolérances et vérifications des ratios avant chaque opération.  
-- **Moteur de stratégie adaptatif** : détecte le contexte de marché et ajuste dynamiquement l’allocation selon le profil d’investisseur.  
-- **Journalisation unifiée** : chaque opération génère une entrée structurée dans les fichiers CSV et JSONL, incluant le run_id, le gas utilisé, le coût, le statut et le contexte de décision.  
-- **Renforcement de la robustesse** : contrôles d’erreur étendus, validation des entrées et gestion propre des échecs de transaction.  
-- **Préparation de l’interface graphique (GUI)** : la base de données des pools et la couche de stratégie sont désormais prêtes pour l’intégration visuelle prévue en V4.1.  
+Interface fluide et sans dépendances externes (bibliothèque standard uniquement).
 
-**Impact global :**  
-La V4.0 transforme DeFiPilot d’un simple simulateur d’investissement en un **bot DeFi réellement opérationnel**, capable d’exécuter, vérifier et enregistrer des opérations en temps réel.  
-Cette transition constitue la base du futur moteur de décision intelligent.  
+Impact global :
+La V4.1 rend DeFiPilot visuellement interactif pour la première fois, tout en conservant la robustesse du moteur interne.
+Elle prépare la voie à la V4.2, qui intégrera un moteur de stratégie plus fin et de nouveaux signaux de marché.
 
 •••
 
-**EN :**  
-Version **4.0** represents a key milestone: the transition from **simulation mode** to **real on-chain execution**.  
-It introduces new functional modules, an improved strategy engine, and a complete overhaul of the logging structure.  
+EN :
+Version 4.1 introduces the first Graphical User Interface (GUI) for DeFiPilot.
+Built with Tkinter only, it provides a lightweight and stable way to monitor market context, allocation policy, and recent signals in real time.
 
-### 🧠 Main Technical Improvements
-- **Full real mode:** all core operations (swap, add liquidity, farming) are now executed directly on the Polygon blockchain with full transaction verification.  
-- **Slippage and price validation management:** automatic calculation of tolerances and pre-check of ratios before each transaction.  
-- **Adaptive strategy engine:** detects market context and dynamically adjusts allocation based on investor profile.  
-- **Unified logging:** every operation produces a structured entry in CSV and JSONL logs, including run_id, gas used, cost, status, and decision context.  
-- **Improved robustness:** extended error handling, input validation, and clean transaction failure management.  
-- **Graphical Interface (GUI) preparation:** pool database and strategy layer are now ready for integration in V4.1.  
+🎛️ Main Highlights
 
-**Overall impact:**  
-V4.0 transforms DeFiPilot from a simple investment simulator into a **fully operational DeFi bot**, capable of executing, validating, and logging real-time blockchain operations.  
-This marks the foundation of the future intelligent decision engine.  
+Main window with four cards: Context, Policy (allocation), Score, and Journal.
 
+Dynamic status bar updated every second: Last data read | UI updated.
+
+Robust JSONL parsing (handles empty, corrupted, or valid files).
+
+CSV export of the key/value summary table.
+
+Fixed “Key” column for consistent display.
+
+Smooth interface, no external dependencies (standard library only).
+
+Overall impact:
+V4.1 makes DeFiPilot visually interactive for the first time, while maintaining the internal robustness of the engine.
+It sets the stage for V4.2, which will bring enhanced strategy logic and richer market signal analysis.
 ---
 ## 🗺️ Feuille de route / Roadmap (évolution prévue / Planned Evolution)
 
