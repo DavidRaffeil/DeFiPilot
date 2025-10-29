@@ -1,22 +1,24 @@
-# core/market_signals_adapter.py – V4.0.4
-
+# core/market_signals_adapter.py — V4.2.0
 """
-Adaptateur simple pour relier market_signals au moteur de stratégie.
+Adaptateur entre les signaux de marché et le moteur de stratégie.
 
-Rôle:
-- Charger les paramètres depuis un `cfg` injecté (pas d'import de core.config ici).
-- Détecter le contexte de marché via detect_market_context(...).
-- Mapper la policy correspondante via get_allocation_policy_for_context(...).
-- Journaliser la décision en JSONL pour traçabilité.
-- Retourner (decision, policy) afin que l'appelant ajuste ses allocations.
+Objectifs V4.2 :
+- Rester compatible avec l'existant (signatures publiques inchangées).
+- Tirer parti des métriques avancées ajoutées dans ``core.market_signals``.
+- Support *optionnel* d'une policy d'allocation fournie par la config
+  (mapping bull/flat/bear ou directement favorable/neutre/defavorable).
+- Journal JSONL compatible GUI (écrit metrics_locales + metrics côté market_signals).
 
-Contrats:
+Contraintes :
 - Aucune dépendance web.
 - Bibliothèque standard + import de core.market_signals uniquement.
 - Commentaires/docstrings en français.
 """
 
-from typing import Optional, Tuple, Dict, Any
+from __future__ import annotations
+
+from typing import Optional, Tuple, Dict, Any, Mapping
+
 from core.market_signals import (
     MarketParams,
     MarketDecision,
@@ -26,37 +28,80 @@ from core.market_signals import (
     journaliser_signaux,
 )
 
+# Mapping optionnel pour compat "bull/flat/bear" -> contexte V4.x
+_CONTEXT_ALIAS: Mapping[str, str] = {
+    "bull": "favorable",
+    "flat": "neutre",
+    "bear": "defavorable",
+}
+
+
+def _policy_from_cfg(context: str, cfg: Mapping[str, Any]) -> Optional[Dict[str, float]]:
+    """Retourne une policy depuis la config si disponible et valide.
+
+    La config peut fournir un bloc :
+        ALLOCATION_POLICIES = {
+            "bull": {"risque": 0.6, "modéré": 0.3, "prudent": 0.1},
+            "flat": {...},
+            "bear": {...}
+        }
+    ou directement :
+        ALLOCATION_POLICIES = {
+            "favorable": {...},
+            "neutre": {...},
+            "defavorable": {...}
+        }
+    """
+    policies_cfg = cfg.get("ALLOCATION_POLICIES") if isinstance(cfg, Mapping) else None
+    if not isinstance(policies_cfg, Mapping):
+        return None
+
+    # Tentative 1 : clés déjà au format contexte V4.x
+    if context in policies_cfg:
+        policy = policies_cfg[context]
+    else:
+        # Tentative 2 : alias bull/flat/bear
+        # ex: context="favorable" -> alias_key="bull"
+        alias_key = next((k for k, v in _CONTEXT_ALIAS.items() if v == context), None)
+        if alias_key and alias_key in policies_cfg:
+            policy = policies_cfg[alias_key]
+        else:
+            return None
+
+    if not isinstance(policy, Mapping):
+        return None
+
+    p = {str(k): float(v) for k, v in policy.items() if k in ("risque", "modéré", "prudent")}
+    total = sum(p.values())
+    if total <= 0:
+        return None
+    # Normalise légèrement si nécessaire (tolérance petite dérive)
+    if abs(total - 1.0) > 1e-9:
+        p = {k: v / total for k, v in p.items()}
+    return p
+
 
 def calculer_contexte_et_policy(
     pools_stats: list[dict],
     cfg: dict,
     last_context: Optional[str] = None,
     run_id: Optional[str] = None,
-    version: str = "V4.0.4",
+    version: str = "V4.2.0",
     journal_path: str = "journal_signaux.jsonl",
 ) -> Tuple[MarketDecision, Dict[str, float]]:
     """
     Calcule la décision de contexte de marché et renvoie la policy d'allocation correspondante.
 
     Args:
-        pools_stats: liste de dicts contenant au minimum:
-            - "apr_change_pct": float|None
-            - "tvl_change_pct": float|None
-        cfg: dictionnaire de configuration global contenant au moins:
-            - "MARKET_SIGNALS": {...}
-            - "ALLOCATION_POLICIES": {"bull": {...}, "flat": {...}, "bear": {...}}
-        last_context: contexte précédent ("bull"|"flat"|"bear"|None) pour stabiliser les bascules si cooldown actif.
-        run_id: identifiant optionnel pour tracer l'exécution dans le journal.
+        pools_stats: liste de dicts de stats de pools.
+        cfg: configuration globale (peut contenir market_params et/ou ALLOCATION_POLICIES).
+        last_context: contexte précédent pour information.
+        run_id: identifiant optionnel pour traçabilité.
         version: version logique de l'exécution (ex: tag de release).
         journal_path: chemin du JSONL de journalisation.
 
     Returns:
-        (decision, policy) où:
-            - decision: MarketDecision (context, score, indicators, reason)
-            - policy: dict normalisé {"risque": x, "modéré": y, "prudent": z} (somme=1.0)
-
-    Raises:
-        KeyError/ValueError si la configuration de policy est manquante ou invalide.
+        (decision, policy)
     """
     # 1) Charger les paramètres de signaux depuis cfg
     params: MarketParams = load_params_from_config(cfg)
@@ -68,11 +113,16 @@ def calculer_contexte_et_policy(
         last_context=last_context,
     )
 
-    # 3) Récupérer la policy associée
-    policies_cfg: Dict[str, Any] = cfg.get("ALLOCATION_POLICIES", {})
-    policy: Dict[str, float] = get_allocation_policy_for_context(decision.context, policies_cfg)
+    # 3) Récupérer la policy associée : priorité à la config si valide, sinon valeurs par défaut
+    policy = _policy_from_cfg(decision.context, cfg) or get_allocation_policy_for_context(decision.context)
 
-    # 4) Journaliser la décision (append JSONL)
-    journaliser_signaux(decision, run_id=run_id, version=version, path_jsonl=journal_path)
+    # 4) Journaliser la décision + policy
+    journaliser_signaux(
+        decision,
+        policy,
+        run_id=run_id,
+        version=version,
+        journal_path=journal_path,
+    )
 
     return decision, policy
