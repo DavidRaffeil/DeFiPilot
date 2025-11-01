@@ -1,0 +1,20 @@
+[
+  {
+    "name": "USDC/WETH",
+    "apr": 0.12,
+    "volume_24h": 1250000.0,
+    "tvl": 10500000.0
+  },
+  {
+    "name": "WMATIC/WETH",
+    "apr": 0.09,
+    "volume_24h": 1100000.0,
+    "tvl": 9500000.0
+  },
+  {
+    "name": "DAI/USDC",
+    "apr": 0.14,
+    "volume_24h": 800000.0,
+    "tvl": 15000000.0
+  }
+]

@@ -1,0 +1,33 @@
+diff --git a/README.md b/README.md
+--- a/README.md
++++ b/README.md
+@@ -0,0 +1,33 @@
++---
++
++## 🖼️ Aperçu visuel / Visual Preview
++
++> **Note :** ces aperçus sont affichés en français car le bot ne fonctionne qu’en français pour le moment.
++> **Note:** these previews are shown in French because the bot currently works in French only.
++
++**FR :**
++Exemples d’exécution réelle de **DeFiPilot** en ligne de commande (CLI).
++Ces aperçus montrent le fonctionnement du bot en mode réel et en simulation.
++
++```
++$ python strategy_cli.py --pools data/pools_sample.json --cfg config/defipilot_config.json
++Contexte détecté : favorable
++Allocation cible : Risqué 60% | Modéré 30% | Prudent 10%
++Score global : 0.67
++Journal mis à jour : journal_signaux.jsonl
++```
++
++```
++$ python liquidity_cli.py --dry-run
++Simulation d’ajout de liquidité...
++Pair USDC/WETH détectée (SushiSwap)
++Montant simulé : 0.50 USDC + 0.00012 WETH
++Aucune transaction réelle effectuée.
++```
++
++---
+
