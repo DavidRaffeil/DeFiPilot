@@ -5,12 +5,13 @@
 > 🗣️ **Langue / Language :** le bot fonctionne uniquement en **français** pour le moment.  
 > The bot currently works **in French only** for the moment.
 
-![Version](https://img.shields.io/badge/Version-V4.2%20Stable-blue)
+![Version](https://img.shields.io/badge/Version-V4.3%20Stable-blue)
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
 ![Made in France](https://img.shields.io/badge/Made%20in-France-lightgrey)
 ![Developed with ChatGPT](https://img.shields.io/badge/Developed%20with-ChatGPT-orange)
 ![Open Source](https://img.shields.io/badge/Open%20Source-Non%20Commercial-green)
 ![Polygon Network](https://img.shields.io/badge/Network-Polygon-purple)
+
 
 ---
 
@@ -18,7 +19,7 @@
 
 1. [Introduction / Introduction](#-introduction--introduction)  
 2. [Fonctionnalités principales / Key Features](#-fonctionnalités-principales--key-features)  
-3. [Nouveautés / What's New — Version 4.2](#-nouveautés--whats-new--version-42)  
+3. [Nouveautés / What's New — Version 4.3](#-nouveautés--whats-new--version-43)  
 4. [Historique des versions / Past Versions](#-historique-des-versions--past-versions)  
 5. [Caractéristiques techniques / Technical Highlights](#-caractéristiques-techniques--technical-highlights)  
 6. [Prérequis / Requirements](#-prérequis--requirements)  
@@ -51,13 +52,19 @@ DeFiPilot provides a comprehensive feature set for automating DeFi investment ma
 
 ---
 
-## 🆕 Nouveautés / What's New — Version 4.2
+## 🆕 Nouveautés / What's New — Version 4.3
 
 **FR :**  
-La version **4.2** marque une étape importante dans l’évolution de DeFiPilot. Elle introduit un moteur de stratégie optimisé, capable de prendre en compte la volatilité du marché, la tendance des APR et le TVL global afin d’ajuster dynamiquement les allocations de risque. Cette version renforce également la détection du contexte de marché (favorable, neutre, défavorable) et améliore la précision du calcul de score. Les nouvelles métriques sont désormais journalisées dans `journal_signaux.jsonl` et intégrées à l’interface graphique pour un suivi visuel en temps réel. L’ensemble prépare le terrain pour la communication inter-module avec **ControlPilot**, le futur module d’analyse IA.
+La version **4.3** introduit l’interface graphique complète de **DeFiPilot**, permettant un suivi visuel clair et fluide des stratégies, du contexte de marché et des scores de pools en temps réel.  
+Cette version consolide la stabilité du mode simulation et intègre un rafraîchissement automatique des données, un affichage dynamique du statut (🟢 favorable, 🟡 neutre, 🔴 défavorable) et un tableau de bord ergonomique.  
+Le moteur de stratégie et le journaliseur continu travaillent désormais de concert avec l’interface pour offrir une vue instantanée des signaux de marché et des allocations actives.  
+Cette étape prépare le terrain pour la future intégration du module **ControlPilot** (analyse IA et pilotage multi-bots).
 
 **EN :**  
-Version **4.2** marks a major milestone in DeFiPilot’s evolution. It introduces an optimized strategy engine capable of factoring in market volatility, APR trends, and global TVL to dynamically adjust risk allocations. This release also enhances market context detection (favorable, neutral, unfavorable) and improves scoring accuracy. New metrics are now logged in `journal_signaux.jsonl` and integrated into the graphical interface for real-time visual monitoring. Overall, this version lays the groundwork for future inter‑module communication with **ControlPilot**, the upcoming AI analysis module.
+Version **4.3** introduces the complete graphical interface of **DeFiPilot**, offering a clear and smooth visual overview of strategies, market context, and pool scores in real time.  
+This release enhances simulator stability and adds automatic data refresh, dynamic status indicators (🟢 favorable, 🟡 neutral, 🔴 unfavorable), and an ergonomic dashboard.  
+The strategy engine and continuous logger now work seamlessly with the interface to provide instant insights into market signals and active allocations.  
+This version lays the foundation for upcoming integration with **ControlPilot**, the AI-driven multi-bot management module.
 
 ---
 
@@ -170,34 +177,63 @@ python strategy_cli.py --pools data/pools_sample.json --journal journal_signaux.
 ## 🗺️ Feuille de route / Roadmap
 
 **FR :**  
-La feuille de route de DeFiPilot trace les prochaines étapes vers un écosystème DeFi complet et entièrement automatisé. Après la version 4.2, l’objectif est de perfectionner l’interface graphique et d’introduire un système de supervision intelligente via **ControlPilot**, qui analysera les métriques de marché et les signaux de stratégie. Les futures versions intégreront progressivement des modules d’intelligence artificielle pour la prise de décision automatisée, la gestion du risque et l’interconnexion entre bots (DeFiPilot, ControlPilot, ArbiPilot, LabPilot). L’ambition finale est d’obtenir un système autonome capable d’évaluer, d’investir et de s’ajuster sans intervention manuelle, tout en restant transparent et documenté.
+La feuille de route de DeFiPilot poursuit son objectif : atteindre un écosystème DeFi entièrement automatisé et intelligent.  
+Après la version **4.3**, qui introduit l’interface graphique complète et le monitoring temps réel, la priorité est donnée à la consolidation du mode réel complet et à la supervision via **ControlPilot**.  
+Ce dernier assurera la collecte, l’analyse et l’interprétation des métriques de marché pour assister les décisions d’investissement.  
+Les futures versions introduiront progressivement des capacités d’intelligence artificielle pour la détection contextuelle, l’optimisation de stratégie et la communication entre les différents bots (DeFiPilot, ControlPilot, ArbiPilot, LabPilot).  
+L’ambition finale reste inchangée : un système autonome, transparent et documenté, capable d’analyser, d’investir et d’évoluer sans intervention manuelle.
 
 **Prochaines versions :**  
-- **V4.3** — Interface complète et suivi temps réel (GUI avancée).  
-- **V4.4** — **ControlPilot (Phase 1)** : collecte de métriques et signaux IA.  
-- **V4.5 → V5.0** — **ControlPilot (Phase 2)** : intégration IA + interconnexion multi-bots.  
-- **V5.x+** — **ArbiPilot** : arbitrage inter-DEX / inter-chaînes.  
+- **V4.4 → V4.7** — Stabilisation du mode réel complet + enrichissement GUI (suivi, stratégie, journaux).  
+- **V4.8 → V5.0** — **ControlPilot (Phase 1)** : collecte et analyse IA des métriques.  
+- **V5.1 → V5.3** — **ControlPilot (Phase 2)** : supervision IA + interconnexion multi-bots.  
+- **V5.4+** — **ArbiPilot** : arbitrage inter-DEX / inter-chaînes.  
 - **V6.x+** — **Cluster multi-bots** : automatisation complète sur SBC.
 
 **EN :**  
-DeFiPilot’s roadmap outlines the next steps toward a fully automated DeFi ecosystem. After version 4.2, the goal is to enhance the graphical interface and introduce intelligent supervision through **ControlPilot**, which will analyze market metrics and strategic signals. Future releases will gradually integrate AI modules for automated decision-making, risk management, and cross-bot interconnection (DeFiPilot, ControlPilot, ArbiPilot, LabPilot). The ultimate aim is a self-governing system that can evaluate, invest, and adapt without manual intervention while remaining transparent and documented.
+DeFiPilot’s roadmap continues its mission to achieve a fully automated and intelligent DeFi ecosystem.  
+After version **4.3**, which introduced the complete graphical interface and real-time monitoring, the focus shifts to strengthening full real-mode operation and introducing intelligent supervision through **ControlPilot**.  
+ControlPilot will handle the collection, analysis, and interpretation of market metrics to support investment decisions.  
+Future releases will progressively integrate AI capabilities for contextual detection, strategy optimization, and communication between bots (DeFiPilot, ControlPilot, ArbiPilot, LabPilot).  
+The long-term goal remains unchanged: a self-sufficient, transparent, and documented system capable of analyzing, investing, and evolving without manual input.
 
 **Upcoming Versions:**  
-- **V4.3** — Full interface with real-time monitoring (advanced GUI).  
-- **V4.4** — **ControlPilot (Phase 1)**: metrics collection and AI signals.  
-- **V4.5 → V5.0** — **ControlPilot (Phase 2)**: AI integration + multi-bot interconnection.  
-- **V5.x+** — **ArbiPilot**: inter-DEX / cross-chain arbitrage.  
+- **V4.4 → V4.7** — Full real-mode stabilization + enhanced GUI (monitoring, strategy, logs).  
+- **V4.8 → V5.0** — **ControlPilot (Phase 1)**: metric collection and AI analysis.  
+- **V5.1 → V5.3** — **ControlPilot (Phase 2)**: AI supervision + multi-bot interconnection.  
+- **V5.4+** — **ArbiPilot**: inter-DEX / cross-chain arbitrage.  
 - **V6.x+** — **Multi-bot cluster**: full automation on SBC.
 
 ---
 
-## 🌐 Vision du projet / Project Vision
+## 🎯 Vision du projet / Project Vision
 
 **FR :**  
-La vision de DeFiPilot est de créer un écosystème complet et cohérent de bots DeFi autonomes travaillant ensemble de manière intelligente et transparente. Chaque composant a un rôle spécifique : **DeFiPilot** gère l’investissement et la sélection des pools, **ControlPilot** assure la supervision et l’analyse du contexte de marché, **ArbiPilot** exploite les opportunités d’arbitrage inter-DEX et inter-chaînes, et **LabPilot** sert de laboratoire d’expérimentation pour tester de nouvelles stratégies et intégrer des modèles d’IA. À long terme, l’objectif est d’obtenir un réseau autonome capable de fonctionner sur du matériel léger (SBC) tout en maintenant un contrôle total, une documentation claire et une traçabilité complète des décisions.
+DeFiPilot est le premier maillon d’un écosystème d’agents DeFi entièrement automatisés.  
+Son rôle est d’analyser les opportunités de rendement, d’évaluer le contexte de marché et de gérer les positions de manière autonome, tout en assurant une traçabilité complète via des journaux CSV et JSONL.  
+Chaque version vise à renforcer la précision, la réactivité et la stabilité du bot, en passant progressivement du mode simulation à la gestion réelle sur la blockchain Polygon.  
+L’écosystème complet comprendra plusieurs modules interconnectés :  
+
+- **DeFiPilot** — cœur d’exécution et de stratégie (analyse, scoring, investissement).  
+- **ControlPilot** — supervision centrale et intelligence artificielle (analyse, signaux, pilotage multi-bots).  
+- **ArbiPilot** — arbitrage inter-DEX et inter-chaînes.  
+- **LabPilot** — expérimentation IA, amélioration continue des algorithmes et stratégies.  
+
+L’objectif final est d’obtenir un système autonome, tournant sur un cluster de SBC (ex. Orange Pi), capable d’évaluer les pools, d’ajuster les positions et de composer les gains sans intervention manuelle, tout en conservant transparence et contrôle total de l’utilisateur.
 
 **EN :**  
-DeFiPilot’s vision is to build a complete and coherent ecosystem of autonomous DeFi bots working together intelligently and transparently. Each component plays a specific role: **DeFiPilot** manages investments and pool selection, **ControlPilot** handles supervision and market context analysis, **ArbiPilot** takes advantage of inter-DEX and cross-chain arbitrage opportunities, and **LabPilot** acts as an experimental lab to test new strategies and integrate AI models. In the long term, the goal is to achieve a self-sustaining network running on lightweight hardware (SBC) while maintaining full control, clear documentation, and complete traceability of decisions.
+DeFiPilot is the first component of a fully automated DeFi agent ecosystem.  
+Its purpose is to analyze yield opportunities, assess market context, and manage positions autonomously while maintaining full transparency through CSV and JSONL logs.  
+Each release improves accuracy, responsiveness, and stability — progressively transitioning from simulation mode to full real blockchain operations on Polygon.  
+The complete ecosystem will include several interconnected modules:  
+
+- **DeFiPilot** — core engine for strategy, scoring, and investment execution.  
+- **ControlPilot** — central supervision and AI intelligence (analysis, signals, multi-bot management).  
+- **ArbiPilot** — inter-DEX and cross-chain arbitrage.  
+- **LabPilot** — AI experimentation and continuous optimization of algorithms and strategies.  
+
+The ultimate goal is a self-governing system running on a cluster of SBCs (e.g., Orange Pi), capable of evaluating pools, adjusting positions, and compounding profits automatically — while remaining fully transparent and user-controlled.
+
 
 ---
 
