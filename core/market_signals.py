@@ -281,8 +281,13 @@ def journaliser_signaux(
     et **metrics** (héritage) pour ne rien casser.
     """
 
+    # Timestamp unique en UTC, format ISO 8601 avec suffixe Z pour compat
+    now_utc = datetime.now(timezone.utc).replace(microsecond=0)
+    ts_iso = now_utc.isoformat().replace("+00:00", "Z")
+
     entry = {
-        "ts": datetime.now(timezone.utc).isoformat(),
+        "timestamp": ts_iso,                # clé historique (existant dans ton journal)
+        "ts": ts_iso,                       # clé courte, conservée pour l'avenir
         "context": decision.context,
         "score": decision.score,
         "metrics_locales": decision.metrics,  # clé préférée par l'UI V4.1.x
@@ -291,6 +296,7 @@ def journaliser_signaux(
         "policy": dict(policy),
         "run_id": run_id,
         "version": version,
+        "journal_path": journal_path,       # pour tracer la source exacte
     }
 
     with open(journal_path, "a", encoding="utf-8") as fh:
