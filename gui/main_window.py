@@ -1,5 +1,5 @@
-# gui/main_window.py — V4.4.0
-"""DeFiPilot — Tableau de bord principal (V4.4.0).
+# gui/main_window.py — V4.7.1
+"""DeFiPilot — Tableau de bord principal (V4.7.1).
 
 Version stable avec :
 - Cartes « Contexte », « Allocation (policy) », « Score & version », « Journal ».
@@ -23,9 +23,6 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 import tkinter.font as tkfont
 
-# ============================
-# Configuration
-# ============================
 JSONL_ENV_KEYS = (
     "DEFIPILOT_JOURNAL",
     "DEFIPILOT_SIGNALS_JSONL",
@@ -34,13 +31,10 @@ JSONL_ENV_KEYS = (
 )
 DEFAULT_JSONL_PATH = Path("journal_signaux.jsonl")
 REFRESH_MS = 1_000
-APP_VERSION = "V4.4.0"
+APP_VERSION = "V4.7.1"
 APP_TITLE = f"DeFiPilot — Tableau de bord ({APP_VERSION})"
 MIN_SIZE = (1120, 680)
 
-# ============================
-# Fonctions utilitaires
-# ============================
 
 def _resolve_jsonl_path() -> Path:
     for key in JSONL_ENV_KEYS:
@@ -74,33 +68,33 @@ def _parse_timestamp(value: Any) -> Optional[datetime]:
     return None
 
 
-def _fmt_hms(dt: Optional[datetime]) -> str:
-    return dt.astimezone().strftime("%H:%M:%S") if isinstance(dt, datetime) else "--:--:--"
-
-
 def _fmt_datetime(dt: Optional[datetime]) -> str:
-    return dt.astimezone().strftime("%d/%m/%Y %H:%M:%S") if isinstance(dt, datetime) else "—"
+    if not dt:
+        return "—"
+    return dt.astimezone().strftime("%d/%m/%Y %H:%M:%S")
+
+
+def _fmt_hms(dt: Optional[datetime]) -> str:
+    if not dt:
+        return "—"
+    return dt.astimezone().strftime("%H:%M:%S")
 
 
 def _safe_float(value: Any) -> Optional[float]:
+    if value is None:
+        return None
     try:
-        return float(str(value).replace(",", "."))
-    except Exception:
+        return float(value)
+    except (TypeError, ValueError):
         return None
 
 
 def _fmt_compact(value: Any) -> str:
-    try:
-        val = float(value)
-    except Exception:
-        return str(value)
-    if abs(val) >= 1_000_000_000:
-        return f"{val/1_000_000_000:.2f} B"
-    if abs(val) >= 1_000_000:
-        return f"{val/1_000_000:.2f} M"
-    if abs(val) >= 1_000:
-        return f"{val/1_000:.2f} K"
-    return f"{val:.2f}"
+    if value is None:
+        return "—"
+    if isinstance(value, float):
+        return f"{value:.6g}"
+    return str(value)
 
 
 @dataclass
@@ -113,21 +107,56 @@ class LastEvent:
     version: Optional[str]
     run_id: Optional[str]
     metrics: Optional[Dict[str, Any]]
-    journal_path_label: str
     raw_line: Optional[str]
+    journal_path_label: str
 
 
 def read_last_event(path: Path) -> LastEvent:
-    """Lit la dernière ligne JSONL et la transforme en LastEvent."""
+    label = str(path)
     if not path.exists():
-        return LastEvent(None, None, None, None, None, None, None, None, str(path), None)
+        return LastEvent(
+            timestamp=None,
+            context=None,
+            last_context=None,
+            policy=None,
+            score=None,
+            version=None,
+            run_id=None,
+            metrics=None,
+            raw_line=None,
+            journal_path_label=label,
+        )
+
     try:
-        with open(path, "r", encoding="utf-8") as f:
-            lines = [line.strip() for line in f if line.strip()]
+        with path.open("r", encoding="utf-8") as f:
+            lines = [line.rstrip("\n") for line in f if line.strip()]
     except OSError:
-        return LastEvent(None, None, None, None, None, None, None, None, str(path), None)
+        return LastEvent(
+            timestamp=None,
+            context=None,
+            last_context=None,
+            policy=None,
+            score=None,
+            version=None,
+            run_id=None,
+            metrics=None,
+            raw_line=None,
+            journal_path_label=label,
+        )
+
     if not lines:
-        return LastEvent(None, None, None, None, None, None, None, None, str(path), None)
+        return LastEvent(
+            timestamp=None,
+            context=None,
+            last_context=None,
+            policy=None,
+            score=None,
+            version=None,
+            run_id=None,
+            metrics=None,
+            raw_line=None,
+            journal_path_label=label,
+        )
 
     raw = lines[-1]
     try:
@@ -135,40 +164,42 @@ def read_last_event(path: Path) -> LastEvent:
     except json.JSONDecodeError:
         payload = {}
 
-    timestamp = _parse_timestamp(payload.get("timestamp")) or _now_tz()
+    ts = _parse_timestamp(payload.get("timestamp")) or _now_tz()
+    context = payload.get("context")
+    last_context = payload.get("last_context") or payload.get("previous_context")
+    policy = payload.get("policy") if isinstance(payload.get("policy"), dict) else None
+    score = _safe_float(payload.get("score"))
+    version = payload.get("version") or payload.get("defipilot_version")
+    run_id = payload.get("run_id") or payload.get("id")
     metrics = payload.get("metrics_locales") or payload.get("metrics")
+    if not isinstance(metrics, dict):
+        metrics = None
 
     return LastEvent(
-        timestamp=timestamp,
-        context=payload.get("context"),
-        last_context=payload.get("last_context"),
-        policy=payload.get("policy"),
-        score=_safe_float(payload.get("score")),
-        version=payload.get("version"),
-        run_id=payload.get("run_id"),
-        metrics=metrics if isinstance(metrics, dict) else None,
-        journal_path_label=str(path),
+        timestamp=ts,
+        context=context,
+        last_context=last_context,
+        policy=policy,
+        score=score,
+        version=version,
+        run_id=run_id,
+        metrics=metrics,
         raw_line=raw,
+        journal_path_label=label,
     )
 
 
 def read_history_events(path: Path, max_events: int = 100) -> List[Dict[str, Any]]:
-    """Lit les dernières lignes du JSONL pour alimenter la vue Historique.
-
-    Retourne une liste de dicts avec les champs principaux :
-    - timestamp (datetime)
-    - context
-    - score
-    - apr_mean, tvl_sum, volume_sum, volatility_cv, apr_trend_avg (si présents)
-    """
     events: List[Dict[str, Any]] = []
     if not path.exists():
         return events
+
     try:
-        with open(path, "r", encoding="utf-8") as f:
-            lines = [line.strip() for line in f if line.strip()]
+        with path.open("r", encoding="utf-8") as f:
+            lines = [line.rstrip("\n") for line in f if line.strip()]
     except OSError:
         return events
+
     if not lines:
         return events
 
@@ -196,9 +227,24 @@ def read_history_events(path: Path, max_events: int = 100) -> List[Dict[str, Any
     return events
 
 
-# ============================
-# Classes UI
-# ============================
+def _metric_color(name: str, value: Optional[float]) -> str:
+    if value is None:
+        return "🟡"
+    key = name.lower()
+    if key == "apr_mean":
+        return "🟢" if value > 0.10 else "🟡" if value >= 0.05 else "🔴"
+    if key == "tvl_sum":
+        millions = value / 1_000_000.0
+        return "🟢" if millions > 10 else "🟡" if millions >= 2 else "🔴"
+    if key == "volume_sum":
+        millions = value / 1_000_000.0
+        return "🟢" if millions > 1 else "🟡" if millions >= 0.3 else "🔴"
+    if key == "volatility_cv":
+        return "🟢" if value < 0.25 else "🟡" if value <= 0.45 else "🔴"
+    if key == "apr_trend_avg":
+        return "🟢" if value > 0 else "🟡" if value == 0 else "🔴"
+    return "🟡"
+
 
 class Card(ttk.Frame):
     def __init__(self, master: tk.Misc, title: str, wrap: int = 420) -> None:
@@ -239,59 +285,34 @@ class StatusBar(ttk.Frame):
         self.label.configure(text=status)
 
 
-# --- Carte Métriques clés ---
-
-
-def _metric_color(name: str, value: Optional[float]) -> str:
-    """Retourne une pastille unicode en fonction du nom et de la valeur de la métrique."""
-    if value is None:
-        return "🟡"
-    key = name.lower()
-    if key == "apr_mean":
-        return "🟢" if value > 0.10 else "🟡" if value >= 0.05 else "🔴"
-    if key == "tvl_sum":
-        millions = value / 1_000_000.0
-        return "🟢" if millions > 10 else "🟡" if millions >= 2 else "🔴"
-    if key == "volume_sum":
-        millions = value / 1_000_000.0
-        return "🟢" if millions > 1 else "🟡" if millions >= 0.3 else "🔴"
-    if key == "volatility_cv":
-        return "🟢" if value < 0.25 else "🟡" if value <= 0.45 else "🔴"
-    if key == "apr_trend_avg":
-        return "🟢" if value > 0 else "🟡" if value == 0 else "🔴"
-    return "🟡"
-
-
 class MetricRow:
     def __init__(self, master: ttk.Frame, label: str, row: int) -> None:
         name_font = tkfont.Font(master, family="Segoe UI", size=10, weight="bold")
         value_font = tkfont.Font(master, family="Segoe UI", size=10)
         emoji_font = tkfont.Font(master, family="Segoe UI Emoji", size=14)
 
-        ttk.Label(master, text=label, font=name_font).grid(
-            row=row, column=0, sticky="w", padx=(0, 6), pady=4
-        )
-        self.value_label = ttk.Label(master, text="—", font=value_font, anchor="e")
-        self.value_label.grid(row=row, column=1, sticky="e", padx=(0, 6), pady=4)
-        self.dot_label = ttk.Label(master, text="🟡", font=emoji_font, anchor="e")
-        self.dot_label.grid(row=row, column=2, sticky="e")
+        ttk.Label(master, text=label, font=name_font).grid(row=row, column=0, sticky="w", pady=2)
+        self.emoji_label = ttk.Label(master, text="🟡", font=emoji_font)
+        self.emoji_label.grid(row=row, column=1, sticky="w", padx=(8, 4))
+        self.value_label = ttk.Label(master, text="—", font=value_font)
+        self.value_label.grid(row=row, column=2, sticky="w")
 
-    def update(self, value: str, dot: str) -> None:
+    def update(self, value: str, emoji: str) -> None:
         self.value_label.configure(text=value)
-        self.dot_label.configure(text=dot)
+        self.emoji_label.configure(text=emoji)
 
 
 class KeyMetricsCard(ttk.Frame):
     def __init__(self, master: tk.Misc) -> None:
         super().__init__(master, padding=(12, 10))
         self.configure(borderwidth=1, relief="groove")
+
         title_font = tkfont.Font(self, family="Segoe UI", size=11, weight="bold")
-        ttk.Label(self, text="Métriques clés", font=title_font).grid(
-            row=0, column=0, columnspan=3, sticky="w"
-        )
+        ttk.Label(self, text="Métriques clés", font=title_font).grid(row=0, column=0, columnspan=3, sticky="w")
+
         self.rows: Dict[str, MetricRow] = {}
         self.rows["apr_mean"] = MetricRow(self, "APR moyen", row=1)
-        self.rows["tvl_sum"] = MetricRow(self, "TVL total", row=2)
+        self.rows["tvl_sum"] = MetricRow(self, "TVL", row=2)
         self.rows["volume_sum"] = MetricRow(self, "Volume 24h", row=3)
         self.rows["volatility_cv"] = MetricRow(self, "Volatilité", row=4)
         self.rows["apr_trend_avg"] = MetricRow(self, "Tendance APR", row=5)
@@ -317,10 +338,6 @@ class KeyMetricsCard(ttk.Frame):
             row.update(display, _metric_color(key, val))
 
 
-# ============================
-# Fenêtre principale
-# ============================
-
 class MainWindow(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
@@ -336,7 +353,6 @@ class MainWindow(tk.Tk):
         self._setup_theme()
         self._build_menu()
 
-        # Layout global
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
 
@@ -346,7 +362,6 @@ class MainWindow(tk.Tk):
         container.rowconfigure(0, weight=3)
         container.rowconfigure(1, weight=2)
 
-        # --- Cartes haut ---
         cards = ttk.Frame(container)
         cards.grid(row=0, column=0, sticky="nsew")
         for col in range(3):
@@ -369,7 +384,6 @@ class MainWindow(tk.Tk):
         self.card_journal = Card(cards, "Journal")
         self.card_journal.grid(row=1, column=1, sticky="nsew", padx=8, pady=(8, 0))
 
-        # --- Bas : Notebook avec Résumé & Historique ---
         bottom = ttk.Frame(container, padding=(0, 8, 0, 0))
         bottom.grid(row=1, column=0, sticky="nsew")
         bottom.columnconfigure(0, weight=1)
@@ -378,7 +392,6 @@ class MainWindow(tk.Tk):
         notebook = ttk.Notebook(bottom)
         notebook.grid(row=0, column=0, sticky="nsew")
 
-        # Onglet Résumé actuel
         tab_summary = ttk.Frame(notebook)
         tab_summary.columnconfigure(0, weight=1)
         tab_summary.rowconfigure(0, weight=1)
@@ -402,7 +415,6 @@ class MainWindow(tk.Tk):
 
         notebook.add(tab_summary, text="Résumé actuel")
 
-        # Onglet Historique
         tab_history = ttk.Frame(notebook)
         tab_history.columnconfigure(0, weight=1)
         tab_history.rowconfigure(0, weight=1)
@@ -415,8 +427,7 @@ class MainWindow(tk.Tk):
             selectmode="browse",
         )
 
-        # Configuration des colonnes de l'historique
-        headings = {
+        headings: Dict[str, str] = {
             "ts": "Timestamp",
             "context": "Contexte",
             "score": "Score",
@@ -426,7 +437,7 @@ class MainWindow(tk.Tk):
             "volume": "Volume 24h (M$)",
             "trend": "Tendance APR",
         }
-        widths = {
+        widths: Dict[str, int] = {
             "ts": 160,
             "context": 110,
             "score": 70,
@@ -437,8 +448,7 @@ class MainWindow(tk.Tk):
             "trend": 110,
         }
 
-        # État de tri pour chaque colonne
-        self._history_sort_reverse: Dict[str, bool] = {key: False for key in headings.keys()}
+        self._history_sort_state: Dict[str, bool] = {}
 
         for key, title in headings.items():
             self._history_tree.heading(
@@ -447,7 +457,7 @@ class MainWindow(tk.Tk):
                 command=lambda c=key: self._on_history_heading_click(c),
             )
             self._history_tree.column(key, width=widths.get(key, 90), anchor="e", stretch=False)
-        # Colonnes texte alignées à gauche
+
         self._history_tree.column("ts", anchor="w")
         self._history_tree.column("context", anchor="w")
 
@@ -458,15 +468,12 @@ class MainWindow(tk.Tk):
 
         notebook.add(tab_history, text="Historique des signaux")
 
-        # Barre de statut
         self.status_bar = StatusBar(self)
         self.status_bar.grid(row=1, column=0, sticky="ew")
 
-        # Premier rafraîchissement + boucle
         self._refresh_data(force=True)
         self.after(REFRESH_MS, self._tick)
 
-    # --- Apparence & menu ---
     def _setup_theme(self) -> None:
         style = ttk.Style(self)
         try:
@@ -495,7 +502,6 @@ class MainWindow(tk.Tk):
 
         self.config(menu=menubar)
 
-    # --- Actions menu ---
     def _select_jsonl_path(self) -> None:
         initial_dir = self._jsonl_path.parent if self._jsonl_path.exists() else Path.cwd()
         file_path = filedialog.askopenfilename(
@@ -514,7 +520,6 @@ class MainWindow(tk.Tk):
             f"DeFiPilot — Tableau de bord\nVersion : {APP_VERSION}\nJournal : {self._jsonl_path}",
         )
 
-    # --- Rafraîchissement périodique ---
     def _tick(self) -> None:
         self._refresh_data()
         self.after(REFRESH_MS, self._tick)
@@ -525,14 +530,12 @@ class MainWindow(tk.Tk):
     def _refresh_data(self, *, force: bool = False) -> None:
         event = read_last_event(self._jsonl_path)
         if (not event.timestamp or event.raw_line == self._last_raw_line) and not force:
-            # Même si l'événement brut n'a pas changé, on met l'historique à jour
             self._update_history_table()
             return
 
         self._last_raw_line = event.raw_line
         self._last_data_dt = event.timestamp
 
-        # Contexte
         ctx_lines: List[str] = []
         if event.context:
             ctx_lines.append(str(event.context))
@@ -540,7 +543,6 @@ class MainWindow(tk.Tk):
             ctx_lines.append(f"Contexte précédent : {event.last_context}")
         self.card_context.set_value("\n".join(ctx_lines) if ctx_lines else "—")
 
-        # Policy
         if event.policy:
             parts = []
             for k, v in event.policy.items():
@@ -552,7 +554,6 @@ class MainWindow(tk.Tk):
         else:
             self.card_policy.set_value("—")
 
-        # Score & version
         score_lines: List[str] = []
         score_lines.append(f"Score : {event.score:.4f}" if event.score is not None else "Score : —")
         score_lines.append(f"Version : {event.version or '—'}")
@@ -560,7 +561,6 @@ class MainWindow(tk.Tk):
         score_lines.append(f"Horodatage : {_fmt_datetime(event.timestamp)}")
         self.card_score.set_value("\n".join(score_lines))
 
-        # Journal
         journal_lines: List[str] = [f"Fichier : {event.journal_path_label}"]
         if not self._jsonl_path.exists():
             status = "introuvable"
@@ -572,10 +572,8 @@ class MainWindow(tk.Tk):
         journal_lines.append(f"Source JSONL : {self._jsonl_path}")
         self.card_journal.set_value("\n".join(journal_lines))
 
-        # Métriques clés (carte à droite)
         self.card_metrics.update_metrics(event.metrics if isinstance(event.metrics, dict) else None)
 
-        # Tableau récap (Résumé actuel)
         self._summary_tree.delete(*self._summary_tree.get_children())
         self._summary_tree.insert("", "end", values=("Horodatage", _fmt_datetime(event.timestamp)))
         self._summary_tree.insert("", "end", values=("Version", event.version or "—"))
@@ -607,10 +605,8 @@ class MainWindow(tk.Tk):
         self._summary_tree.insert("", "end", values=("Journal", event.journal_path_label))
         self._summary_tree.insert("", "end", values=("JSON brut", event.raw_line or "—"))
 
-        # Historique
         self._update_history_table()
 
-        # Statut
         self._last_ui_dt = _now_tz()
         indicator = (
             "🟢 JSONL OK"
@@ -620,9 +616,7 @@ class MainWindow(tk.Tk):
         self.status_bar.set_status(self._last_data_dt, self._last_ui_dt, indicator=indicator)
 
     def _update_history_table(self) -> None:
-        """Recharge la vue Historique avec les dernières lignes du JSONL."""
         events = read_history_events(self._jsonl_path, max_events=100)
-        # On affiche le plus récent en haut
         events = list(reversed(events))
 
         self._history_tree.delete(*self._history_tree.get_children())
@@ -662,64 +656,46 @@ class MainWindow(tk.Tk):
                 ),
             )
 
-    def _on_history_heading_click(self, column: str) -> None:
-        """Trie la vue historique en cliquant sur l'en-tête de colonne."""
-        # Mapping colonne -> index dans le tuple de valeurs
-        col_index = {
-            "ts": 0,
-            "context": 1,
-            "score": 2,
-            "apr": 3,
-            "tvl": 4,
-            "vol": 5,
-            "volume": 6,
-            "trend": 7,
-        }
-        idx = col_index.get(column)
-        if idx is None:
-            return
+    def _on_history_heading_click(self, column_id: str) -> None:
+        item_ids = list(self._history_tree.get_children(""))
+        ascending = self._history_sort_state.get(column_id, True)
 
-        reverse = self._history_sort_reverse.get(column, False)
+        def key_func(item_id: str) -> Any:
+            value = self._history_tree.set(item_id, column_id)
+            text = str(value).strip()
+            normalized = (
+                text.replace("%", "")
+                .replace("M$", "")
+                .replace("m$", "")
+                .replace(" ", "")
+                .replace("\u202f", "")
+                .replace(",", ".")
+            )
+            if normalized:
+                try:
+                    return float(normalized)
+                except ValueError:
+                    pass
+            dt_text = text.replace("\u202f", " ").strip()
+            if column_id in {"ts", "timestamp", "datetime"} or ("T" in dt_text and ":" in dt_text):
+                iso_text = dt_text.replace("Z", "+00:00")
+                try:
+                    return datetime.fromisoformat(iso_text)
+                except ValueError:
+                    pass
+                for fmt in ("%d/%m/%Y %H:%M:%S", "%Y-%m-%d %H:%M:%S"):
+                    try:
+                        return datetime.strptime(dt_text, fmt)
+                    except ValueError:
+                        continue
+            return text.lower()
 
-        # Récupération des lignes actuelles
-        items = []
-        for iid in self._history_tree.get_children(""):
-            values = self._history_tree.item(iid, "values")
-            items.append((values, iid))
-
-        def parse_numeric(text: Any) -> Any:
-            s = str(text).strip()
-            # suppression symboles et espaces
-            s = s.replace("%", "").replace("M$", "").replace(" ", "")
-            try:
-                return float(s.replace(",", "."))
-            except ValueError:
-                return text
-
-        def sort_key(item: tuple[Any, Any]) -> Any:
-            values, _ = item
-            if idx >= len(values):
-                return ""
-            val = values[idx]
-            # colonnes numériques par défaut sauf timestamp / contexte
-            if column in {"ts", "context"}:
-                return str(val)
-            return parse_numeric(val)
-
-        items.sort(key=sort_key, reverse=reverse)
-
-        # Réinjection dans l'ordre trié
-        for pos, (_, iid) in enumerate(items):
-            self._history_tree.move(iid, "", pos)
-
-        # Inversion du sens pour le prochain clic
-        self._history_sort_reverse[column] = not reverse
-
-        # On force un rafraîchissement visuel sur la première ligne
-        children = self._history_tree.get_children("")
-        if children:
-            self._history_tree.see(children[0])
-        # Fin de _on_history_heading_click
+        sorted_ids = sorted(item_ids, key=key_func, reverse=not ascending)
+        for index, item_id in enumerate(sorted_ids):
+            self._history_tree.move(item_id, "", index)
+        if sorted_ids:
+            self._history_tree.see(sorted_ids[0])
+        self._history_sort_state[column_id] = not ascending
 
     def _export_table_csv(self) -> None:
         file_path = filedialog.asksaveasfilename(
