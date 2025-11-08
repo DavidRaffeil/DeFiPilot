@@ -3,7 +3,7 @@
 > 🗣️ **Langue / Language :** le bot fonctionne uniquement en **français** pour le moment.  
 > The bot currently works **in French only** for the moment.
 
-![Version](https://img.shields.io/badge/Version-V4.5%20Stable-blue)
+![Version](https://img.shields.io/badge/Version-V4.6%20Stable-blue)
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
 ![Made in France](https://img.shields.io/badge/Made%20in-France-lightgrey)
 ![Developed with ChatGPT](https://img.shields.io/badge/Developed%20with-ChatGPT-orange)
@@ -16,7 +16,7 @@
 
 1. [Introduction / Introduction](#-introduction--introduction)  
 2. [Fonctionnalités principales / Key Features](#-fonctionnalités-principales--key-features)  
-3. [Nouveautés / What's New — Version 4.5](#-nouveautés--whats-new--version-45)  
+3. [Nouveautés / What's New — Version 4.6](#-nouveautés--whats-new--version-46)  
 4. [Historique des versions / Past Versions](#-historique-des-versions--past-versions)  
 5. [Caractéristiques techniques / Technical Highlights](#-caractéristiques-techniques--technical-highlights)  
 6. [Prérequis / Requirements](#-prérequis--requirements)  
@@ -28,6 +28,7 @@
 12. [Licence / License](#-licence--license)
 
 ---
+
 ## 🧭 Introduction / Introduction
 
 **FR :**  
@@ -39,6 +40,7 @@ DeFiPilot is an autonomous DeFi bot designed to analyze, select, and automatical
 The project demonstrates that an individual investor can build a sophisticated DeFi management tool with AI assistance, without a technical background.
 
 ---
+
 ## ⚙️ Fonctionnalités principales / Key Features
 
 **FR :**  
@@ -58,29 +60,40 @@ DeFiPilot automates DeFi investment analysis and management through:
 - **Extensive logging** to CSV and JSONL for all events (signals, strategies, transactions, errors, system metrics).  
 
 ---
-## 🆕 Nouveautés / What's New — Version 4.5
+
+## 🆕 Nouveautés / What's New — Version 4.6
 
 **FR :**  
-La version **4.5** marque le début de l'intégration de **ControlPilot**, l’agent central de supervision et d’analyse :  
-- Collecte unifiée des **métriques opérationnelles** de DeFiPilot (APR moyen, TVL total, contexte de marché, stratégie active, latence, erreurs récentes, etc.).  
-- Ajout d’un **module de supervision** dans la GUI : zone dédiée qui affiche l’état global du système, le dernier signal reçu et la stratégie actuellement appliquée.  
-- Préparation de la **communication inter-bots** (DeFiPilot ↔ ControlPilot) via des journaux structurés pensés pour être relus et agrégés.  
-- Nettoyage et harmonisation des journaux (noms de fichiers, formats de timestamps, champs obligatoires) pour faciliter l’analyse externe.  
+La version **4.6** renforce le moteur de stratégie dynamique en ajoutant un module de répartition intra-catégorie.  
+Au lieu de se limiter à des ajustements globaux par catégorie (Prudent / Modéré / Risqué), DeFiPilot peut désormais proposer une réallocation **pool par pool**, en utilisant les scores de rentabilité comme poids relatifs.
+
+Principales évolutions :  
+- Nouveau module `core/rebalancing_intra.py` (moteur de répartition intra-catégorie).  
+- Transformation des actions « augmenter / réduire une catégorie de X USD » en **deltas par pool**, pondérés par les scores.  
+- Gestion des cas extrêmes : bornage automatique pour éviter qu’une pool passe en dessous de zéro (on retire au maximum le montant investi).  
+- Fonctions pures et sans effet de bord : aucun appel Web3, aucun mouvement réel sur le wallet — tout reste **théorique** en V4.6.  
+- Nouveau script de test `test_rebalancing_intra.py` avec scénarios nominaux et cas de bornage validés.  
 
 **EN :**  
-Version **4.5** marks the beginning of **ControlPilot** integration, the central supervision and analysis agent:  
-- Unified collection of DeFiPilot **operational metrics** (average APR, total TVL, market context, active strategy, latency, recent errors, etc.).  
-- Addition of a **supervision module** in the GUI: a dedicated area displaying global system status, latest signal, and currently applied strategy.  
-- Preparation for **inter-bot communication** (DeFiPilot ↔ ControlPilot) through structured logs designed for external reading and aggregation.  
-- Cleanup and harmonization of log formats (file names, timestamp formats, required fields) to ease external analysis.
+Version **4.6** strengthens the dynamic strategy engine with an intra-category allocation module.  
+Instead of limiting adjustments to global category levels (Prudent / Moderate / Risk), DeFiPilot can now compute **per-pool reallocations**, using profitability scores as relative weights.
+
+Main changes:  
+- New module `core/rebalancing_intra.py` (intra-category allocation engine).  
+- Transformation of actions “increase / reduce a category by X USD” into **per-pool deltas**, weighted by each pool’s score.  
+- Edge-case handling: automatic capping ensures a pool never drops below zero (reduction limited to the invested amount).  
+- Pure, side-effect-free functions: no Web3 calls, no real wallet movement — everything remains **theoretical** in V4.6.  
+- New test script `test_rebalancing_intra.py` validating both normal and capping scenarios.  
 
 ---
+
 ## 🕰️ Historique des versions / Past Versions
 
 **FR :**  
 DeFiPilot a évolué d'un simple simulateur de rendement à un bot opérationnel complet connecté à Polygon.  
 Chaque version a renforcé la robustesse, la clarté des journaux et la sécurité :  
 
+- **V4.5** — Intégration initiale de ControlPilot (métriques unifiées, supervision dans la GUI).  
 - **V4.4** — Socle de supervision et lancement global (ControlPilot observateur minimal).  
 - **V4.3** — Interface graphique complète, suivi des contextes et des pools en temps réel.  
 - **V4.2** — Moteur de stratégie optimisé, signaux enrichis et compatibilité GUI.  
@@ -96,6 +109,7 @@ Chaque version a renforcé la robustesse, la clarté des journaux et la sécurit
 DeFiPilot has evolved from a basic yield simulator into a full operational bot connected to Polygon.  
 Each version improved robustness, log clarity, and security:  
 
+- **V4.5** — Initial ControlPilot integration (unified metrics, GUI supervision).  
 - **V4.4** — Supervision foundation and global launcher (ControlPilot minimal observer).  
 - **V4.3** — Full GUI with real-time contexts and pool monitoring.  
 - **V4.2** — Optimized strategy engine, enriched signals, and GUI compatibility.  
@@ -108,6 +122,7 @@ Each version improved robustness, log clarity, and security:
 - **V1.x → V2.x** — Full simulation, scoring, and DefiLlama integration.  
 
 ---
+
 ## 🛠️ Caractéristiques techniques / Technical Highlights
 
 **FR :**  
@@ -127,6 +142,7 @@ Each version improved robustness, log clarity, and security:
 - Architecture: separated modules (`core/`, `gui/`, `defi_sources/`, `strategy/`, etc.) to make the project easier to extend.  
 
 ---
+
 ## 💻 Prérequis / Requirements
 
 **FR :**  
@@ -142,46 +158,108 @@ Each version improved robustness, log clarity, and security:
 - Recommended environment: a PC or dedicated **Single Board Computer** (Orange Pi, Raspberry Pi).  
 
 ---
+
+## 🧩 Installation / Installation
+
+**FR :**
+
+1. **Cloner le dépôt :**  
+   &nbsp;&nbsp;git clone https://github.com/DavidRaffeil/DeFiPilot.git  
+   &nbsp;&nbsp;cd DeFiPilot  
+
+2. **Créer un environnement virtuel (recommandé) :**  
+   &nbsp;&nbsp;python -m venv venv  
+   &nbsp;&nbsp;source venv/bin/activate &nbsp;&nbsp;# Linux / macOS  
+   &nbsp;&nbsp;venv\Scripts\activate &nbsp;&nbsp;# Windows  
+
+3. **Installer les dépendances :**  
+   &nbsp;&nbsp;pip install -r requirements.txt  
+
+4. **Configurer les variables d’environnement :**  
+   &nbsp;&nbsp;- Crée un fichier `.env` à la racine (voir `.env.example`).  
+   &nbsp;&nbsp;- Renseigne ton **RPC Polygon** (Infura, Alchemy, etc.) et ta **clé privée** locale (jamais en ligne).  
+
+5. **Tester le lancement du bot :**  
+   &nbsp;&nbsp;python main.py --dryrun  
+
+---
+
+**EN :**
+
+1. **Clone the repository:**  
+   &nbsp;&nbsp;git clone https://github.com/DavidRaffeil/DeFiPilot.git  
+   &nbsp;&nbsp;cd DeFiPilot  
+
+2. **Create a virtual environment (recommended):**  
+   &nbsp;&nbsp;python -m venv venv  
+   &nbsp;&nbsp;source venv/bin/activate &nbsp;&nbsp;# Linux / macOS  
+   &nbsp;&nbsp;venv\Scripts\activate &nbsp;&nbsp;# Windows  
+
+3. **Install dependencies:**  
+   &nbsp;&nbsp;pip install -r requirements.txt  
+
+4. **Configure environment variables:**  
+   &nbsp;&nbsp;- Create a `.env` file at the root (see `.env.example`).  
+   &nbsp;&nbsp;- Fill in your **Polygon RPC** (Infura, Alchemy, etc.) and your **local private key** (never online).  
+
+5. **Test bot startup:**  
+   &nbsp;&nbsp;python main.py --dryrun  
+
+---
+
 ## ▶️ Utilisation / Usage
-FR :
 
-Mode journal + GUI
+**FR :**
 
-Lancer le journaliseur continu (signaux de marché) :
+### 🧩 Mode journal + GUI
 
-python journal_daemon.py --pools data/pools_sample.json --interval 30 --journal journal_signaux.jsonl
+1. **Lancer le journaliseur continu (signaux de marché) :**  
+   &nbsp;&nbsp;python journal_daemon.py --pools data/pools_sample.json --interval 30 --journal journal_signaux.jsonl  
 
-Lancer l’interface graphique dans un second terminal :
+2. **Ouvrir l’interface graphique dans un second terminal :**  
+   &nbsp;&nbsp;python gui/main_window.py  
 
-python gui/main_window.py
+3. **Dans la GUI :**  
+   - Sélectionner le fichier `journal_signaux.jsonl` si nécessaire.  
+   - Observer les mises à jour en temps réel (scores, signaux, stratégie active).  
 
-Sélectionner le fichier journal_signaux.jsonl dans la GUI si nécessaire,
-puis observer les mises à jour en temps réel.
+---
 
-Mode réel
+### 💼 Mode réel
 
-Lorsque le mode réel est activé, exécuter les commandes CLI prévues (swap, add-liquidity, farming) avec prudence,
-et toujours vérifier les montants et les adresses avant validation.
+1. **Activer le mode réel dans la configuration.**  
+2. **Exécuter les commandes CLI correspondantes (swap, add-liquidity, farming).**  
+3. **Toujours vérifier les montants et adresses avant validation.**  
 
-EN :
+⚠️ **Attention :** toute transaction en mode réel est signée avec la clé privée locale.  
+Aucune donnée sensible n’est transmise en ligne.  
 
-Journal + GUI mode
+---
 
-Start the continuous journal (market signals):
+**EN :**
 
-python journal_daemon.py --pools data/pools_sample.json --interval 30 --journal journal_signaux.jsonl
+### 🧩 Journal + GUI mode
 
-Launch the GUI in a second terminal:
+1. **Start the continuous journal (market signals):**  
+   &nbsp;&nbsp;python journal_daemon.py --pools data/pools_sample.json --interval 30 --journal journal_signaux.jsonl  
 
-python gui/main_window.py
+2. **Open the GUI in a second terminal:**  
+   &nbsp;&nbsp;python gui/main_window.py  
 
-Select the file journal_signaux.jsonl in the GUI if needed,
-then watch real-time updates.
+3. **In the GUI:**  
+   - Select `journal_signaux.jsonl` if needed.  
+   - Observe real-time updates (scores, signals, active strategy).  
 
-Real mode
+---
 
-When the real mode is enabled, run the provided CLI commands (swap, add-liquidity, farming) carefully,
-and always double-check amounts and addresses before confirming any on-chain transaction.
+### 💼 Real mode
+
+1. **Enable real mode in the configuration.**  
+2. **Run the related CLI commands (swap, add-liquidity, farming).**  
+3. **Always double-check amounts and addresses before confirming.**  
+
+⚠️ **Warning:** every real transaction is signed with your local private key.  
+No sensitive data is ever sent online.  
 
 ---
 
@@ -189,7 +267,6 @@ and always double-check amounts and addresses before confirming any on-chain tra
 
 **FR :**
 
-- **V4.5** — Intégration initiale de ControlPilot (métriques unifiées, supervision dans la GUI).  
 - **V4.6 – V4.7** — Stabilisation du mode réel complet avec stratégie automatisée (sélection / retrait des pools, ajustement selon le risque).  
 - **V4.8+** — Amélioration de la GUI (filtres avancés, vues historiques, export simplifié).  
 - **V5.x — ControlPilot** : agent central de supervision, agrégation multi-bots, premières briques IA.  
@@ -199,13 +276,13 @@ and always double-check amounts and addresses before confirming any on-chain tra
 
 **EN :**
 
-- **V4.5** — Initial ControlPilot integration (unified metrics, supervision in GUI).  
 - **V4.6 – V4.7** — Stabilizing the full real mode with automated strategy (pool selection/exit, risk-based adjustments).  
 - **V4.8+** — GUI improvements (advanced filters, historical views, easy exports).  
 - **V5.x — ControlPilot**: central supervision agent, multi-bot aggregation, first AI bricks.  
 - **V6.x — ArbiPilot**: inter-DEX / cross-chain arbitrage bot built on DeFiPilot’s infrastructure.  
 
 ---
+
 ## 🌌 Vision du projet / Project Vision
 
 **FR :**
@@ -233,6 +310,7 @@ can progressively build a complete ecosystem:
 The goal is both educational and practical: to document every step and inspire others to build their own tools.
 
 ---
+
 ## ❓ FAQ / Foire aux questions
 
 **FR :**
@@ -322,6 +400,7 @@ A: The code is publicly viewable but remains **personal and non-commercial**.
 Any redistribution or commercial use requires explicit permission from the author.  
 
 ---
+
 ## 📄 Licence / License
 
 **FR :**
