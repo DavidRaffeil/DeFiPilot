@@ -3,7 +3,7 @@
 > 🗣️ **Langue / Language :** le bot fonctionne uniquement en **français** pour le moment.  
 > The bot currently works **in French only** for the moment.
 
-![Version](https://img.shields.io/badge/Version-V4.6%20Stable-blue)
+![Version](https://img.shields.io/badge/Version-V4.7%20Stable-blue)
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
 ![Made in France](https://img.shields.io/badge/Made%20in-France-lightgrey)
 ![Developed with ChatGPT](https://img.shields.io/badge/Developed%20with-ChatGPT-orange)
@@ -16,7 +16,7 @@
 
 1. [Introduction / Introduction](#-introduction--introduction)  
 2. [Fonctionnalités principales / Key Features](#-fonctionnalités-principales--key-features)  
-3. [Nouveautés / What's New — Version 4.6](#-nouveautés--whats-new--version-46)  
+3. [Nouveautés / What's New — Version 4.7](#-nouveautés--whats-new--version-47)  
 4. [Historique des versions / Past Versions](#-historique-des-versions--past-versions)  
 5. [Caractéristiques techniques / Technical Highlights](#-caractéristiques-techniques--technical-highlights)  
 6. [Prérequis / Requirements](#-prérequis--requirements)  
@@ -50,6 +50,7 @@ DeFiPilot automatise l'analyse et la gestion des investissements DeFi via :
 - Un **mode réel** capable d’exécuter : swaps, ajout de liquidité, retrait, staking / unstaking, récolte des rewards (SushiSwap V2 + MiniChef sur Polygon).  
 - Une **interface graphique Tkinter** affichant en temps réel le contexte de marché, la stratégie active, les pools analysées et les journaux.  
 - Une **journalisation exhaustive** en CSV et JSONL de tous les événements (signaux, stratégies, transactions, erreurs, métriques système).  
+- Une **gestion d’état persistante** via un fichier `.state` : chargement au démarrage, sauvegarde automatique, écriture atomique crash-safe et CLI dédiée (`state_cli.py`).  
 
 **EN :**  
 DeFiPilot automates DeFi investment analysis and management through:  
@@ -58,32 +59,35 @@ DeFiPilot automates DeFi investment analysis and management through:
 - A **real mode** able to perform swaps, add/remove liquidity, stake/unstake LP tokens, and harvest rewards (SushiSwap V2 + MiniChef on Polygon).  
 - A **Tkinter GUI** that displays market context, active strategy, analyzed pools, and logs in real time.  
 - **Extensive logging** to CSV and JSONL for all events (signals, strategies, transactions, errors, system metrics).  
+- **Persistent state management** through a `.state` file: load on startup, automatic saving, crash-safe atomic writes and a dedicated CLI (`state_cli.py`).  
 
 ---
 
-## 🆕 Nouveautés / What's New — Version 4.6
+## 🆕 Nouveautés / What's New — Version 4.7
 
 **FR :**  
-La version **4.6** renforce le moteur de stratégie dynamique en ajoutant un module de répartition intra-catégorie.  
-Au lieu de se limiter à des ajustements globaux par catégorie (Prudent / Modéré / Risqué), DeFiPilot peut désormais proposer une réallocation **pool par pool**, en utilisant les scores de rentabilité comme poids relatifs.
+La version **4.7** renforce la stabilité globale de DeFiPilot en ajoutant une **gestion d’état persistante et crash-safe**.  
+Le bot peut désormais reprendre proprement après une coupure ou un redémarrage, en conservant son contexte (soldes, métadonnées, profil, etc.).
 
 Principales évolutions :  
-- Nouveau module `core/rebalancing_intra.py` (moteur de répartition intra-catégorie).  
-- Transformation des actions « augmenter / réduire une catégorie de X USD » en **deltas par pool**, pondérés par les scores.  
-- Gestion des cas extrêmes : bornage automatique pour éviter qu’une pool passe en dessous de zéro (on retire au maximum le montant investi).  
-- Fonctions pures et sans effet de bord : aucun appel Web3, aucun mouvement réel sur le wallet — tout reste **théorique** en V4.6.  
-- Nouveau script de test `test_rebalancing_intra.py` avec scénarios nominaux et cas de bornage validés.  
+- Nouveau module `core/state_manager.py` pour la gestion centralisée de l’état persistant.  
+- **Chargement automatique** de l’état `.state` au démarrage, avec validation des soldes (pas de valeur négative ou incohérente).  
+- **Sauvegarde automatique** de l’état après chaque cycle, avec thread d’auto-save optionnel en arrière-plan.  
+- **Écriture atomique crash-safe** : écriture dans un fichier temporaire puis remplacement atomique du fichier d’état final, limitant les risques de corruption.  
+- Nouveau CLI `state_cli.py` pour inspecter et modifier l’état depuis le terminal (`show`, `set-meta`, `set-balance`).  
+- Intégration complète à la V4.x : DeFiPilot peut désormais tourner en continu et redémarrer de façon robuste.
 
 **EN :**  
-Version **4.6** strengthens the dynamic strategy engine with an intra-category allocation module.  
-Instead of limiting adjustments to global category levels (Prudent / Moderate / Risk), DeFiPilot can now compute **per-pool reallocations**, using profitability scores as relative weights.
+Version **4.7** focuses on **stability and persistence**, adding robust crash-safe state management.  
+The bot can now safely restart after shutdown while preserving its context (balances, metadata, profile, etc.).
 
 Main changes:  
-- New module `core/rebalancing_intra.py` (intra-category allocation engine).  
-- Transformation of actions “increase / reduce a category by X USD” into **per-pool deltas**, weighted by each pool’s score.  
-- Edge-case handling: automatic capping ensures a pool never drops below zero (reduction limited to the invested amount).  
-- Pure, side-effect-free functions: no Web3 calls, no real wallet movement — everything remains **theoretical** in V4.6.  
-- New test script `test_rebalancing_intra.py` validating both normal and capping scenarios.  
+- New `core/state_manager.py` module that centralizes persistent state handling.  
+- **Automatic state loading** from `.state` at startup, with balance validation (no negative or inconsistent values).  
+- **Automatic state saving** after each cycle, with an optional background auto-save thread.  
+- **Crash-safe atomic writes**: state is first written to a temporary file then atomically replaces the final state file to avoid corruption.  
+- New `state_cli.py` CLI tool to inspect and update state from the terminal (`show`, `set-meta`, `set-balance`).  
+- Fully integrated into the V4.x line: DeFiPilot can run continuously and restart safely.
 
 ---
 
@@ -93,6 +97,8 @@ Main changes:
 DeFiPilot a évolué d'un simple simulateur de rendement à un bot opérationnel complet connecté à Polygon.  
 Chaque version a renforcé la robustesse, la clarté des journaux et la sécurité :  
 
+- **V4.7** — Gestion d’état persistante, écriture crash-safe, CLI `state_cli.py`.  
+- **V4.6** — Moteur de répartition intra-catégorie, deltas par pool pondérés par les scores, cas extrêmes bornés.  
 - **V4.5** — Intégration initiale de ControlPilot (métriques unifiées, supervision dans la GUI).  
 - **V4.4** — Socle de supervision et lancement global (ControlPilot observateur minimal).  
 - **V4.3** — Interface graphique complète, suivi des contextes et des pools en temps réel.  
@@ -109,6 +115,8 @@ Chaque version a renforcé la robustesse, la clarté des journaux et la sécurit
 DeFiPilot has evolved from a basic yield simulator into a full operational bot connected to Polygon.  
 Each version improved robustness, log clarity, and security:  
 
+- **V4.7** — Persistent state, crash-safe writes, `state_cli.py` CLI.  
+- **V4.6** — Intra-category allocation engine, per-pool deltas weighted by scores, capped edge cases.  
 - **V4.5** — Initial ControlPilot integration (unified metrics, GUI supervision).  
 - **V4.4** — Supervision foundation and global launcher (ControlPilot minimal observer).  
 - **V4.3** — Full GUI with real-time contexts and pool monitoring.  
@@ -131,7 +139,8 @@ Each version improved robustness, log clarity, and security:
 - Réseau principal : **Polygon PoS** (RPC externe type Infura / Alchemy).  
 - DEX supporté (mode réel actuel) : **SushiSwap V2 + MiniChef**.  
 - Journaux : fichiers **CSV** (transactions, farming, liquidité) et **JSONL** (signaux, stratégie, supervision).  
-- Architecture : modules séparés (`core/`, `gui/`, `defi_sources/`, `strategy/`, etc.) pour faciliter l’évolution du projet.  
+- Gestion d’état : fichier **`defipilot.state`** avec chargement au démarrage, sauvegarde automatique, écriture atomique et CLI (`state_cli.py`).  
+- Architecture : modules séparés (`core/`, `gui/`, `defi_sources/`, `strategy/`, `control/`, etc.) pour faciliter l’évolution du projet.  
 
 **EN :**  
 - Language: **Python 3.11+**  
@@ -139,7 +148,8 @@ Each version improved robustness, log clarity, and security:
 - Main network: **Polygon PoS** (external RPC such as Infura / Alchemy).  
 - Supported DEX (current real mode): **SushiSwap V2 + MiniChef**.  
 - Logging: **CSV** files (transactions, farming, liquidity) and **JSONL** files (signals, strategy, supervision).  
-- Architecture: separated modules (`core/`, `gui/`, `defi_sources/`, `strategy/`, etc.) to make the project easier to extend.  
+- State management: **`defipilot.state`** file with startup loading, automatic saving, atomic writes and CLI (`state_cli.py`).  
+- Architecture: separated modules (`core/`, `gui/`, `defi_sources/`, `strategy/`, `control/`, etc.) to make the project easier to extend.  
 
 ---
 
@@ -161,49 +171,37 @@ Each version improved robustness, log clarity, and security:
 
 ## 🧩 Installation / Installation
 
-**FR :**
-
+**FR :**  
 1. **Cloner le dépôt :**  
-   &nbsp;&nbsp;git clone https://github.com/DavidRaffeil/DeFiPilot.git  
-   &nbsp;&nbsp;cd DeFiPilot  
-
+   &nbsp;&nbsp;`git clone https://github.com/DavidRaffeil/DeFiPilot.git`  
+   &nbsp;&nbsp;`cd DeFiPilot`  
 2. **Créer un environnement virtuel (recommandé) :**  
-   &nbsp;&nbsp;python -m venv venv  
-   &nbsp;&nbsp;source venv/bin/activate &nbsp;&nbsp;# Linux / macOS  
-   &nbsp;&nbsp;venv\Scripts\activate &nbsp;&nbsp;# Windows  
-
+   &nbsp;&nbsp;`python -m venv venv`  
+   &nbsp;&nbsp;`source venv/bin/activate` (Linux / macOS)  
+   &nbsp;&nbsp;`venv\Scripts\activate` (Windows)  
 3. **Installer les dépendances :**  
-   &nbsp;&nbsp;pip install -r requirements.txt  
-
+   &nbsp;&nbsp;`pip install -r requirements.txt`  
 4. **Configurer les variables d’environnement :**  
-   &nbsp;&nbsp;- Crée un fichier `.env` à la racine (voir `.env.example`).  
-   &nbsp;&nbsp;- Renseigne ton **RPC Polygon** (Infura, Alchemy, etc.) et ta **clé privée** locale (jamais en ligne).  
-
+   &nbsp;&nbsp;Créer un fichier `.env` à la racine (voir `.env.example`).  
+   &nbsp;&nbsp;Renseigner le **RPC Polygon** (Infura, Alchemy, etc.) et la **clé privée** locale.  
 5. **Tester le lancement du bot :**  
-   &nbsp;&nbsp;python main.py --dryrun  
+   &nbsp;&nbsp;`python main.py --dryrun`  
 
----
-
-**EN :**
-
+**EN :**  
 1. **Clone the repository:**  
-   &nbsp;&nbsp;git clone https://github.com/DavidRaffeil/DeFiPilot.git  
-   &nbsp;&nbsp;cd DeFiPilot  
-
+   &nbsp;&nbsp;`git clone https://github.com/DavidRaffeil/DeFiPilot.git`  
+   &nbsp;&nbsp;`cd DeFiPilot`  
 2. **Create a virtual environment (recommended):**  
-   &nbsp;&nbsp;python -m venv venv  
-   &nbsp;&nbsp;source venv/bin/activate &nbsp;&nbsp;# Linux / macOS  
-   &nbsp;&nbsp;venv\Scripts\activate &nbsp;&nbsp;# Windows  
-
+   &nbsp;&nbsp;`python -m venv venv`  
+   &nbsp;&nbsp;`source venv/bin/activate` (Linux / macOS)  
+   &nbsp;&nbsp;`venv\Scripts\activate` (Windows)  
 3. **Install dependencies:**  
-   &nbsp;&nbsp;pip install -r requirements.txt  
-
+   &nbsp;&nbsp;`pip install -r requirements.txt`  
 4. **Configure environment variables:**  
-   &nbsp;&nbsp;- Create a `.env` file at the root (see `.env.example`).  
-   &nbsp;&nbsp;- Fill in your **Polygon RPC** (Infura, Alchemy, etc.) and your **local private key** (never online).  
-
+   &nbsp;&nbsp;Create a `.env` file at the root (see `.env.example`).  
+   &nbsp;&nbsp;Fill in your **Polygon RPC** and your **local private key**.  
 5. **Test bot startup:**  
-   &nbsp;&nbsp;python main.py --dryrun  
+   &nbsp;&nbsp;`python main.py --dryrun`  
 
 ---
 
@@ -214,16 +212,12 @@ Each version improved robustness, log clarity, and security:
 ### 🧩 Mode journal + GUI
 
 1. **Lancer le journaliseur continu (signaux de marché) :**  
-   &nbsp;&nbsp;python journal_daemon.py --pools data/pools_sample.json --interval 30 --journal journal_signaux.jsonl  
-
+   &nbsp;&nbsp;`python journal_daemon.py --pools data/pools_sample.json --interval 30 --journal journal_signaux.jsonl`  
 2. **Ouvrir l’interface graphique dans un second terminal :**  
-   &nbsp;&nbsp;python gui/main_window.py  
-
+   &nbsp;&nbsp;`python gui/main_window.py`  
 3. **Dans la GUI :**  
    - Sélectionner le fichier `journal_signaux.jsonl` si nécessaire.  
    - Observer les mises à jour en temps réel (scores, signaux, stratégie active).  
-
----
 
 ### 💼 Mode réel
 
@@ -234,23 +228,17 @@ Each version improved robustness, log clarity, and security:
 ⚠️ **Attention :** toute transaction en mode réel est signée avec la clé privée locale.  
 Aucune donnée sensible n’est transmise en ligne.  
 
----
-
 **EN :**
 
 ### 🧩 Journal + GUI mode
 
 1. **Start the continuous journal (market signals):**  
-   &nbsp;&nbsp;python journal_daemon.py --pools data/pools_sample.json --interval 30 --journal journal_signaux.jsonl  
-
+   &nbsp;&nbsp;`python journal_daemon.py --pools data/pools_sample.json --interval 30 --journal journal_signaux.jsonl`  
 2. **Open the GUI in a second terminal:**  
-   &nbsp;&nbsp;python gui/main_window.py  
-
+   &nbsp;&nbsp;`python gui/main_window.py`  
 3. **In the GUI:**  
    - Select `journal_signaux.jsonl` if needed.  
    - Observe real-time updates (scores, signals, active strategy).  
-
----
 
 ### 💼 Real mode
 
@@ -267,16 +255,14 @@ No sensitive data is ever sent online.
 
 **FR :**
 
-- **V4.6 – V4.7** — Stabilisation du mode réel complet avec stratégie automatisée (sélection / retrait des pools, ajustement selon le risque).  
+- **V4.6 – V4.7** — Stabilisation du mode réel complet avec stratégie automatisée (sélection / retrait des pools, ajustement selon le risque) et gestion d’état persistante.  
 - **V4.8+** — Amélioration de la GUI (filtres avancés, vues historiques, export simplifié).  
 - **V5.x — ControlPilot** : agent central de supervision, agrégation multi-bots, premières briques IA.  
 - **V6.x — ArbiPilot** : bot d’arbitrage inter-DEX / inter-chaînes, basé sur l’infrastructure de DeFiPilot.  
 
----
-
 **EN :**
 
-- **V4.6 – V4.7** — Stabilizing the full real mode with automated strategy (pool selection/exit, risk-based adjustments).  
+- **V4.6 – V4.7** — Stabilizing the full real mode with automated strategy (pool selection/exit, risk-based adjustments) and persistent state management.  
 - **V4.8+** — GUI improvements (advanced filters, historical views, easy exports).  
 - **V5.x — ControlPilot**: central supervision agent, multi-bot aggregation, first AI bricks.  
 - **V6.x — ArbiPilot**: inter-DEX / cross-chain arbitrage bot built on DeFiPilot’s infrastructure.  
@@ -295,8 +281,6 @@ peut construire pas à pas un écosystème complet :
 - Des modules spécialisés (**ArbiPilot**, **LabPilot**, etc.) qui viendront explorer d’autres stratégies.  
 
 L’objectif est autant pédagogique que pratique : documenter chaque étape pour inspirer d’autres personnes à construire leurs propres outils.
-
----
 
 **EN :**
 
@@ -356,8 +340,6 @@ Ces valeurs sont pondérées selon le profil d’investissement choisi (Prudent,
 R : Le code est consultable librement sur GitHub, mais il reste à usage **personnel et non commercial**.  
 Toute réutilisation publique ou intégration commerciale nécessitera une autorisation de l’auteur.  
 
----
-
 **EN :**
 
 **Q: Can I use DeFiPilot to manage large amounts of capital?**  
@@ -413,8 +395,6 @@ nécessite un **accord explicite** de l'auteur.
 
 L’objectif du projet est de partager une démarche d’apprentissage et d’autonomie assistée par l’IA,  
 sans exploitation commerciale directe.  
-
----
 
 **EN :**
 
