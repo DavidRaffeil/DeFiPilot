@@ -66,7 +66,7 @@ DeFiPilot automates DeFi investment analysis and management through :
 ---
 ## 🖼️ Aperçu visuel / Visual Overview
 
-![Capture DeFiPilot GUI](assets/screenshot_defipilot_gui_v49.png)
+![Capture d’écran DeFiPilot V4.9](assets/screenshot_defipilot_gui_v49.png)
 
 ---
 
