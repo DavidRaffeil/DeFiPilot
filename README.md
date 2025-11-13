@@ -3,363 +3,413 @@
 > 🗣️ **Langue / Language :** le bot fonctionne uniquement en **français** pour le moment.  
 > The bot currently works **in French only** for the moment.
 
-![Version](https://img.shields.io/badge/Version-V4.9%20Stable-blue)
+![Version](https://img.shields.io/badge/Version-V5.0%20Stable-blue)
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
 ![Made in France](https://img.shields.io/badge/Made%20in-France-lightgrey)
 ![Developed with ChatGPT](https://img.shields.io/badge/Developed%20with-ChatGPT-orange)
-![Open Source](https://img.shields.io/badge/Open%20Source-Non%20Commercial-green)
+![Open Source](https://img.shields.io/badge/License-CC--BY--NC--SA%204.0-green)
 ![Polygon Network](https://img.shields.io/badge/Network-Polygon-purple)
 
 ---
 
 ## 📚 Sommaire / Table of Contents
-
-1. [Introduction / Introduction](#-introduction--introduction)  
-2. [Fonctionnalités principales / Key Features](#-fonctionnalités-principales--key-features)  
-3. [Aperçu visuel / Visual Overview](#-aperçu-visuel--visual-overview)  
-4. [Nouveautés / What's New — Version 4.9](#-nouveautés--whats-new--version-49)  
-5. [Historique des versions / Past Versions](#-historique-des-versions--past-versions)  
-6. [Caractéristiques techniques / Technical Highlights](#-caractéristiques-techniques--technical-highlights)  
-7. [Prérequis / Requirements](#-prérequis--requirements)  
-8. [Installation / Installation](#-installation--installation)  
-9. [Utilisation / Usage](#-utilisation--usage)  
-10. [Feuille de route / Roadmap](#-feuille-de-route--roadmap)  
-11. [Vision du projet / Project Vision](#-vision-du-projet--project-vision)  
-12. [FAQ / Foire aux questions](#-faq--foire-aux-questions)  
-13. [À propos de l’auteur / About the Author](#-à-propos-de-lauteur--about-the-author)  
-14. [Licence / License](#-licence--license)
-
----
-
-## 🧭 Introduction / Introduction
-
-**FR :**  
-DeFiPilot est un bot DeFi autonome conçu pour analyser, sélectionner et gérer automatiquement les pools de liquidité les plus rentables sur différents DEX.  
-Le projet vise à démontrer qu’un investisseur individuel peut construire un outil avancé de pilotage DeFi, sans formation technique, grâce à l’assistance de l’IA.
-
-**EN :**  
-DeFiPilot is an autonomous DeFi bot designed to analyze, select, and automatically manage the most profitable liquidity pools across multiple DEXs.  
-The project demonstrates that an individual investor can build a sophisticated DeFi management tool with AI assistance, without a technical background.
+1. [Introduction / Introduction](#1-introduction--introduction)  
+2. [Fonctionnalités principales / Key Features](#2-fonctionnalités-principales--key-features)  
+3. [Aperçu visuel / Visual Overview](#3-aperçu-visuel--visual-overview)  
+4. [Nouveautés / What's New — Version 5.0](#4-nouveautés--whats-new--version-50)  
+5. Historique des versions / Past Versions  
+6. Caractéristiques techniques / Technical Highlights  
+7. Prérequis / Requirements  
+8. Installation / Installation  
+9. Utilisation / Usage  
+10. Feuille de route / Roadmap  
+11. Vision du projet / Project Vision  
+12. FAQ / Foire aux questions  
+13. À propos de l’auteur / About the Author  
+14. Crédits techniques / Technical Credits  
+15. Licence / License  
+16. Dernière révision / Last Review
 
 ---
 
-## ⚙️ Fonctionnalités principales / Key Features
+# 1. 🧭 Introduction / Introduction
 
-**FR :**  
-DeFiPilot automatise l'analyse et la gestion des investissements DeFi via :  
-- Un **moteur de stratégie** qui calcule un score pondéré par pool (APR, TVL, volume, volatilité, tendance APR, slippage prévu, etc.)  
-- Des **profils d’investissement** (Prudent, Modéré, Risqué) qui ajustent les seuils, pondérations et limites d’exposition  
-- Un **mode réel** capable d’exécuter : swaps, ajout de liquidité, retrait, staking / unstaking, récolte des rewards (SushiSwap V2 + MiniChef sur Polygon)  
-- Une **interface graphique Tkinter** affichant en temps réel le contexte de marché, la stratégie active, les pools analysées et les journaux  
-- Une **journalisation exhaustive** en CSV et JSONL de tous les événements (signaux, stratégies, transactions, erreurs, métriques système)  
-- Une **gestion d’état persistante** via un fichier `.state` : chargement au démarrage, sauvegarde automatique, écriture atomique crash-safe et CLI dédiée (`state_cli.py`)
+## FR
+DeFiPilot est un bot DeFi autonome conçu pour analyser en continu les opportunités disponibles sur les échanges décentralisés (DEX), calculer la rentabilité réelle des pools, puis sélectionner les meilleures options en fonction d’un profil d’investissement configurable. Le système fonctionne aussi bien en mode simulation qu’en mode réel selon la configuration utilisateur.
 
-**EN :**  
-DeFiPilot automates DeFi investment analysis and management through :  
-- A **strategy engine** computing a weighted score per pool (APR, TVL, volume, volatility, APR trend, expected slippage, etc.)  
-- **Investment profiles** (Conservative, Moderate, Aggressive) adjusting thresholds, weights, and exposure limits  
-- A **real mode** able to perform swaps, add/remove liquidity, stake/unstake LP tokens, and harvest rewards (SushiSwap V2 + MiniChef on Polygon)  
-- A **Tkinter GUI** showing market context, active strategy, analyzed pools, and logs in real time  
-- **Extensive logging** to CSV and JSONL for all events (signals, strategies, transactions, errors, system metrics)  
-- **Persistent state management** through a `.state` file (load on startup, automatic saving, crash-safe atomic writes and dedicated CLI `state_cli.py`)
+Son architecture repose sur quatre principes :  
+- **Robustesse** : tolérance aux erreurs réseau, redondances, vérifications multiples.  
+- **Modularité** : possibilité d’étendre facilement les fonctionnalités via modules.  
+- **Transparence** : journalisation complète (CSV + JSONL), état sauvegardé, historique visible.  
+- **Automatisation** : analyse continue, décisions guidées par les profils, reprise automatique.
 
----
-## 🖼️ Aperçu visuel / Visual Overview
+DeFiPilot vise à constituer une base sérieuse et pérenne pour gérer des investissements DeFi automatisés, tout en intégrant des mécanismes de sécurité pour réduire les risques opérationnels.
 
-![Capture d’écran DeFiPilot V4.9](assets/screenshot_defipilot_gui_v49.png)
+## EN
+DeFiPilot is an autonomous DeFi bot designed to continuously analyze opportunities across decentralized exchanges (DEX), compute real profitability for liquidity pools, and select the best options according to a configurable investment profile. The system runs in both simulation and real execution modes depending on user configuration.
 
----
+Its architecture relies on four core principles:  
+- **Robustness**: tolerance to network failures, redundancy, multiple safety checks.  
+- **Modularity**: easily extendable through additional modules.  
+- **Transparency**: full logging (CSV + JSONL), state storage, visible history.  
+- **Automation**: continuous analysis, profile‑driven decisions, automatic state recovery.
 
-## 🆕 Nouveautés / What's New — Version 4.9
-
-**FR :**  
-La version **4.9** marque la montée en puissance du module **ControlPilot** avec l’apparition de l’**agrégation avancée** et de la **détection d’anomalies**.  
-Cette mise à jour consolide également la stabilité du tableau de bord et introduit un suivi amélioré des métriques système.
-
-Principales évolutions :  
-- Nouvelle couche **d’agrégation des signaux** : corrélation des variations APR, TVL et volume entre pools  
-- Détection d’**anomalies combinées** via le module `control/aggregateur_signaux.py`  
-- Section **“ControlPilot – Anomalies”** intégrée à la GUI (résumé, gravité, codes détectés)  
-- Amélioration du rafraîchissement des journaux et du tri des onglets historiques  
-- Mise à jour automatique des métriques clés (APR, TVL, Volume, Volatilité, Tendance APR)  
-- Capture d’écran officielle de la version 4.9 ajoutée dans le README  
-- Préparation de la phase 1.2 de ControlPilot (analyse contextuelle IA – prévue en V5.0)
-
-**EN :**  
-Version **4.9** brings a major improvement to the **ControlPilot** module, introducing **advanced signal aggregation** and **anomaly detection**.  
-It also enhances dashboard stability and adds improved system metric tracking.
-
-Main changes:  
-- New **signal aggregation layer**: correlation of APR, TVL, and volume variations across pools  
-- Combined **anomaly detection** via `control/aggregateur_signaux.py`  
-- New **“ControlPilot – Anomalies”** section integrated in the GUI (summary, severity, detected codes)  
-- Improved log refresh and history tab sorting  
-- Automatic refresh for key metrics (APR, TVL, Volume, Volatility, APR Trend)  
-- Official V4.9 screenshot added to the README  
-- Preparation for ControlPilot phase 1.2 (AI contextual analysis – coming in V5.0)
+DeFiPilot aims to be a serious and sustainable foundation for automated DeFi investment management while embedding safety mechanisms to minimize operational risks.
 
 ---
 
-## 🕰️ Historique des versions / Past Versions
+# 2. ⚙️ Fonctionnalités principales / Key Features
 
-**FR :**  
-- **V4.9** — Agrégation des signaux, détection d’anomalies, mise à jour GUI ControlPilot  
-- **V4.8** — Supervision de base, signaux de risque, stabilité renforcée  
-- **V4.7** — Gestion d’état persistante, écriture crash-safe, CLI `state_cli.py`  
-- **V4.6** — Répartition intra-catégorie pondérée, cas extrêmes bornés  
-- **V4.5** — Intégration initiale de ControlPilot et métriques unifiées  
-- **V4.4** — Lancement global et socle de supervision  
-- **V4.3** — Interface graphique complète avec suivi des contextes  
-- **V4.2** — Moteur de stratégie enrichi et signaux optimisés  
-- **V4.1** — Première interface graphique (barre de statut, cartes principales)  
-- **V4.0** — Stratégie dynamique et allocation automatique  
-- **V3.9** — Farming LP réel via MiniChef SushiSwap (Polygon)  
-- **V3.8** — Ajout de liquidité réel (SushiSwap V2)  
-- **V3.7** — Swap réel avec gestion du slippage et logs détaillés  
-- **V3.6** — Connexion multi-wallet réelle (Polygon)  
-- **V1.x → V2.x** — Simulation complète et intégration DefiLlama
+## FR
+- Analyse automatique des pools (APR, TVL, volume, volatilité, slippage).  
+- Scoring pondéré basé sur plusieurs profils (Prudent, Modéré, Risque).  
+- Mode simulation complet pour tests sécurisés.  
+- Mode réel avec gestion du slippage, limites, confirmations.  
+- Interface graphique Tkinter avec rafraîchissement automatique.  
+- Multi-wallets avec séparation des usages.  
+- Supervision IA via ControlPilot (signaux contextuels).  
+- Reprise automatique après coupure (fichier `.state`).  
+- Journalisation détaillée (JSONL + CSV).  
+- Architecture modulaire extensible.
 
-**EN :**  
-- **V4.9** — Signal aggregation, anomaly detection, updated ControlPilot GUI  
-- **V4.8** — Basic supervision, risk signals, improved stability  
-- **V4.7** — Persistent state, crash-safe writes, `state_cli.py` CLI  
-- **V4.6** — Weighted intra-category allocation, capped edge cases  
-- **V4.5** — Initial ControlPilot integration, unified metrics  
-- **V4.4** — Global launch and supervision foundation  
-- **V4.3** — Full GUI with real-time context tracking  
-- **V4.2** — Enriched strategy engine and optimized signals  
-- **V4.1** — First GUI (status bar, main cards)  
-- **V4.0** — Dynamic strategy and automatic allocation  
-- **V3.9** — Real LP farming via SushiSwap MiniChef (Polygon)  
-- **V3.8** — Real add-liquidity on SushiSwap V2  
-- **V3.7** — Real swaps with slippage control and detailed logs  
-- **V3.6** — Real multi-wallet connection (Polygon)  
-- **V1.x → V2.x** — Full simulation and DefiLlama integration
+## EN
+- Automatic pool analysis (APR, TVL, volume, volatility, slippage).  
+- Weighted scoring based on multiple profiles (Conservative, Moderate, Risk).  
+- Full simulation mode for safe testing.  
+- Real mode with slippage management, limits, confirmations.  
+- Tkinter GUI with automatic refresh.  
+- Multi‑wallet support.  
+- AI supervision via ControlPilot (context signals).  
+- Automatic resume after shutdown (`.state`).  
+- Detailed logging (JSONL + CSV).  
+- Modular and extensible architecture.
 
 ---
 
-## 🛠️ Caractéristiques techniques / Technical Highlights
+# 3. 🖥️ Aperçu visuel / Visual Overview
 
-**FR :**  
-- Langage : **Python 3.11+**  
-- Interface : **Tkinter** (GUI locale, compatible Windows / Linux / SBC type Orange Pi)  
-- Réseau principal : **Polygon PoS** (RPC externe type Infura / Alchemy)  
-- DEX supporté : **SushiSwap V2 + MiniChef**  
-- Journaux : fichiers **CSV** (transactions, farming, liquidité) et **JSONL** (signaux, stratégie, supervision)  
-- Gestion d’état : fichier **`defipilot.state`** avec chargement, sauvegarde auto, écriture atomique et CLI (`state_cli.py`)  
-- Architecture : modules séparés (`core/`, `gui/`, `defi_sources/`, `strategy/`, `control/`)  
-- Support multi-wallet et gestion sécurisée des allowances  
-- Compatible **Orange Pi 5 Pro**, optimisé pour une exécution 24/7
+![Interface DeFiPilot V5.0](assets/screenshot_defipilot_gui_v50.png)
 
-**EN :**  
-- Language: **Python 3.11+**  
-- Interface: **Tkinter** (local GUI, Windows / Linux / SBC such as Orange Pi)  
-- Main network: **Polygon PoS** (external RPC such as Infura / Alchemy)  
-- Supported DEX: **SushiSwap V2 + MiniChef**  
-- Logging: **CSV** (transactions, farming, liquidity) and **JSONL** (signals, strategy, supervision)  
-- State management: **`defipilot.state`** file with startup load, auto-save, atomic writes, and CLI (`state_cli.py`)  
-- Architecture: modular (`core/`, `gui/`, `defi_sources/`, `strategy/`, `control/`)  
-- Multi-wallet support and secure allowance handling  
-- Compatible with **Orange Pi 5 Pro**, optimized for 24/7 operation
+## FR
+L’interface graphique de DeFiPilot présente les métriques clés, l’état du bot, les signaux AI de ControlPilot, la liste des pools analysées, et les indicateurs de stratégie actifs.
 
----
-## 💻 Prérequis / Requirements
-
-**FR :**  
-- Python **3.11+** installé  
-- Accès à un **RPC Polygon** (Infura, Alchemy, etc.)  
-- Un wallet compatible (Rabby, Metamask) avec quelques MATIC/POL  
-- Environnement recommandé : PC ou **SBC dédié** (Orange Pi, Raspberry Pi)
-
-**EN :**  
-- Python **3.11+** installed  
-- Access to a **Polygon RPC** endpoint  
-- Compatible wallet (Rabby, Metamask) with MATIC/POL  
-- Recommended: PC or dedicated **SBC** (Orange Pi, Raspberry Pi)
+## EN
+DeFiPilot’s graphical interface displays key metrics, bot status, ControlPilot AI signals, list of analyzed pools, and active strategy indicators.
 
 ---
 
-## 🧩 Installation / Installation
+# 4. 🆕 Nouveautés / What's New — Version 5.0
 
-**FR :**  
-1. Cloner le dépôt →  
-   `git clone https://github.com/DavidRaffeil/DeFiPilot.git`  
-2. Créer un environnement virtuel →  
-   `python -m venv venv`  
-   - Linux/macOS : `source venv/bin/activate`  
-   - Windows : `venv\Scripts\activate`  
-3. Installer les dépendances →  
-   `pip install -r requirements.txt`  
-4. Créer un fichier `.env` et renseigner :  
-   - `POLYGON_RPC=https://...`  
-   - `PRIVATE_KEY=<VOTRE_CLÉ_PRIVÉE>`  
-5. Tester :  
-   `python main.py --dryrun`
+## FR
+- Intégration IA complète via ControlPilot (analyse contextuelle + signaux).  
+- Dashboard amélioré : latence réduite, affichage dynamique, stabilité renforcée.  
+- Journalisation uniformisée et centralisée.  
+- Optimisation des appels RPC et gestion des erreurs réseau.  
+- Amélioration de la structure interne et simplification de plusieurs modules.
 
-**EN :**  
-1. Clone →  
-   `git clone https://github.com/DavidRaffeil/DeFiPilot.git`  
-2. Create virtual environment →  
-   `python -m venv venv`  
-   - Linux/macOS: `source venv/bin/activate`  
-   - Windows: `venv\Scripts\activate`  
-3. Install dependencies →  
-   `pip install -r requirements.txt`  
-4. Create `.env` file and set:  
-   - `POLYGON_RPC=https://...`  
-   - `PRIVATE_KEY=<YOUR_PRIVATE_KEY>`    
-5. Test:  
-   `python main.py --dryrun`
+## EN
+- Full AI integration via ControlPilot (context analysis + signals).  
+- Improved dashboard: reduced latency, dynamic display, increased stability.  
+- Unified and centralized logging.  
+- Optimized RPC calls and improved network error handling.  
+- Internal structure improvements and simplification of several modules.
 
 ---
 
-## ▶️ Utilisation / Usage
+# 5. 🕓 Historique des versions / Past Versions
 
-**FR :**  
-### 🧩 Mode journal + GUI  
-1. Lancer le journaliseur →  
-   `python journal_daemon.py --pools data/pools_sample.json --interval 30 --journal journal_signaux.jsonl`  
-2. Ouvrir la GUI →  
-   `python gui/main_window.py`  
-3. Sélectionner `journal_signaux.jsonl` si besoin et observer les mises à jour
+## FR
+- **V5.0 :** Intégration IA ControlPilot, stabilité renforcée, dashboard optimisé.  
+- **V4.9 :** Agrégation avancée des signaux + détection d’anomalies.  
+- **V4.8 :** Collecte des signaux simples (début ControlPilot).  
+- **V4.7 :** Stabilisation complète du mode réel + reprise automatique.  
+- **V4.6 :** Stratégie dynamique avec ajustements automatiques.  
+- **V4.5 :** Améliorations GUI + affichage contextuel.  
+- **V4.4 :** Lancement global + supervision initiale.  
+- **V4.3 :** Simulation LP + journalisation complète.  
+- **V4.2 :** Scoring pondéré + gestion des profils.  
+- **V4.0 :** Passage au simulateur complet.
 
-### 💼 Mode réel  
-1. Activer le mode réel dans la configuration  
-2. Lancer les commandes CLI (swap, add-liquidity, farming)  
-3. Vérifier les montants et adresses avant exécution  
-
-⚠️ **Attention :** la clé privée reste locale et aucune donnée sensible n’est transmise.
-
-**EN :**  
-### 🧩 Journal + GUI mode  
-1. Start logger →  
-   `python journal_daemon.py --pools data/pools_sample.json --interval 30 --journal journal_signaux.jsonl`  
-2. Open GUI →  
-   `python gui/main_window.py`  
-3. Select `journal_signaux.jsonl` and observe updates
-
-### 💼 Real mode  
-1. Enable real mode in config  
-2. Run CLI (swap, add-liquidity, farming)  
-3. Double-check amounts and addresses  
-
-⚠️ **Warning:** private key is local, no data sent online.
-
----
-## 🗺️ Feuille de route / Roadmap
-
-**FR :**  
-
-- **V4.9 — ControlPilot Phase 1.1 :** agrégation avancée, détection d’anomalies, stabilité GUI renforcée  
-- **V5.0 — ControlPilot Phase 1.2 :** intégration IA basique (analyse contextuelle et tendances)  
-- **V5.4 — ArbiPilot :** prototype d’arbitrage inter-DEX et inter-chaînes (Polygon, Arbitrum, Optimism)  
-- **V6.0 — LabPilot :** module d’expérimentation IA et optimisation des stratégies  
-- **V7.x — Cluster complet :** interconnexion multi-bots et supervision autonome via ControlPilot  
-
-**EN :**  
-
-- **V4.9 — ControlPilot Phase 1.1:** advanced aggregation, anomaly detection, enhanced GUI stability  
-- **V5.0 — ControlPilot Phase 1.2:** basic AI integration (contextual analysis and trend tracking)  
-- **V5.4 — ArbiPilot:** inter-DEX and cross-chain arbitrage prototype (Polygon, Arbitrum, Optimism)  
-- **V6.0 — LabPilot:** AI experimentation and strategy optimization module  
-- **V7.x — Full cluster:** interconnected multi-bot architecture with autonomous ControlPilot supervision  
+## EN
+- **V5.0:** AI integration (ControlPilot), improved stability, optimized dashboard.  
+- **V4.9:** Advanced signal aggregation + anomaly detection.  
+- **V4.8:** Simple signal collection (start of ControlPilot).  
+- **V4.7:** Full real‑mode stabilization + auto‑resume.  
+- **V4.6:** Dynamic strategy with automatic portfolio adjustments.  
+- **V4.5:** GUI improvements + contextual display.  
+- **V4.4:** Global launch + initial supervision.  
+- **V4.3:** LP simulation + detailed logging.  
+- **V4.2:** Weighted scoring + profile management.  
+- **V4.0:** Full simulation mode.
 
 ---
 
-## 🌌 Vision du projet / Project Vision
+# 6. 🧱 Caractéristiques techniques / Technical Highlights
 
-**FR :**  
+## FR
+DeFiPilot repose sur une architecture modulaire, pensée pour garantir évolutivité et stabilité :
 
-DeFiPilot n’est pas seulement un bot DeFi, c’est un **laboratoire public** montrant qu’un autodidacte, accompagné par l’IA,  
-peut construire pas à pas un écosystème complet :  
+- **`core/`** — Analyse, scoring, stratégie, transactions, gestion des wallets.  
+- **`gui/`** — Interface Tkinter (rafraîchissement, affichage, widgets personnalisés).  
+- **`cli/`** — Exécution en mode console, outils rapides, smoke tests.  
+- **`control/`** — Module IA ControlPilot (signaux + agrégation).  
+- **`config/`** — Paramètres généraux, profils, fichiers JSON de configuration.  
+- **`journal/`** — Système de logs (CSV + JSONL), rotation, journaux par modules.  
+- **`state/`** — Gestion du fichier `.state` (reprise automatique).  
 
-- Un bot principal (**DeFiPilot**) qui gère des investissements réels de manière transparente  
-- Un centre de contrôle (**ControlPilot**) qui observe, agrège et analyse  
-- Des modules spécialisés (**ArbiPilot**, **LabPilot**, etc.) qui exploreront d’autres stratégies et optimisations  
+Le bot utilise principalement **Python 3.11**, **Web3.py**, **Tkinter**, **Pandas**, et l’API **DefiLlama**.
 
-L’objectif est autant pédagogique que pratique : documenter chaque étape pour inspirer d’autres personnes à créer leurs propres outils.  
+## EN
+DeFiPilot is built on a modular architecture designed for scalability and stability:
 
-**EN :**  
+- **`core/`** — Analysis, scoring, strategy, transactions, wallet management.  
+- **`gui/`** — Tkinter interface (refresh engine, display, custom widgets).  
+- **`cli/`** — Console execution, quick tools, smoke tests.  
+- **`control/`** — ControlPilot AI module (signals + aggregation).  
+- **`config/`** — Global settings, profiles, JSON configuration files.  
+- **`journal/`** — Log system (CSV + JSONL), rotation, per‑module logs.  
+- **`state/`** — `.state` file management (auto‑resume).  
 
-DeFiPilot is not just a DeFi bot — it’s a **public lab** proving that a self-taught individual, assisted by AI,  
-can progressively build a complete ecosystem:  
-
-- A main bot (**DeFiPilot**) managing real investments transparently  
-- A control center (**ControlPilot**) that observes, aggregates, and analyzes  
-- Specialized modules (**ArbiPilot**, **LabPilot**, etc.) exploring new strategies and optimizations  
-
-The goal is both educational and practical: to document every step and inspire others to build their own tools.  
-
----
-
-## ❓ FAQ / Foire aux questions
-
-**FR :**
-
-**Q : DeFiPilot peut-il exécuter des transactions réelles ?**  
-Oui. Depuis la V3.6, DeFiPilot gère les connexions multi-wallets réelles, les swaps, l’ajout de liquidité et le farming LP sur SushiSwap Polygon.  
-Les transactions sont **signées localement** avec votre clé privée, jamais transmises en ligne.
-
-**Q : Puis-je l’utiliser sur un Raspberry Pi ou un Orange Pi ?**  
-Oui. Le projet a été optimisé pour tourner 24h/24 sur des SBC comme l’**Orange Pi 5 Pro**, avec une consommation minimale.  
-
-**Q : Le bot utilise-t-il l’IA ?**  
-Pas directement dans DeFiPilot.  
-Les modules IA seront intégrés dans **ControlPilot (V5.x)** et **LabPilot (V6.x)** pour analyser le marché et ajuster les stratégies.
-
-**Q : Les données DeFi viennent d’où ?**  
-Principalement de **DefiLlama**, puis des API DEX (SushiSwap, Uniswap, etc.) selon la version.  
-Le système est modulaire et peut facilement intégrer d’autres sources.
-
-**Q : Le code est-il open source ?**  
-Oui, sous licence **CC BY-NC 4.0**, donc libre à usage personnel et éducatif mais **non commercial**.  
+The bot relies mainly on **Python 3.11**, **Web3.py**, **Tkinter**, **Pandas**, and the **DefiLlama** API.
 
 ---
 
-**EN :**
+# 7. 🔧 Prérequis / Requirements
 
-**Q: Can DeFiPilot perform real transactions?**  
-Yes. Since V3.6, DeFiPilot supports real multi-wallet connections, swaps, liquidity additions, and LP farming on SushiSwap Polygon.  
-Transactions are **signed locally** with your private key and never sent online.
+## FR
+- Python **3.11+**  
+- Accès RPC Polygon (Infura, Alchemy, QuickNode)  
+- Wallet compatible (Rabby, MetaMask)  
+- Connexion Internet stable  
+- Git installé
 
-**Q: Can I run it on a Raspberry Pi or Orange Pi?**  
-Yes. It’s optimized to run 24/7 on SBCs such as the **Orange Pi 5 Pro**, with minimal power usage.  
-
-**Q: Does the bot use AI?**  
-Not directly inside DeFiPilot.  
-AI modules will be integrated into **ControlPilot (V5.x)** and **LabPilot (V6.x)** for market analysis and adaptive strategies.
-
-**Q: Where does the DeFi data come from?**  
-Mainly from **DefiLlama**, and from DEX APIs (SushiSwap, Uniswap, etc.) depending on the version.  
-The system is modular and can easily add new data sources.
-
-**Q: Is the code open source?**  
-Yes, it’s licensed under **CC BY-NC 4.0**, free for personal and educational use but **non-commercial**.  
+## EN
+- Python **3.11+**  
+- Polygon RPC access (Infura, Alchemy, QuickNode)  
+- Compatible wallet (Rabby, MetaMask)  
+- Stable Internet connection  
+- Git installed
 
 ---
+# 8. ⚙️ Installation / Installation
 
-## 👤 À propos de l’auteur / About the Author
+## FR
+1. **Cloner le dépôt :**
+```bash
+git clone https://github.com/DavidRaffeil/DeFiPilot.git
+cd DeFiPilot
+```
+2. **Créer l’environnement virtuel et installer les dépendances :**
+```bash
+python3.11 -m venv .venv
+source .venv/bin/activate  # Windows : .venv\Scripts\activate
+pip install -U pip
+pip install -r requirements.txt
+```
+3. **Configurer le fichier `.env` :**
+```dotenv
+NETWORK=polygon
+RPC_URL=https://polygon-mainnet.infura.io/v3/<PROJECT_ID>
+WALLEΤ_ADDRESS=<VOTRE_ADRESSE_WALLET> # remplacer par votre adresse
+LOG_LEVEL=INFO
 
-**FR :**  
-Je m’appelle **David**, passionné par la DeFi, les IA collaboratives et les SBC (Single Board Computers).  
-DeFiPilot est un projet **100 % autodidacte**, construit pas à pas avec l’aide de ChatGPT, dans le but de prouver qu’un individu seul peut concevoir un écosystème DeFi complet et transparent.  
-Chaque version est publiée publiquement pour partager le parcours, les progrès et les apprentissages techniques.  
+```
+4. **Vérifier l’installation :**
+```bash
+python check_setup.py
+```
 
-**EN :**  
-My name is **David**, I’m passionate about DeFi, collaborative AI, and SBCs (Single Board Computers).  
-DeFiPilot is a **fully self-taught project**, built step by step with the help of ChatGPT, to demonstrate that a single individual can design a complete and transparent DeFi ecosystem.  
-Each version is released publicly to share the journey, technical progress, and lessons learned.  
+## EN
+1. **Clone the repository:**
+```bash
+git clone https://github.com/DavidRaffeil/DeFiPilot.git
+cd DeFiPilot
+```
+2. **Create a virtual environment and install dependencies:**
+```bash
+python3.11 -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+pip install -U pip
+pip install -r requirements.txt
+```
+3. **Configure the `.env` file:**
+```dotenv
+NETWORK=polygon
+RPC_URL=https://polygon-mainnet.infura.io/v3/<PROJECT_ID>
+WALLEΤ_ADDRESS=<YOUR_WALLET_ADDRESS> # replace with your address
+LOG_LEVEL=INFO
+
+```
+4. **Verify installation:**
+```bash
+python check_setup.py
+```
 
 ---
+# 9. ▶️ Utilisation / Usage
 
-## ⚖️ Licence / License
+## FR
+- **Interface graphique :**
+```bash
+python start_defipilot.py
+```
+- **Mode console (headless) :**
+```bash
+python run_defipilot.py
+```
+Les journaux sont enregistrés dans `journal_*.jsonl` et `journal_*.csv`.
 
-**FR :**  
-Ce projet est distribué sous licence **Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)**.  
-Vous pouvez le partager et l’adapter librement, à condition de créditer l’auteur et de ne pas l’utiliser à des fins commerciales.  
-
-**EN :**  
-This project is licensed under the **Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)** license.  
-You are free to share and adapt it, as long as you credit the author and do not use it for commercial purposes.  
+## EN
+- **Graphical interface:**
+```bash
+python start_defipilot.py
+```
+- **Headless mode:**
+```bash
+python run_defipilot.py
+```
+Logs are saved in `journal_*.jsonl` and `journal_*.csv`.
 
 ---
+# 10. 🚀 Feuille de route / Roadmap
+
+## FR
+- **V5.0 :** AI ControlPilot + stabilité.  
+- **V5.1 :** Stratégie IA + rééquilibrage avancé.  
+- **V5.2 :** ArbiPilot (arbitrage inter-DEX).  
+- **V5.3 :** LabPilot (optimisation IA).  
+- **V6.0 :** Écosystème multi‑bots autonome.
+
+## EN
+- **V5.0:** AI ControlPilot + stability.  
+- **V5.1:** AI strategy + advanced rebalancing.  
+- **V5.2:** ArbiPilot (inter‑DEX arbitrage).  
+- **V5.3:** LabPilot (AI optimization).  
+- **V6.0:** Autonomous multi‑bot ecosystem.
+
+---
+# 11. 🌍 Vision du projet / Project Vision
+
+## FR
+DeFiPilot vise à devenir une plateforme de gestion automatisée complète regroupant :  
+- Analyse multi‑DEX, multi‑blockchains.  
+- Stratégies dynamiques ajustées selon le marché.  
+- Modules complémentaires (ControlPilot, ArbiPilot, LabPilot).  
+- Architecture transparente et robuste centrée sur la sécurité et la pédagogie.
+
+## EN
+DeFiPilot aims to evolve into a complete automated management platform including:  
+- Multi‑DEX, multi‑chain analysis.  
+- Dynamic strategies adjusted to market conditions.  
+- Complementary modules (ControlPilot, ArbiPilot, LabPilot).  
+- Transparent and robust architecture focused on safety and clarity.
+
+---
+# 12. ❓ FAQ / Foire aux questions
+
+## FR
+**1. DeFiPilot effectue‑t‑il des transactions automatiquement ?**  
+Oui, si le mode réel est activé et correctement configuré. En mode simulation, aucune transaction blockchain n’est envoyée.
+
+**2. Puis‑je utiliser DeFiPilot sans interface graphique ?**  
+Oui, le bot peut fonctionner en mode console (headless) via `run_defipilot.py`.
+
+**3. Quels réseaux sont supportés ?**  
+Polygon est supporté en natif. D’autres blockchains seront ajoutées progressivement.
+
+**4. Les clés privées sont‑elles stockées en clair ?**  
+Elles sont chargées via `.env` et jamais écrites dans les journaux.
+
+**5. Quelle est la fréquence d’analyse ?**  
+Elle dépend de la configuration, généralement quelques secondes.
+
+**6. Comment fonctionne la reprise automatique ?**  
+L’état est stocké dans un fichier `.state`, permettant au bot de reprendre après une coupure.
+
+**7. Comment fonctionne la supervision IA ?**  
+ControlPilot fournit des signaux contextuels (favorable, neutre, défavorable) influençant la stratégie.
+
+**8. Les données de marché proviennent d’où ?**  
+Principalement de DefiLlama et des RPC blockchain.
+
+**9. Puis‑je ajouter mes propres stratégies ?**  
+Oui, l’architecture modulaire permet d’étendre facilement les stratégies.
+
+**10. Le projet est‑il open source ?**  
+Oui, sous licence CC‑BY‑NC‑SA 4.0.
+
+## EN
+**1. Does DeFiPilot perform transactions automatically?**  
+Yes, if real mode is enabled and properly configured. In simulation mode, no blockchain transactions are sent.
+
+**2. Can I run DeFiPilot without the GUI?**  
+Yes, the bot can run headless using `run_defipilot.py`.
+
+**3. Which networks are supported?**  
+Polygon is supported natively; other networks will be added later.
+
+**4. Are private keys stored in plain text?**  
+They are loaded via `.env` and never written to logs.
+
+**5. What is the analysis frequency?**  
+It depends on configuration, usually a few seconds.
+
+**6. How does auto‑resume work?**  
+Bot state is stored in a `.state` file, allowing recovery after a shutdown.
+
+**7. How does AI supervision work?**  
+ControlPilot provides contextual signals (favorable, neutral, unfavorable) affecting strategy.
+
+**8. Where does market data come from?**  
+Mainly from DefiLlama and blockchain RPC endpoints.
+
+**9. Can I add my own strategies?**  
+Yes, the modular architecture supports custom strategy modules.
+
+**10. Is the project open source?**  
+Yes, licensed under CC‑BY‑NC‑SA 4.0.
+
+---
+# 13. 👤 À propos de l’auteur / About the Author
+
+## FR
+DeFiPilot est développé par un passionné d’automatisation, d’analyse de données et de finance décentralisée. Le projet a été conçu pour créer un outil pédagogique, robuste et réellement utilisable au quotidien pour explorer la DeFi de manière encadrée.
+
+## EN
+DeFiPilot is developed by an enthusiast of automation, data analysis, and decentralized finance. The project aims to provide an educational, robust and practical tool to explore DeFi safely and efficiently.
+
+---
+# 14. 🧩 Crédits techniques / Technical Credits
+
+## FR
+- Développement assisté par **ChatGPT**.  
+- Icônes, badges et éléments visuels issus de ressources libres.  
+- Utilisation de **Web3.py**, **Tkinter**, **Pandas**, **DefiLlama API**.
+
+## EN
+- Development assisted by **ChatGPT**.  
+- Icons, badges and visuals use open free resources.  
+- Built on **Web3.py**, **Tkinter**, **Pandas**, **DefiLlama API**.
+
+---
+# 15. 📜 Licence / License
+
+## FR
+Ce projet est distribué sous licence **CC‑BY‑NC‑SA 4.0**.  
+Vous pouvez utiliser, modifier et partager le code tant que :  
+- L’usage n’est **pas commercial**.  
+- L’auteur est crédité.  
+- Les modifications sont partagées sous la même licence.
+
+## EN
+This project is released under **CC‑BY‑NC‑SA 4.0**.  
+You may use, modify and share the code provided that:  
+- Usage is **non‑commercial**.  
+- Proper credit is given.  
+- Derivative works remain under the same license.
+
+---
+# 16. 🔍 Dernière révision / Last Review
+
+**README V5.0 — mis à jour et consolidé.**
+
