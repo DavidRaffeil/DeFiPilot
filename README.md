@@ -14,21 +14,21 @@
 
 ## 📚 Sommaire / Table of Contents
 1. [Introduction / Introduction](#1-introduction--introduction)  
-2. [Fonctionnalités principales / Key Features](#2-fonctionnalités-principales--key-features)  
-3. [Aperçu visuel / Visual Overview](#3-aperçu-visuel--visual-overview)  
-4. [Nouveautés / What's New — Version 5.0](#4-nouveautés--whats-new--version-50)  
-5. Historique des versions / Past Versions  
-6. Caractéristiques techniques / Technical Highlights  
-7. Prérequis / Requirements  
-8. Installation / Installation  
-9. Utilisation / Usage  
-10. Feuille de route / Roadmap  
-11. Vision du projet / Project Vision  
-12. FAQ / Foire aux questions  
-13. À propos de l’auteur / About the Author  
-14. Crédits techniques / Technical Credits  
-15. Licence / License  
-16. Dernière révision / Last Review
+2. [Fonctionnalités principales / Key Features](#2-fonctionnalites-principales--key-features)  
+3. [Aperçu visuel / Visual Overview](#3-apercu-visuel--visual-overview)  
+4. [Nouveautés / What's New — Version 5.0](#4-nouveautes--whats-new--version-50)  
+5. [Historique des versions / Past Versions](#5-historique-des-versions--past-versions)  
+6. [Caractéristiques techniques / Technical Highlights](#6-caracteristiques-techniques--technical-highlights)  
+7. [Prérequis / Requirements](#7-prerequis--requirements)  
+8. [Installation / Installation](#8-installation--installation)  
+9. [Utilisation / Usage](#9-utilisation--usage)  
+10. [Feuille de route / Roadmap](#10-feuille-de-route--roadmap)  
+11. [Vision du projet / Project Vision](#11-vision-du-projet--project-vision)  
+12. [FAQ / Foire aux questions](#12-faq--foire-aux-questions)  
+13. [À propos de l’auteur / About the Author](#13-a-propos-de-lauteur--about-the-author)  
+14. [Crédits techniques / Technical Credits](#14-credits-techniques--technical-credits)  
+15. [Licence / License](#15-licence--license)  
+16. [Dernière révision / Last Review](#16-derniere-revision--last-review)
 
 ---
 
