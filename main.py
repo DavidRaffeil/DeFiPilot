@@ -1,286 +1,276 @@
-# main.py – V3.5
-# Intégration : core.journal_wallet (init_logs, log_wallet_action, log_wallet_balance)
-# Conserver le flux existant ; ajouts discrets et robustes.
+# main.py – V5.0
+"""
+Point d'entrée principal pour DeFiPilot V5.0.
+
+Rôle de ce fichier :
+- Initialiser le logging de base.
+- Analyser les arguments de la ligne de commande.
+- Déléguer l'exécution au bon "runner" (GUI ou CLI) si disponible.
+- Fournir des messages d'erreur clairs sans casser le projet.
+
+Ce main est volontairement léger pour éviter les régressions :
+la logique "métier" reste dans les autres modules (run_defipilot,
+GUI, etc.).
+"""
 
 from __future__ import annotations
 
-import sys
-import os
 import logging
-from datetime import datetime
-from typing import Any, Callable, Tuple
-
-# Journal wallet (obligatoire à cette version)
-from core.journal_wallet import init_logs, log_wallet_action, log_wallet_balance
-
-# Wallet réel optionnel (adresse uniquement si dispo)
-try:
-    from core.real_wallet import get_wallet_address  # type: ignore
-except Exception:  # pragma: no cover
-    get_wallet_address = None  # type: ignore
-
-# ────────────────────────────────────────────────────────────────────────────────
-# Utilitaires d’affichage
-# ────────────────────────────────────────────────────────────────────────────────
-
-def _fmt_date_iso(dt: datetime | None = None) -> str:
-    dt = dt or datetime.now()
-    return dt.strftime("%Y-%m-%d")
+import os
+import sys
+from typing import List, Optional, Callable, Any
 
 
-def _afficher_entete(profil_nom: str, profil: dict) -> None:
-    print("🚀 Lancement de DeFiPilot")
-    print(f"[{_fmt_date_iso(datetime.now())}] INFO 🏗 Profil actif : {profil_nom} (APR {profil.get('ponderations',{}).get('apr',0.3)}, TVL {profil.get('ponderations',{}).get('tvl',0.7)})")
+APP_VERSION = "V5.0"
 
-# ────────────────────────────────────────────────────────────────────────────────
-# Imports robustes (garde-fous sur noms/chemins)
-# ────────────────────────────────────────────────────────────────────────────────
 
-def _safe_import_profil() -> Tuple[dict, str]:
+# ---------------------------------------------------------------------------
+# Utilitaires
+# ---------------------------------------------------------------------------
+
+def get_project_root() -> str:
+    """Retourne le chemin racine supposé du projet (dossier de ce fichier)."""
+    return os.path.dirname(os.path.abspath(__file__))
+
+
+def setup_logging() -> None:
+    """Configure un logging simple vers la console et, si possible, vers un fichier."""
+    root = get_project_root()
+    logs_dir = os.path.join(root, "data", "logs")
+    os.makedirs(logs_dir, exist_ok=True)
+    log_file = os.path.join(logs_dir, "main_v5.log")
+
+    log_format = "[%(asctime)s] [%(levelname)s] %(name)s: %(message)s"
+    datefmt = "%Y-%m-%d %H:%M:%S"
+
+    # Handler fichier
+    file_handler = logging.FileHandler(log_file, encoding="utf-8")
+    file_handler.setLevel(logging.INFO)
+    file_handler.setFormatter(logging.Formatter(log_format, datefmt=datefmt))
+
+    # Handler console
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.INFO)
+    console_handler.setFormatter(logging.Formatter(log_format, datefmt=datefmt))
+
+    logging.basicConfig(
+        level=logging.INFO,
+        handlers=[file_handler, console_handler],
+        force=True,
+    )
+
+    logging.getLogger(__name__).info("DeFiPilot %s – logging initialisé.", APP_VERSION)
+
+
+# ---------------------------------------------------------------------------
+# Détection du mode
+# ---------------------------------------------------------------------------
+
+def detect_mode(argv: List[str]) -> str:
     """
-    Essaie d’importer le profil depuis core.config puis core.profil.
-    Doit fournir :
-      - PROFILS : dict des profils
-      - PROFIL_ACTIF (str) ou get_profil_actif() -> str
+    Détermine le mode d'exécution à partir des arguments.
+
+    Modes possibles :
+    - 'gui'      : lance l'interface graphique (si disponible)
+    - 'cli'      : lance le moteur CLI principal (si disponible)
+    - 'simulate' : mode simulation (alias spécialisé de 'cli')
+    - 'help'     : affiche l'aide
+    - défaut     : 'gui' si disponible, sinon 'cli'
     """
-    profils, actif = None, None
+    if len(argv) < 2:
+        return "default"
+
+    arg = argv[1].lower().strip()
+    if arg in ("gui", "g"):
+        return "gui"
+    if arg in ("cli", "c"):
+        return "cli"
+    if arg in ("simulate", "sim"):
+        return "simulate"
+    if arg in ("help", "-h", "--help"):
+        return "help"
+
+    # Argument inconnu → on considère que c'est du CLI avec arguments
+    return "cli"
+
+
+def print_help() -> None:
+    """Affiche une aide rapide sur les modes possibles."""
+    msg = f"""
+DeFiPilot {APP_VERSION} – Point d'entrée principal
+
+Usage :
+    python main.py [mode] [options]
+
+Modes :
+    gui, g         Lance l'interface graphique (si disponible).
+    cli, c         Lance le mode CLI principal (run_defipilot, etc.).
+    simulate, sim  Lance une simulation si supportée par le runner CLI.
+    help, -h       Affiche cette aide.
+
+Sans argument :
+    - tente de lancer la GUI si elle est disponible ;
+    - sinon bascule automatiquement en mode CLI.
+"""
+    print(msg.strip())
+
+
+# ---------------------------------------------------------------------------
+# Lancement GUI
+# ---------------------------------------------------------------------------
+
+def run_gui() -> int:
+    """
+    Tente de lancer l'interface graphique principale.
+
+    - Essaie d'importer `gui.main_window`.
+    - Cherche une fonction `run()` ou `main()` dans ce module.
+    - Si rien n'est trouvé, loggue un message et retourne un code d'erreur doux.
+    """
+    logger = logging.getLogger("DeFiPilot.GUI")
+
     try:
-        # cas 1 : core.config
-        from core.config import PROFILS as _PROFILS  # type: ignore
-        profils = _PROFILS
-        try:
-            from core.config import PROFIL_ACTIF as _ACTIF  # type: ignore
-            actif = _ACTIF
-        except Exception:
-            pass
-        try:
-            from core.config import get_profil_actif as _get  # type: ignore
-            actif = actif or _get()
-        except Exception:
-            pass
-    except Exception:
-        pass
+        import gui.main_window as gui_main  # type: ignore[import]
+    except Exception as exc:  # ImportError, ModuleNotFoundError, etc.
+        logger.error("Impossible d'importer gui.main_window : %s", exc)
+        logger.info("Astuce : vérifie que le dossier 'gui' est bien à la racine du projet.")
+        return 1
 
-    if not profils:
-        try:
-            # cas 2 : core.profil (fallback historique)
-            from core.profil import PROFILS as _PROFILS  # type: ignore
-            profils = _PROFILS
-            try:
-                from core.profil import PROFIL_ACTIF as _ACTIF  # type: ignore
-                actif = _ACTIF
-            except Exception:
-                pass
-        except Exception:
-            profils = {"modere": {"nom": "modere", "ponderations": {"apr": 0.3, "tvl": 0.7}}}
+    # On essaye d'appeler une fonction de lancement "standard"
+    launch_func: Optional[Callable[[], Any]] = None
 
-    actif_str = actif if isinstance(actif, str) else "modere"
-    return profils, actif_str
-
-
-def _safe_import_pools_fetcher() -> Callable[..., list] | None:
-    try:
-        # Emplacement actuel du projet
-        from core.defi_sources.defillama import fetch_pools  # type: ignore
-        return fetch_pools
-    except Exception:
-        try:
-            # Fallback ancien nom
-            from core.defillama import fetch_pools  # type: ignore
-            return fetch_pools
-        except Exception:
-            return None
-
-
-def _safe_import_scoring() -> Tuple[Callable[[dict, dict], float] | None, Callable[[dict, dict], float] | None]:
-    calculer_score_fn = None
-    simuler_gains_fn = None
-    try:
-        from core.scoring import calculer_score as _calc  # type: ignore
-        calculer_score_fn = _calc
-    except Exception:
-        pass
-    try:
-        from core.scoring import simuler_gains as _sim  # type: ignore
-        simuler_gains_fn = _sim
-    except Exception:
-        pass
-    return calculer_score_fn, simuler_gains_fn
-
-
-def _safe_import_risk() -> Callable[[dict], dict] | None:
-    try:
-        from risk_analysis import analyser_risque  # type: ignore
-        return analyser_risque
-    except Exception:
-        try:
-            from core.risk_analysis import analyser_risque  # type: ignore
-            return analyser_risque
-        except Exception:
-            return None
-
-
-def _safe_import_journal() -> Tuple[Callable[..., None] | None, Callable[..., None] | None, Callable[..., None] | None]:
-    enreg_top3 = None
-    journal_scores = None
-    enreg_risque = None
-    try:
-        from core.journal import enregistrer_top3 as _top3  # type: ignore
-        enreg_top3 = _top3
-    except Exception:
-        pass
-    try:
-        from core.journal import journaliser_scores as _js  # type: ignore
-        journal_scores = _js
-    except Exception:
-        pass
-    try:
-        from core.journal import enregistrer_pools_risquées as _jr  # type: ignore
-        enreg_risque = _jr
-    except Exception:
-        pass
-    return enreg_top3, journal_scores, enreg_risque
-
-# ────────────────────────────────────────────────────────────────────────────────
-# Calculs de secours
-# ────────────────────────────────────────────────────────────────────────────────
-
-def _score(pool: dict, profil: dict, calculer_score_fn: Callable[[dict, dict], float] | None) -> float:
-    if callable(calculer_score_fn):
-        try:
-            return float(calculer_score_fn(pool, profil))
-        except Exception:
-            pass
-    # Fallback simple : pondération APR/TVL
-    apr = float(pool.get("apr", 0) or 0)
-    tvl = float(pool.get("tvl_usd", pool.get("tvl", 0)) or 0)
-    w_apr = float(profil.get("ponderations", {}).get("apr", 0.3))
-    w_tvl = float(profil.get("ponderations", {}).get("tvl", 0.7))
-    return apr * w_apr + tvl * w_tvl
-
-
-def _nom_pool_court(p: dict) -> str:
-    plat = str(p.get("platform", p.get("plateforme", "?")))
-    t0 = str(p.get("token0", p.get("base", "?")))
-    t1 = str(p.get("token1", p.get("quote", "?")))
-    return f"{plat} | {t0}-{t1}"
-
-# ────────────────────────────────────────────────────────────────────────────────
-# Programme principal
-# ────────────────────────────────────────────────────────────────────────────────
-
-def main() -> None:
-    # Profil actif
-    PROFILS, PROFIL_ACTIF = _safe_import_profil()
-    profil_nom = PROFIL_ACTIF if isinstance(PROFIL_ACTIF, str) else "modere"
-    profil = PROFILS.get(profil_nom, {"nom": profil_nom, "ponderations": {"apr": 0.3, "tvl": 0.7}})
-    profil["nom"] = profil.get("nom", profil_nom)
-
-    _afficher_entete(profil_nom, profil)
-
-    # Journal wallet (début de run)
-    init_logs()
-    log_wallet_action(action="run_start", notes="début exécution DeFiPilot")
-
-    # Récupération des pools
-    fetch_pools = _safe_import_pools_fetcher()
-    if not callable(fetch_pools):
-        print("[INFO] 🧪 Récupération des pools via DefiLlama (fallback)")
-        pools: list[dict] = []
+    if hasattr(gui_main, "run") and callable(getattr(gui_main, "run")):
+        launch_func = getattr(gui_main, "run")
+        logger.info("Lancement de l'interface graphique via gui.main_window.run()")
+    elif hasattr(gui_main, "main") and callable(getattr(gui_main, "main")):
+        launch_func = getattr(gui_main, "main")
+        logger.info("Lancement de l'interface graphique via gui.main_window.main()")
     else:
-        print("[INFO] 🧪 Récupération des pools via DefiLlama")
-        try:
+        logger.error(
+            "Le module gui.main_window ne définit ni 'run()' ni 'main()'. "
+            "Merci d'ajouter une de ces fonctions pour lancer la GUI."
+        )
+        return 1
+
+    try:
+        launch_func()
+    except Exception as exc:  # pragma: no cover - protection runtime
+        logger.exception("Erreur lors de l'exécution de la GUI : %s", exc)
+        return 1
+
+    return 0
+
+
+# ---------------------------------------------------------------------------
+# Lancement CLI
+# ---------------------------------------------------------------------------
+
+def run_cli(mode: str, argv: List[str]) -> int:
+    """
+    Tente de lancer le runner CLI principal.
+
+    Stratégie :
+    - Essaye d'importer `run_defipilot`.
+      - Si ce module contient une fonction `run()` ou `main(argv)`, on l'utilise.
+    - Sinon, loggue un message d'information et sort proprement.
+
+    Le paramètre `mode` permet éventuellement de transmettre une intention
+    spéciale ('simulate', etc.) au runner, si celui-ci la supporte.
+    """
+    logger = logging.getLogger("DeFiPilot.CLI")
+
+    try:
+        import run_defipilot  # type: ignore[import]
+    except Exception as exc:  # ImportError, ModuleNotFoundError, etc.
+        logger.error("Impossible d'importer run_defipilot : %s", exc)
+        logger.info(
+            "Si tu utilises un autre script CLI (start_defipilot.py, simulateur_*.py, etc.), "
+            "tu peux l'appeler directement en attendant d'unifier les entrées."
+        )
+        return 1
+
+    # On essaie de détecter une fonction de lancement dans run_defipilot
+    func_with_argv: Optional[Callable[[List[str], str], Any]] = None
+    func_simple: Optional[Callable[[], Any]] = None
+
+    # Stratégie flexible : plusieurs signatures possibles
+    if hasattr(run_defipilot, "main"):
+        candidate = getattr(run_defipilot, "main")
+        if callable(candidate):
+            func_with_argv = candidate  # on tentera main(argv, mode) puis main()
+    if hasattr(run_defipilot, "run") and callable(getattr(run_defipilot, "run")):
+        func_simple = getattr(run_defipilot, "run")
+
+    if func_with_argv is None and func_simple is None:
+        logger.error(
+            "Le module run_defipilot ne définit ni fonction main() exploitable "
+            "ni fonction run(). Merci d'ajouter un point d'entrée."
+        )
+        return 1
+
+    logger.info("Lancement du mode CLI (mode='%s') via run_defipilot", mode)
+
+    try:
+        # On essaye d'abord main(argv, mode), puis main(argv), puis main()
+        if func_with_argv is not None:
             try:
-                pools = fetch_pools(profil)  # certains fetchers acceptent le profil
+                # type: ignore[arg-type]
+                func_with_argv(argv, mode)  # type: ignore[misc]
             except TypeError:
-                pools = fetch_pools()
-        except Exception:
-            pools = []
+                try:
+                    func_with_argv(argv)  # type: ignore[misc]
+                except TypeError:
+                    func_with_argv()  # type: ignore[misc]
+        elif func_simple is not None:
+            func_simple()
+    except Exception as exc:  # pragma: no cover - protection runtime
+        logger.exception("Erreur lors de l'exécution du runner CLI : %s", exc)
+        return 1
 
-    print(f"[{_fmt_date_iso(datetime.now())}] INFO ✅ {len(pools)} pools récupérées")
+    return 0
 
-    # Scoring / gains / risque
-    calculer_score_fn, simuler_gains_fn = _safe_import_scoring()
-    analyser_risque = _safe_import_risk()
-    enreg_top3, journal_scores, enreg_risque = _safe_import_journal()
 
-    for pool in pools:
-        # Score
-        try:
-            s = _score(pool, profil, calculer_score_fn)
-            pool["score"] = float(s)
-        except Exception:
-            pool["score"] = 0.0
-        # Gains simulés
-        if callable(simuler_gains_fn):
-            try:
-                pool["gain_simule_usdc"] = float(simuler_gains_fn(pool, profil))
-            except Exception:
-                pool["gain_simule_usdc"] = 0.0
-        # Risque
-        if callable(analyser_risque):
-            try:
-                analyser_risque(pool)  # ajoute champs "risque" et "raisons_risque"
-            except Exception:
-                pass
+# ---------------------------------------------------------------------------
+# main()
+# ---------------------------------------------------------------------------
 
-        # Affichage score (style historique)
-        plat = str(pool.get("platform", pool.get("plateforme", "?")))
-        pair = f"{pool.get('token0','?')}-{pool.get('token1','?')}"
-        print(f"[SCORE] {plat} | {pair} | Score : {pool.get('score',0)}")
+def main(argv: Optional[List[str]] = None) -> int:
+    """
+    Point d'entrée principal.
 
-    # Tri scores
-    pools_sorted = sorted(pools, key=lambda x: float(x.get("score", 0.0)), reverse=True) if pools else []
+    - Initialise le logging.
+    - Détecte le mode d'exécution.
+    - Route vers GUI ou CLI.
+    """
+    if argv is None:
+        argv = sys.argv
 
-    # Résumé TOP 3 (affichage + journal optionnel)
-    date_iso = _fmt_date_iso(datetime.now())
-    if pools_sorted:
-        print()  # espace visuel
-        for p in pools_sorted[:3]:
-            nom_simple = _nom_pool_court(p)
-            apr = float(p.get("apr", 0) or 0)
-            gain = float(p.get("gain_simule_usdc", 0.0))
-            print(f"  • {nom_simple} | APR : {apr:.2f}% | Gain simulé : {gain:.2f} $ USDC")
-        try:
-            if callable(enreg_top3):
-                top3 = []
-                for p in pools_sorted[:3]:
-                    nom_simple = _nom_pool_court(p)
-                    apr = float(p.get("apr", 0) or 0)
-                    gain = float(p.get("gain_simule_usdc", 0.0))
-                    top3.append((nom_simple, apr, gain))
-                enreg_top3(date_iso, top3, profil.get("nom", profil_nom))
-        except Exception:
-            pass
+    setup_logging()
+    logger = logging.getLogger("DeFiPilot.Main")
 
-    # Scores détaillés (journal)
-    if pools_sorted and callable(journal_scores):
-        try:
-            journal_scores(date_iso, profil, pools_sorted, historique_pools=[])
-        except Exception:
-            pass
+    mode = detect_mode(argv)
+    logger.info("DeFiPilot %s – mode détecté : %s", APP_VERSION, mode)
 
-    # Pools risquées (journal)
-    if pools_sorted and callable(enreg_risque):
-        try:
-            enreg_risque(pools_sorted, date_iso, profil.get("nom", profil_nom))
-        except Exception:
-            pass
+    if mode == "help":
+        print_help()
+        return 0
 
-    # Fin de run + snapshot optionnel
-    log_wallet_action(action="run_end", notes="fin exécution DeFiPilot")
+    if mode == "gui":
+        return run_gui()
 
-    wallet_address = get_wallet_address() if callable(get_wallet_address) else None
-    chain_name = os.getenv("CHAIN_NAME", "polygon")
-    if wallet_address:
-        try:
-            log_wallet_balance(wallet=wallet_address, chain=chain_name, balances={}, notes="snapshot fin de run")
-        except Exception:
-            pass
+    if mode in ("cli", "simulate"):
+        # Le mode "simulate" est géré à l'intérieur de run_cli via le paramètre `mode`.
+        return run_cli(mode, argv)
+
+    # Mode par défaut : on tente la GUI, puis on retombe sur le CLI si la GUI n'est pas dispo
+    logger.info("Mode par défaut : tentative de lancement GUI, puis fallback CLI.")
+    gui_status = run_gui()
+    if gui_status == 0:
+        return 0
+
+    logger.info("GUI indisponible ou en erreur, bascule vers le mode CLI.")
+    return run_cli("cli", argv)
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        sys.exit(0)
+    sys.exit(main())

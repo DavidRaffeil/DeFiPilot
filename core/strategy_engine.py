@@ -1,8 +1,10 @@
-# strategy_engine.py – V4.0.1
+# core/strategy_engine.py – V5.1.0
 """Squelette du moteur de stratégie / Strategy engine skeleton.
 
-FR: Version squelette en mode simulation (dry-run) sans dépendances internes.
-EN: Skeleton version operating in dry-run only with no internal dependencies.
+FR: Version squelette en mode simulation (dry-run) avec intégration optionnelle
+    d'un contexte global de stratégie.
+EN: Skeleton version operating in dry-run only with optional integration
+    of a global strategy context.
 """
 
 from __future__ import annotations
@@ -10,10 +12,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Protocol, Any
+from typing import Any, Dict, List, Optional, Protocol
 import json
 import time
 from datetime import datetime
+
+from .strategy_context import StrategyContext
 
 
 class MarketState(Enum):
@@ -35,7 +39,7 @@ class PoolCandidate:
     tvl: float
     apr: float
     score: Optional[float] = None
-    metadata: Dict[str, Any] = None
+    metadata: Dict[str, Any] | None = None
 
 
 @dataclass
@@ -116,7 +120,8 @@ class _DefaultExecutor:
 
 class StrategyEngine:
     """FR: Moteur de stratégie minimal orienté dry-run.
-    EN: Minimal dry-run oriented strategy engine."""
+    EN: Minimal dry-run oriented strategy engine.
+    """
 
     def __init__(
         self,
@@ -207,12 +212,44 @@ class StrategyEngine:
         self._log_info(f"Detected market state: {state.value}")
         return state
 
-    def select_candidates(self, pools: List[PoolCandidate]) -> List[PoolCandidate]:
+    def _compute_effective_score(
+        self,
+        pool: PoolCandidate,
+        context: Optional[StrategyContext],
+    ) -> float:
+        """FR: Calcule un score effectif pour un pool en tenant compte du contexte global.
+        EN: Compute an effective score for a pool taking the global context into account.
+        """
+
+        if pool.score is not None:
+            return float(pool.score)
+
+        base_apr = float(pool.apr)
+        base_tvl = float(pool.tvl)
+        tvl_factor = base_tvl / 1e9 if base_tvl > 0 else 0.0
+
+        if context is None:
+            return base_apr + tvl_factor
+
+        label = context.label
+        if label == "favorable":
+            return base_apr * 1.0 + tvl_factor * 0.5
+        if label == "defavorable":
+            return base_apr * 0.6 + tvl_factor * 0.4
+        return base_apr * 0.8 + tvl_factor * 0.2
+
+    def select_candidates(
+        self,
+        pools: List[PoolCandidate],
+        context: Optional[StrategyContext] = None,
+    ) -> List[PoolCandidate]:
         """FR: Sélectionne les meilleurs pools. EN: Select top pool candidates."""
         max_concurrent = self.cfg["allocations"]["max_concurrent"]
         if not pools:
             self._log_warn("No pools provided; selection empty")
             return []
+
+        # Si des scores explicites sont fournis, on respecte la logique existante.
         if any(pool.score is not None for pool in pools):
             sorted_pools = sorted(
                 pools,
@@ -220,12 +257,47 @@ class StrategyEngine:
                 reverse=True,
             )
         else:
-            sorted_pools = sorted(pools, key=lambda p: (p.apr, p.tvl), reverse=True)
+            # Sinon, on utilise le score effectif dépendant du contexte global.
+            sorted_pools = sorted(
+                pools,
+                key=lambda p: self._compute_effective_score(p, context),
+                reverse=True,
+            )
+
         selected = sorted_pools[:max_concurrent]
         self._log_info(f"Selected {len(selected)} pool candidates")
         return selected
 
-    def compute_allocations(self, candidates: List[PoolCandidate], market: MarketState) -> List[Allocation]:
+    def _compute_exposure_factor(self, context: Optional[StrategyContext]) -> float:
+        """FR: Calcule un facteur global d'exposition en fonction du profil et du contexte IA.
+        EN: Compute a global exposure factor based on profile and AI context.
+        """
+
+        if context is None:
+            return 1.0
+
+        label = getattr(context, "label", "neutre") or "neutre"
+        label = label.lower()
+        if label not in {"favorable", "neutre", "defavorable"}:
+            label = "neutre"
+
+        exposure_table: Dict[str, Dict[str, float]] = {
+            "prudent": {"favorable": 1.0, "neutre": 0.9, "defavorable": 0.7},
+            "modere": {"favorable": 1.0, "neutre": 1.0, "defavorable": 0.8},
+            "agressif": {"favorable": 1.1, "neutre": 1.0, "defavorable": 0.9},
+        }
+
+        profile_table = exposure_table.get(self.profile)
+        if profile_table is None:
+            return 1.0
+        return profile_table.get(label, 1.0)
+
+    def compute_allocations(
+        self,
+        candidates: List[PoolCandidate],
+        market: MarketState,
+        context: Optional[StrategyContext] = None,
+    ) -> List[Allocation]:
         """FR: Calcule les allocations cibles. EN: Compute target allocations."""
         if not candidates:
             self._log_warn("No candidates to allocate")
@@ -278,6 +350,16 @@ class StrategyEngine:
                 for allocation in allocations:
                     allocation.target_pct /= total_after
 
+        exposure_factor = self._compute_exposure_factor(context)
+        if exposure_factor != 1.0:
+            for allocation in allocations:
+                allocation.target_pct *= exposure_factor
+
+            total_after = sum(a.target_pct for a in allocations)
+            if total_after > 1.0 and total_after > 0:
+                for allocation in allocations:
+                    allocation.target_pct /= total_after
+
         return allocations
 
     def build_actions(self, allocs: List[Allocation], snapshot: PortfolioSnapshot) -> List[Action]:
@@ -314,14 +396,18 @@ class StrategyEngine:
         """FR: Exécute via l'executor. EN: Execute through executor."""
         return self.executor.execute(actions)
 
-    def run(self, pools: Optional[List[PoolCandidate]] = None) -> Dict[str, Any]:
+    def run(
+        self,
+        pools: Optional[List[PoolCandidate]] = None,
+        context: Optional[StrategyContext] = None,
+    ) -> Dict[str, Any]:
         """FR: Orchestration complète. EN: Full orchestration."""
         self.validate_config()
         snapshot = self.snapshot_portfolio()
         market = self.detect_market_state()
         pool_list = pools if pools is not None else self.pool_source.list_pools()
-        candidates = self.select_candidates(pool_list)
-        allocations = self.compute_allocations(candidates, market)
+        candidates = self.select_candidates(pool_list, context=context)
+        allocations = self.compute_allocations(candidates, market, context=context)
         actions = self.build_actions(allocations, snapshot)
 
         for action in actions:
@@ -330,7 +416,7 @@ class StrategyEngine:
         if not self.dry_run:
             self.execute(actions)
 
-        result = {
+        result: Dict[str, Any] = {
             "profile": self.profile,
             "market": market.value,
             "snapshot": {
@@ -341,10 +427,18 @@ class StrategyEngine:
             "candidates": [candidate.__dict__ for candidate in candidates],
             "allocations": [allocation.__dict__ for allocation in allocations],
             "actions": [
-                {"kind": action.kind, "params": action.params, "dry_run": action.dry_run} for action in actions
+                {"kind": action.kind, "params": action.params, "dry_run": action.dry_run}
+                for action in actions
             ],
             "dry_run": self.dry_run,
             "generated_at": datetime.utcnow().isoformat() + "Z",
+            "context": {
+                "label": context.label,
+                "ai_score": context.ai_score,
+                "confiance": context.confiance,
+            }
+            if context is not None
+            else None,
         }
         self._log_info("Strategy run completed")
         return result

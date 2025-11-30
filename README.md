@@ -3,7 +3,7 @@
 > 🗣️ **Langue / Language :** le bot fonctionne uniquement en **français** pour le moment.  
 > The bot currently works **in French only** for the moment.
 
-![Version](https://img.shields.io/badge/Version-V5.0%20Stable-blue)
+![Version](https://img.shields.io/badge/Version-V5.1%20Stable-blue)
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
 ![Made in France](https://img.shields.io/badge/Made%20in-France-lightgrey)
 ![Developed with ChatGPT](https://img.shields.io/badge/Developed%20with-ChatGPT-orange)
@@ -16,7 +16,7 @@
 1. [Introduction / Introduction](#1-introduction--introduction)  
 2. [Fonctionnalités principales / Key Features](#2-fonctionnalites-principales--key-features)  
 3. [Aperçu visuel / Visual Overview](#3-apercu-visuel--visual-overview)  
-4. [Nouveautés / What's New — Version 5.0](#4-nouveautes--whats-new--version-50)  
+4. [Nouveautés / What's New — Version 5.1](#4-nouveautes--whats-new--version-51)  
 5. [Historique des versions / Past Versions](#5-historique-des-versions--past-versions)  
 6. [Caractéristiques techniques / Technical Highlights](#6-caracteristiques-techniques--technical-highlights)  
 7. [Prérequis / Requirements](#7-prerequis--requirements)  
@@ -98,27 +98,34 @@ DeFiPilot’s graphical interface displays key metrics, bot status, ControlPilot
 
 ---
 
-# 4. 🆕 Nouveautés / What's New — Version 5.0
+# 4. 🆕 Nouveautés / What's New — Version 5.1
 
 ## FR
-- Intégration IA complète via ControlPilot (analyse contextuelle + signaux).  
-- Dashboard amélioré : latence réduite, affichage dynamique, stabilité renforcée.  
-- Journalisation uniformisée et centralisée.  
-- Optimisation des appels RPC et gestion des erreurs réseau.  
-- Amélioration de la structure interne et simplification de plusieurs modules.
+- Nouveau **moteur de signaux IA** via ControlPilot (contexte : favorable / neutre / défavorable).  
+- **Normalisation avancée** des signaux consolidés (module `signals_normalizer`).  
+- **Injection intelligente des signaux** dans la stratégie et dans le scoring.  
+- **Scoring dynamique** : les pools sont réévaluées selon le contexte du marché.  
+- Ajout du fichier `strategy_snapshot.jsonl` pour tracer toutes les décisions internes.  
+- Mise à jour du moteur de stratégie pour intégrer les signaux pondérés.  
+- Amélioration de la stabilité du pipeline décisionnel (mode simulation + réel limité).  
+- Préparation des futures étapes : rééquilibrage automatique (V5.2) et stratégie avancée.
 
 ## EN
-- Full AI integration via ControlPilot (context analysis + signals).  
-- Improved dashboard: reduced latency, dynamic display, increased stability.  
-- Unified and centralized logging.  
-- Optimized RPC calls and improved network error handling.  
-- Internal structure improvements and simplification of several modules.
+- New **AI signal engine** via ControlPilot (context: favorable / neutral / unfavorable).  
+- **Advanced normalization** of consolidated signals (`signals_normalizer` module).  
+- **Intelligent injection of signals** into the strategy and scoring engine.  
+- **Dynamic scoring**: pools are re-evaluated depending on market context.  
+- Added `strategy_snapshot.jsonl` to record all internal decisions.  
+- Updated strategy engine to include weighted contextual signals.  
+- Improved stability of the decision pipeline (simulation mode + limited real mode).  
+- Preparation for next steps: automatic rebalancing (V5.2) and advanced strategy features.
 
 ---
 
 # 5. 🕓 Historique des versions / Past Versions
 
 ## FR
+- **V5.1 :** Nouveau moteur de signaux IA, normalisation avancée, scoring dynamique, stratégie enrichie.  
 - **V5.0 :** Intégration IA ControlPilot, stabilité renforcée, dashboard optimisé.  
 - **V4.9 :** Agrégation avancée des signaux + détection d’anomalies.  
 - **V4.8 :** Collecte des signaux simples (début ControlPilot).  
@@ -131,11 +138,12 @@ DeFiPilot’s graphical interface displays key metrics, bot status, ControlPilot
 - **V4.0 :** Passage au simulateur complet.
 
 ## EN
-- **V5.0:** AI integration (ControlPilot), improved stability, optimized dashboard.  
+- **V5.1:** New AI signal engine, advanced normalization, dynamic scoring, enriched strategy.  
+- **V5.0:** AI ControlPilot integration, improved stability, optimized dashboard.  
 - **V4.9:** Advanced signal aggregation + anomaly detection.  
 - **V4.8:** Simple signal collection (start of ControlPilot).  
-- **V4.7:** Full real‑mode stabilization + auto‑resume.  
-- **V4.6:** Dynamic strategy with automatic portfolio adjustments.  
+- **V4.7:** Full real-mode stabilization + auto-resume.  
+- **V4.6:** Dynamic strategy with automatic adjustments.  
 - **V4.5:** GUI improvements + contextual display.  
 - **V4.4:** Global launch + initial supervision.  
 - **V4.3:** LP simulation + detailed logging.  
@@ -274,18 +282,19 @@ Logs are saved in `journal_*.jsonl` and `journal_*.csv`.
 # 10. 🚀 Feuille de route / Roadmap
 
 ## FR
-- **V5.0 :** AI ControlPilot + stabilité.  
-- **V5.1 :** Stratégie IA + rééquilibrage avancé.  
-- **V5.2 :** ArbiPilot (arbitrage inter-DEX).  
-- **V5.3 :** LabPilot (optimisation IA).  
-- **V6.0 :** Écosystème multi‑bots autonome.
+- **V5.1 :** Stratégie IA complète (signaux normalisés, scoring dynamique, snapshot de stratégie).  
+- **V5.2 :** Rééquilibrage automatique du portefeuille en fonction du contexte.  
+- **V5.3 :** Optimisations IA via LabPilot (analyse avancée des signaux).  
+- **V5.4 :** Version préliminaire d’ArbiPilot (arbitrage inter-DEX).  
+- **V6.0 :** Écosystème multi-bots autonome (DeFiPilot + ControlPilot + ArbiPilot + LabPilot).
 
 ## EN
-- **V5.0:** AI ControlPilot + stability.  
-- **V5.1:** AI strategy + advanced rebalancing.  
-- **V5.2:** ArbiPilot (inter‑DEX arbitrage).  
-- **V5.3:** LabPilot (AI optimization).  
-- **V6.0:** Autonomous multi‑bot ecosystem.
+- **V5.1:** Full AI-driven strategy (normalized signals, dynamic scoring, strategy snapshots).  
+- **V5.2:** Automatic portfolio rebalancing based on market context.  
+- **V5.3:** AI optimizations via LabPilot (advanced signal analysis).  
+- **V5.4:** Preliminary version of ArbiPilot (inter-DEX arbitrage).  
+- **V6.0:** Autonomous multi-bot ecosystem (DeFiPilot + ControlPilot + ArbiPilot + LabPilot).
+
 
 ---
 # 11. 🌍 Vision du projet / Project Vision
@@ -409,7 +418,16 @@ You may use, modify and share the code provided that:
 - Derivative works remain under the same license.
 
 ---
+
 # 16. 🔍 Dernière révision / Last Review
 
-**README V5.0 — mis à jour et consolidé.**
+**README V5.1 — mis à jour et consolidé.**
 
+---
+
+---
+
+© 2023-2025 DeFiPilot — Tous droits réservés.  
+Projet distribué sous licence CC-BY-NC-SA 4.0.  
+© 2023-2025 DeFiPilot — All rights reserved.  
+Project distributed under the CC-BY-NC-SA 4.0 license.
