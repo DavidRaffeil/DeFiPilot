@@ -3,7 +3,7 @@
 > 🗣️ **Langue / Language :** le bot fonctionne uniquement en **français** pour le moment.  
 > The bot currently works **in French only** for the moment.
 
-![Version](https://img.shields.io/badge/Version-V5.1%20Stable-blue)
+![Version](https://img.shields.io/badge/Version-V5.2%20Stable-blue)
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
 ![Made in France](https://img.shields.io/badge/Made%20in-France-lightgrey)
 ![Developed with ChatGPT](https://img.shields.io/badge/Developed%20with-ChatGPT-orange)
@@ -16,7 +16,7 @@
 1. [Introduction / Introduction](#1-introduction--introduction)  
 2. [Fonctionnalités principales / Key Features](#2-fonctionnalites-principales--key-features)  
 3. [Aperçu visuel / Visual Overview](#3-apercu-visuel--visual-overview)  
-4. [Nouveautés / What's New — Version 5.1](#4-nouveautes--whats-new--version-51)  
+4. [Nouveautés / What's New — Version 5.2](#4-nouveautes--whats-new--version-52)  
 5. [Historique des versions / Past Versions](#5-historique-des-versions--past-versions)  
 6. [Caractéristiques techniques / Technical Highlights](#6-caracteristiques-techniques--technical-highlights)  
 7. [Prérequis / Requirements](#7-prerequis--requirements)  
@@ -29,6 +29,7 @@
 14. [Crédits techniques / Technical Credits](#14-credits-techniques--technical-credits)  
 15. [Licence / License](#15-licence--license)  
 16. [Dernière révision / Last Review](#16-derniere-revision--last-review)
+
 
 ---
 
@@ -98,33 +99,33 @@ DeFiPilot’s graphical interface displays key metrics, bot status, ControlPilot
 
 ---
 
-# 4. 🆕 Nouveautés / What's New — Version 5.1
+# 4. 🆕 Nouveautés / What's New — Version 5.2
 
 ## FR
-- Nouveau **moteur de signaux IA** via ControlPilot (contexte : favorable / neutre / défavorable).  
-- **Normalisation avancée** des signaux consolidés (module `signals_normalizer`).  
-- **Injection intelligente des signaux** dans la stratégie et dans le scoring.  
-- **Scoring dynamique** : les pools sont réévaluées selon le contexte du marché.  
-- Ajout du fichier `strategy_snapshot.jsonl` pour tracer toutes les décisions internes.  
-- Mise à jour du moteur de stratégie pour intégrer les signaux pondérés.  
-- Amélioration de la stabilité du pipeline décisionnel (mode simulation + réel limité).  
-- Préparation des futures étapes : rééquilibrage automatique (V5.2) et stratégie avancée.
+- Nouveau **rééquilibrage automatique du portefeuille** basé sur le contexte du marché et les signaux IA (ControlPilot).  
+- Ajout du module `core/rebalancing_simulator.py` : simulation propre, détection des écarts, recommandations et plan d’actions.  
+- Intégration complète des **signaux pondérés** dans le moteur de rééquilibrage (favorable / neutre / défavorable).  
+- Nouveau fichier `rebalancing_snapshot.jsonl` pour tracer toutes les décisions du rééquilibrage.  
+- Amélioration du scoring : adaptation dynamique selon le contexte et meilleure pondération par profil (Prudent / Modéré / Risque).  
+- Mise à jour de la stratégie pour intégrer le rééquilibrage en continu (simulation + mode réel limité).  
+- Stabilisation générale du pipeline décisionnel en préparation de V5.3 (optimisations IA via LabPilot).
 
 ## EN
-- New **AI signal engine** via ControlPilot (context: favorable / neutral / unfavorable).  
-- **Advanced normalization** of consolidated signals (`signals_normalizer` module).  
-- **Intelligent injection of signals** into the strategy and scoring engine.  
-- **Dynamic scoring**: pools are re-evaluated depending on market context.  
-- Added `strategy_snapshot.jsonl` to record all internal decisions.  
-- Updated strategy engine to include weighted contextual signals.  
-- Improved stability of the decision pipeline (simulation mode + limited real mode).  
-- Preparation for next steps: automatic rebalancing (V5.2) and advanced strategy features.
+- New **automatic portfolio rebalancing** system driven by market context and AI signals (ControlPilot).  
+- Added `core/rebalancing_simulator.py`: clean simulation engine, drift detection, recommendations and action plan generation.  
+- Full integration of **weighted contextual signals** into the rebalancing engine (favorable / neutral / unfavorable).  
+- New `rebalancing_snapshot.jsonl` to record all rebalancing decisions.  
+- Improved scoring: dynamic adjustments based on context and better profile weighting (Conservative / Moderate / Risk).  
+- Updated strategy engine to support continuous rebalancing (simulation + limited real mode).  
+- Overall stabilization of the decision pipeline in preparation for V5.3 (AI enhancements via LabPilot).
+
 
 ---
 
 # 5. 🕓 Historique des versions / Past Versions
 
 ## FR
+- **V5.2 :** Rééquilibrage automatique du portefeuille, intégration des signaux pondérés, nouveau snapshot de rééquilibrage, amélioration du scoring et stabilisation du pipeline décisionnel.  
 - **V5.1 :** Nouveau moteur de signaux IA, normalisation avancée, scoring dynamique, stratégie enrichie.  
 - **V5.0 :** Intégration IA ControlPilot, stabilité renforcée, dashboard optimisé.  
 - **V4.9 :** Agrégation avancée des signaux + détection d’anomalies.  
@@ -138,6 +139,7 @@ DeFiPilot’s graphical interface displays key metrics, bot status, ControlPilot
 - **V4.0 :** Passage au simulateur complet.
 
 ## EN
+- **V5.2:** Automatic portfolio rebalancing, weighted signals integration, new rebalancing snapshot, improved scoring, and decision-pipeline stabilization.  
 - **V5.1:** New AI signal engine, advanced normalization, dynamic scoring, enriched strategy.  
 - **V5.0:** AI ControlPilot integration, improved stability, optimized dashboard.  
 - **V4.9:** Advanced signal aggregation + anomaly detection.  
@@ -150,19 +152,20 @@ DeFiPilot’s graphical interface displays key metrics, bot status, ControlPilot
 - **V4.2:** Weighted scoring + profile management.  
 - **V4.0:** Full simulation mode.
 
+
 ---
 
 # 6. 🧱 Caractéristiques techniques / Technical Highlights
 
 ## FR
-DeFiPilot repose sur une architecture modulaire, pensée pour garantir évolutivité et stabilité :
+DeFiPilot repose sur une architecture modulaire, pensée pour garantir évolutivité et stabilité :
 
-- **`core/`** — Analyse, scoring, stratégie, transactions, gestion des wallets.  
+- **`core/`** — Analyse, scoring, stratégie, transactions, gestion des wallets, rééquilibrage (`rebalancing_simulator.py`).  
 - **`gui/`** — Interface Tkinter (rafraîchissement, affichage, widgets personnalisés).  
 - **`cli/`** — Exécution en mode console, outils rapides, smoke tests.  
 - **`control/`** — Module IA ControlPilot (signaux + agrégation).  
 - **`config/`** — Paramètres généraux, profils, fichiers JSON de configuration.  
-- **`journal/`** — Système de logs (CSV + JSONL), rotation, journaux par modules.  
+- **`journal/`** — Système de logs (CSV + JSONL), rotation, journaux par modules, snapshots du rééquilibrage (`rebalancing_snapshot.jsonl`).  
 - **`state/`** — Gestion du fichier `.state` (reprise automatique).  
 
 Le bot utilise principalement **Python 3.11**, **Web3.py**, **Tkinter**, **Pandas**, et l’API **DefiLlama**.
@@ -170,15 +173,16 @@ Le bot utilise principalement **Python 3.11**, **Web3.py**, **Tkinter**, **Panda
 ## EN
 DeFiPilot is built on a modular architecture designed for scalability and stability:
 
-- **`core/`** — Analysis, scoring, strategy, transactions, wallet management.  
+- **`core/`** — Analysis, scoring, strategy, transactions, wallet management, rebalancing (`rebalancing_simulator.py`).  
 - **`gui/`** — Tkinter interface (refresh engine, display, custom widgets).  
 - **`cli/`** — Console execution, quick tools, smoke tests.  
 - **`control/`** — ControlPilot AI module (signals + aggregation).  
 - **`config/`** — Global settings, profiles, JSON configuration files.  
-- **`journal/`** — Log system (CSV + JSONL), rotation, per‑module logs.  
-- **`state/`** — `.state` file management (auto‑resume).  
+- **`journal/`** — Log system (CSV + JSONL), rotation, per-module logs, rebalancing snapshots (`rebalancing_snapshot.jsonl`).  
+- **`state/`** — `.state` file management (auto-resume).  
 
 The bot relies mainly on **Python 3.11**, **Web3.py**, **Tkinter**, **Pandas**, and the **DefiLlama** API.
+
 
 ---
 
@@ -282,18 +286,24 @@ Logs are saved in `journal_*.jsonl` and `journal_*.csv`.
 # 10. 🚀 Feuille de route / Roadmap
 
 ## FR
-- **V5.1 :** Stratégie IA complète (signaux normalisés, scoring dynamique, snapshot de stratégie).  
-- **V5.2 :** Rééquilibrage automatique du portefeuille en fonction du contexte.  
-- **V5.3 :** Optimisations IA via LabPilot (analyse avancée des signaux).  
+- **V5.3 :** Optimisations IA via LabPilot (analyse avancée des signaux, amélioration du moteur décisionnel).  
 - **V5.4 :** Version préliminaire d’ArbiPilot (arbitrage inter-DEX).  
 - **V6.0 :** Écosystème multi-bots autonome (DeFiPilot + ControlPilot + ArbiPilot + LabPilot).
 
+### Versions finalisées
+- **V5.2 :** Rééquilibrage automatique du portefeuille, signaux pondérés, snapshots de rééquilibrage, mise à jour scoring/stratégie.  
+- **V5.1 :** Stratégie IA complète (signaux normalisés, scoring dynamique, snapshots).  
+- **V5.0 :** Intégration ControlPilot + stabilisation du mode réel.
+
 ## EN
-- **V5.1:** Full AI-driven strategy (normalized signals, dynamic scoring, strategy snapshots).  
-- **V5.2:** Automatic portfolio rebalancing based on market context.  
-- **V5.3:** AI optimizations via LabPilot (advanced signal analysis).  
+- **V5.3:** AI optimizations via LabPilot (advanced signal analysis, improved decision engine).  
 - **V5.4:** Preliminary version of ArbiPilot (inter-DEX arbitrage).  
 - **V6.0:** Autonomous multi-bot ecosystem (DeFiPilot + ControlPilot + ArbiPilot + LabPilot).
+
+### Completed versions
+- **V5.2:** Automatic portfolio rebalancing, weighted signals, rebalancing snapshots, updated scoring/strategy.  
+- **V5.1:** Full AI-driven strategy (normalized signals, dynamic scoring, snapshots).  
+- **V5.0:** ControlPilot integration + real-mode stabilization.
 
 
 ---
@@ -421,9 +431,7 @@ You may use, modify and share the code provided that:
 
 # 16. 🔍 Dernière révision / Last Review
 
-**README V5.1 — mis à jour et consolidé.**
-
----
+**README V5.2 — mis à jour et consolidé.**
 
 ---
 
