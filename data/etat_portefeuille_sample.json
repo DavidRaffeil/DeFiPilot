@@ -1,0 +1,8 @@
+{
+  "valeur_totale_usd": 1000.0,
+  "positions": [
+    { "categorie": "Risque",  "valeur_usd": 400.0 },
+    { "categorie": "Modere",  "valeur_usd": 300.0 },
+    { "categorie": "Prudent", "valeur_usd": 300.0 }
+  ]
+}
