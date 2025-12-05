@@ -211,12 +211,33 @@ def calculer_resume(evenements: list[dict[str, Any]]) -> Optional[ResumeGlobal]:
     )
 
 
+from pathlib import Path
+from typing import Any, Optional
+
 def analyser_anomalies(files: list[Path]) -> Optional[ResumeAnomalies]:
-    """Produit un résumé des anomalies détectées à partir d'une liste de fichiers."""
+    """Produit un résumé des anomalies détectées à partir d'une liste de fichiers.
+
+    Cette fonction est robuste aux mauvais types : si on lui passe autre chose
+    que de vrais chemins (Path ou str), elle ne tente pas d'appeler l'agrégateur
+    et retourne simplement None.
+    """
     if not files:
         return None
 
-    config: dict[str, Any] = {"files": [str(path) for path in files]}
+    # Normalisation des chemins : on ne garde que les vrais paths
+    chemins: list[Path] = []
+    for item in files:
+        if isinstance(item, Path):
+            chemins.append(item)
+        elif isinstance(item, str):
+            chemins.append(Path(item))
+
+    if not chemins:
+        # Cas typique : appelé avec une liste d'événements au lieu de chemins
+        logger.debug("analyser_anomalies appelé sans chemins valides: %r", files)
+        return None
+
+    config: dict[str, Any] = {"files": [str(path) for path in chemins]}
 
     try:
         snapshot: AggregatedSnapshot = aggregate_from_config(config)
@@ -244,22 +265,13 @@ def analyser_anomalies(files: list[Path]) -> Optional[ResumeAnomalies]:
 
     codes_raw = summary.get("codes", [])
     if isinstance(codes_raw, list):
-        codes = [str(code) for code in codes_raw if isinstance(code, str)]
+        codes = [str(code) for code in codes_raw]
     else:
-        codes = []
-
-    if not codes:
-        codes = [
-            anomaly_code
-            for anomaly_code in (
-                getattr(anomaly, "code", None)
-                for anomaly in anomalies
-            )
-            if isinstance(anomaly_code, str)
-        ]
+        codes = [getattr(a, "code", "") for a in anomalies if getattr(a, "code", "")]
 
     return ResumeAnomalies(
         timestamp=timestamp,
+        files=[str(path) for path in chemins],
         total_anomalies=total_anomalies,
         by_severity=by_severity,
         codes=codes,

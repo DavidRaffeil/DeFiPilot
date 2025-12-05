@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# journal_daemon.py — V5.1.5
+# journal_daemon.py — V5.3.0
 """Journaliseur continu de signaux pour DeFiPilot avec sauvegarde, restauration d'état,
 lecture des soldes du wallet au démarrage et génération d'un plan de rééquilibrage simulé.
 
@@ -18,6 +18,8 @@ Boucle simple :
   dans l'état sous la clé `allocation_simulee_apres_reequilibrage`.
 - V5.1.5 : journalise un snapshot complet stratégie/portefeuille à chaque itération
   dans data/logs/journal_strategie.jsonl.
+- V5.3.0 : ajoute un journal stratégique dédié (journal_strategy.jsonl)
+  via core.journal_strategy.journaliser_entree_strategique().
 """
 
 from __future__ import annotations
@@ -37,12 +39,18 @@ from core.state_manager import get_state, update_state, save_state
 from core.wallet_reader import lire_soldes_depuis_env
 from core.scoring import calculer_scores_et_gains, charger_ponderations
 from core.strategy_snapshot import journaliser_decision
+from core.journal_strategy import journaliser_entree_strategique
 
 
-VERSION = "V5.1.5"
+VERSION = "V5.3.0"
 DECISIONS_JOURNAL_PATH = Path("journal_decisions.jsonl")
 STRATEGY_JOURNAL_PATH = Path("data/logs/journal_strategie.jsonl")
 StateDict = dict[str, Any]
+
+
+# ---------------------------------------------------------------------------
+# Utilitaires génériques
+# ---------------------------------------------------------------------------
 
 
 def _read_json(path: Path) -> Any:
@@ -64,6 +72,23 @@ def _append_jsonl(path: Path, payload: dict[str, Any]) -> None:
     with path.open("a", encoding="utf-8") as handle:
         json.dump(payload, handle, ensure_ascii=False)
         handle.write("\n")
+
+
+def _to_float(value: Any) -> float | None:
+    """Convertit une valeur en float si possible, sinon renvoie None."""
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return float(value)
+        except ValueError:
+            return None
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Calculs d'allocation & scoring
+# ---------------------------------------------------------------------------
 
 
 def _calculer_allocation_categorielle(etat: StateDict) -> dict[str, float]:
@@ -101,18 +126,6 @@ def _calculer_allocation_categorielle(etat: StateDict) -> dict[str, float]:
     return allocation
 
 
-def _to_float(value: Any) -> float | None:
-    """Convertit une valeur en float si possible, sinon renvoie None."""
-    if isinstance(value, (int, float)):
-        return float(value)
-    if isinstance(value, str):
-        try:
-            return float(value)
-        except ValueError:
-            return None
-    return None
-
-
 def _charger_signaux_normalises(limit: int = 50) -> list[SignalNormalise]:
     """Lit les signaux consolidés (ControlPilot) et les normalise pour la stratégie.
 
@@ -125,7 +138,7 @@ def _charger_signaux_normalises(limit: int = 50) -> list[SignalNormalise]:
     """
     try:
         signaux_consolides = lire_signaux_consolides(limit=limit, include_ai=True)
-    except Exception as exc:
+    except Exception as exc:  # best effort
         print(f"[WARN] Impossible de lire les signaux consolidés : {exc}")
         return []
 
@@ -146,7 +159,7 @@ def _charger_signaux_normalises(limit: int = 50) -> list[SignalNormalise]:
 
     try:
         signaux_norm = normaliser_signaux(bruts)
-    except Exception as exc:
+    except Exception as exc:  # best effort
         print(f"[WARN] Normalisation des signaux impossible : {exc}")
         return []
 
@@ -199,7 +212,7 @@ def _calculer_scoring_pools(
     )
 
     scoring_info: dict[str, Any] = {
-        "profil": profil,
+        "profil": profil_nom,
         "solde_reference_usd": solde_ref,
         "resultats_top3": resultats_top3,
         "gain_total_journalier_usd": gain_total,
@@ -249,6 +262,11 @@ def _simuler_allocation_apres_reequilibrage(
         nouvelle_alloc[categorie_norm] = float(actuelle) + float(delta)
 
     return nouvelle_alloc
+
+
+# ---------------------------------------------------------------------------
+# Journalisation détaillée
+# ---------------------------------------------------------------------------
 
 
 def _journaliser_decisions(
@@ -376,11 +394,30 @@ def _journaliser_snapshot_strategie(
             "profil_scoring": scoring_info.get("profil", {}),
         }
 
+    # Journal stratégique V5.3 (journal_strategy.jsonl)
+    try:
+        journaliser_entree_strategique(
+            event_type="strategy_decision",
+            version=VERSION,
+            run_id=run_id,
+            context=payload.get("context"),
+            profil=profil_effectif,
+            allocation_avant_usd=payload.get("allocation_actuelle_usd"),
+            allocation_apres_usd=payload.get("allocation_simulee_apres_reequilibrage"),
+        )
+    except Exception as exc:  # best effort
+        print(
+            "[WARN] Impossible de journaliser la stratégie dans journal_strategy.jsonl : "
+            f"{exc}"
+        )
+
     # Journal de décisions globales (V5.1.1+)
     try:
         journaliser_decision(payload)
     except Exception as exc:
-        print(f"[WARN] Impossible de journaliser la décision dans journal_decisions.jsonl : {exc}")
+        print(
+            f"[WARN] Impossible de journaliser la décision dans journal_decisions.jsonl : {exc}"
+        )
 
     try:
         _append_jsonl(path, payload)
@@ -388,11 +425,36 @@ def _journaliser_snapshot_strategie(
         print(f"[WARN] Impossible d'écrire le snapshot stratégie dans {path}: {exc}")
 
 
+# ---------------------------------------------------------------------------
+# Boucle principale
+# ---------------------------------------------------------------------------
+
+
 def main(argv: list[str] | None = None) -> int:
-    """Point d'entrée du journaliseur continu de signaux."""
+    """Point d'entrée du journaliseur continu de signaux.
+
+    - Charge les stats de pools.
+    - Charge une configuration optionnelle.
+    - Lit/initialise l'état.
+    - Lit les soldes du wallet au démarrage (lecture seule).
+    - Boucle à intervalle régulier pour :
+      - charger les signaux normalisés,
+      - calculer le contexte & la policy,
+      - générer un plan de rééquilibrage simulé,
+      - calculer un scoring des pools,
+      - journaliser un snapshot de stratégie + décisions + journal stratégique V5.3.
+    """
     parser = argparse.ArgumentParser(description="DeFiPilot – Journaliseur continu de signaux")
-    parser.add_argument("--pools", required=True, help="Fichier JSON des stats de pools (liste de dicts)")
-    parser.add_argument("--cfg", default=None, help="Fichier JSON de configuration (optionnel)")
+    parser.add_argument(
+        "--pools",
+        required=True,
+        help="Fichier JSON des stats de pools (liste de dicts)",
+    )
+    parser.add_argument(
+        "--cfg",
+        default=None,
+        help="Fichier JSON de configuration (optionnel)",
+    )
     parser.add_argument(
         "--interval",
         type=int,
@@ -403,300 +465,198 @@ def main(argv: list[str] | None = None) -> int:
         "--max-loops",
         type=int,
         default=0,
-        help="Nombre max d’itérations (0 = infini)",
+        help=(
+            "Nombre maximal de boucles à exécuter (0 = illimité). "
+            "Utile pour les tests manuels."
+        ),
     )
-    parser.add_argument(
-        "--journal",
-        default="journal_signaux.jsonl",
-        help="Chemin du journal JSONL (défaut: journal_signaux.jsonl)",
-    )
+
     args = parser.parse_args(argv)
 
     pools_path = Path(args.pools)
-    cfg_path = Path(args.cfg) if args.cfg else None
-    journal_path = args.journal
-    interval_s = max(1, int(args.interval))
-    max_loops = int(args.max_loops)
+    if not pools_path.exists():
+        print(f"[ERROR] Fichier pools introuvable : {pools_path}")
+        return 1
 
-    # Chargement de la config (une fois)
-    cfg: Mapping[str, Any] = {}
-    if cfg_path:
-        try:
-            cfg = _ensure_mapping(_read_json(cfg_path))
-        except Exception as exc:
-            print(f"[WARN] Config illisible ({cfg_path}): {exc} — utilisation des paramètres par défaut")
-            cfg = {}
+    try:
+        pools_data = _read_json(pools_path)
+    except Exception as exc:
+        print(f"[ERROR] Impossible de lire le fichier pools {pools_path} : {exc}")
+        return 1
 
-    etat: StateDict = get_state()
-
-    contexte_prec = etat.get("contexte_marche")
-    if isinstance(contexte_prec, str) and contexte_prec:
-        last_context: str | None = contexte_prec
+    if isinstance(pools_data, list):
+        pools_stats: list[dict[str, Any]] = [
+            p for p in pools_data if isinstance(p, Mapping)
+        ]
+    elif isinstance(pools_data, Mapping) and isinstance(pools_data.get("pools"), list):
+        pools_stats = [
+            p for p in pools_data.get("pools", []) if isinstance(p, Mapping)
+        ]
     else:
-        last_context = None
+        print("[ERROR] Format de pools invalide (attendu: liste de dicts ou clé 'pools').")
+        return 1
 
-    print("[INFO] Journaliseur continu démarré.")
-    print(f"       pools   = {pools_path}")
-    print(f"       cfg     = {cfg_path if cfg_path else '(aucune)'}")
-    print(f"       journal = {journal_path}")
-    print(f"       interval= {interval_s}s, max_loops={max_loops or 'infini'}")
+    config: Mapping[str, Any] = {}
+    if args.cfg is not None:
+        cfg_path = Path(args.cfg)
+        if cfg_path.exists():
+            try:
+                config_obj = _read_json(cfg_path)
+                config = _ensure_mapping(config_obj)
+            except Exception as exc:
+                print(f"[WARN] Impossible de lire la configuration {cfg_path} : {exc}")
+        else:
+            print(f"[WARN] Fichier de configuration introuvable : {cfg_path}")
 
-    profil_actif_etat = etat.get("profil_actif")
-    if not isinstance(profil_actif_etat, str) or not profil_actif_etat:
-        profil_actif_etat = "modere"
+    # Chargement/initialisation de l'état
+    etat: StateDict = get_state() or {}
 
-    contexte_precis = contexte_prec if isinstance(contexte_prec, str) and contexte_prec else "neutre"
+    # Lecture des soldes du wallet au démarrage (lecture seule, best effort)
+    try:
+        soldes_wallet = lire_soldes_depuis_env()
+        if isinstance(soldes_wallet, Mapping):
+            etat.setdefault("soldes_wallet", {}).update(dict(soldes_wallet))
+    except Exception as exc:
+        print(f"[WARN] Impossible de lire les soldes du wallet : {exc}")
 
-    journaux = etat.get("journaux")
-    chemin_journal_prec: str | None = None
-    if isinstance(journaux, dict):
-        journal_signaux = journaux.get("journal_signaux")
-        if isinstance(journal_signaux, dict):
-            path_prec = journal_signaux.get("path")
-            if isinstance(path_prec, str) and path_prec:
-                chemin_journal_prec = path_prec
-
-    if chemin_journal_prec is None:
-        chemin_journal_prec = str(journal_path)
+    # Boucle principale
+    interval = max(1, int(args.interval))
+    max_loops = int(args.max_loops or 0)
+    loop_count = 0
 
     print(
-        f"[STATE] Profil : {profil_actif_etat} | "
-        f"Contexte précédent : {contexte_precis} | "
-        f"Journal précédent : {chemin_journal_prec}"
+        f"[INFO] Journaliseur continu démarré.\n"
+        f"       pools   = {pools_path}\n"
+        f"       cfg     = {args.cfg or '(aucune)'}\n"
+        f"       journal = {STRATEGY_JOURNAL_PATH}\n"
+        f"       interval= {interval}s, max_loops={max_loops or 'illimité'}"
     )
 
-    # Lecture des soldes du wallet (lecture seule) au démarrage
-    try:
-        tokens_cfg = {
-            "USDC": {
-                "address": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
-                "decimals": 6,
-            },
-            "WETH": {
-                "address": "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
-                "decimals": 18,
-            },
-        }
-        soldes = lire_soldes_depuis_env(tokens_cfg)
-
-        solde_native = soldes.get("native") if isinstance(soldes, Mapping) else None
-        solde_usdc = soldes.get("USDC") if isinstance(soldes, Mapping) else None
-        solde_weth = soldes.get("WETH") if isinstance(soldes, Mapping) else None
-
-        if isinstance(solde_native, (int, float)):
-            native_txt = f"{float(solde_native):.6f}"
-        else:
-            native_txt = "n/a"
-
-        usdc_val = float(solde_usdc) if isinstance(solde_usdc, (int, float)) else 0.0
-        weth_val = float(solde_weth) if isinstance(solde_weth, (int, float)) else 0.0
-
-        print(
-            "[BALANCES] "
-            f"Native={native_txt} | USDC={usdc_val:.6f} | WETH={weth_val:.6f}"
+    while True:
+        loop_count += 1
+        run_id = (
+            datetime.now(timezone.utc)
+            .isoformat(timespec="seconds")
+            .replace("+00:00", "Z")
         )
 
-        total_investi = 0.0
-        positions = etat.get("positions")
-        if isinstance(positions, list):
-            for pos in positions:
-                if isinstance(pos, dict):
-                    montant = pos.get("montant_investi_usd")
-                    if isinstance(montant, (int, float)):
-                        total_investi += float(montant)
+        print(f"[LOOP] run_id={run_id} (boucle {loop_count})")
 
-        print(f"[CHECK] Total investi (état) = {total_investi:.2f} USD")
-    except ValueError as exc:
-        print(f"[WARN] Impossible de lire les soldes du wallet : {exc}")
-        total_investi = 0.0
-    except Exception as exc:
-        print(f"[WARN] Erreur inattendue lors de la lecture des soldes : {exc}")
-        total_investi = 0.0
-
-    loop_idx = 0
-
-    while True:
-        loop_idx += 1
-
-        # Chargement des pools à chaque itération (pour prendre en compte un fichier mis à jour)
-        try:
-            pools_obj = _read_json(pools_path)
-            if not isinstance(pools_obj, list):
-                raise ValueError("Le fichier pools doit contenir une liste de dictionnaires JSON.")
-            pools_stats = [x for x in pools_obj if isinstance(x, dict)]
-            # Le scoring des pools est calculé plus bas via _calculer_scoring_pools().
-        except Exception as exc:
-            print(f"[ERROR] Impossible de lire pools ({pools_path}) : {exc}")
-            time.sleep(interval_s)
-            continue
-
-        run_id = "journal_daemon-" + datetime.now(timezone.utc).isoformat(
-            timespec="seconds"
-        ).replace("+00:00", "Z")
-
-        # 1) Calcul du contexte et de la policy à partir des pools
-        try:
-            decision, policy = calculer_contexte_et_policy(
-                pools_stats=pools_stats,
-                cfg=dict(cfg),
-                last_context=last_context,
-                run_id=run_id,
-                version=VERSION,
-                journal_path=journal_path,
-            )
-        except Exception as exc:
-            print(f"[ERROR] Échec du calcul stratégie: {exc}")
-            time.sleep(interval_s)
-            continue
-
-        last_context = decision.context
-
-        # 2) Chargement des signaux normalisés pour le rééquilibrage (V5.1.2)
+        # 1) Charger les signaux normalisés
         signaux_norm = _charger_signaux_normalises(limit=50)
         nb_signaux = len(signaux_norm)
 
-        # 3) Mise à jour de l'état global
-        updates: StateDict = {}
-        updates["contexte_marche"] = decision.context
+        # 2) Calculer contexte + policy via core.market_signals_adapter
+        try:
+            decision, profil_effectif = calculer_contexte_et_policy(
+                signaux_norm,
+                config,
+            )
+        except Exception as exc:
+            print(f"[ERROR] Echec de calcul du contexte/policy : {exc}")
+            time.sleep(interval)
+            if max_loops and loop_count >= max_loops:
+                break
+            continue
 
-        profil_cfg = cfg.get("profil_actif") if isinstance(cfg, Mapping) else None
-        if isinstance(profil_cfg, str) and profil_cfg:
-            updates["profil_actif"] = profil_cfg
-        else:
-            profil_state = etat.get("profil_actif")
-            if isinstance(profil_state, str) and profil_state:
-                updates["profil_actif"] = profil_state
-            else:
-                updates["profil_actif"] = "modere"
+        # 3) Calculer l'allocation actuelle par catégorie de risque
+        allocation_actuelle = _calculer_allocation_categorielle(etat)
 
-        journaux_etat = etat.get("journaux")
-        if isinstance(journaux_etat, dict):
-            journaux_local = dict(journaux_etat)
-        else:
-            journaux_local = {}
-        journal_signaux_etat = journaux_local.get("journal_signaux")
-        if isinstance(journal_signaux_etat, dict):
-            journal_signaux_local = dict(journal_signaux_etat)
-        else:
-            journal_signaux_local = {}
-        journal_signaux_local["path"] = str(journal_path)
-        journaux_local["journal_signaux"] = journal_signaux_local
-        updates["journaux"] = journaux_local
-
-        allocation_actuelle_usd = _calculer_allocation_categorielle(etat)
-
-        cfg_profil = cfg.get("profil_actif") if isinstance(cfg, Mapping) else None
-        if isinstance(cfg_profil, str) and cfg_profil.strip():
-            profil_effectif = cfg_profil.strip()
-        else:
-            profil_state_eff = updates.get("profil_actif") or etat.get("profil_actif")
-            if isinstance(profil_state_eff, str) and profil_state_eff:
-                profil_effectif = profil_state_eff
-            else:
-                profil_effectif = "modere"
-
-        # 4) Calcul du scoring des pools (V5.1.3)
-        scoring_info: dict[str, Any] | None = None
+        # 4) Calculer le scoring des pools
+        solde_total = sum(allocation_actuelle.values())
+        historique_pools = etat.get("historique_pools")
         try:
             scoring_info = _calculer_scoring_pools(
                 pools_stats=pools_stats,
                 profil_nom=profil_effectif,
-                solde_total_usd=total_investi,
-                historique_pools=etat.get("historique_pools"),
+                solde_total_usd=solde_total,
+                historique_pools=historique_pools,
             )
+            etat["dernier_scoring_pools"] = scoring_info
         except Exception as exc:
-            print(f"[WARN] Scoring des pools impossible : {exc}")
-        else:
-            updates["dernier_scoring_pools"] = scoring_info
+            print(f"[WARN] Echec du calcul de scoring des pools : {exc}")
+            scoring_info = None
 
-        # 5) Génération du plan de rééquilibrage « contexte + signaux normalisés »
-        allocation_apres: dict[str, float] | None = None
+        # 5) Générer un plan de rééquilibrage simulé via core.rebalancing
         try:
             plan_reeq = generer_plan_reequilibrage_contexte(
-                context_label=decision.context,
-                profil_actif=profil_effectif,
-                allocation_actuelle_usd=allocation_actuelle_usd,
-                total_usd=None,
-                signaux_normalises=signaux_norm or None,
-                params={"mode_simulation": True},
-                run_id=run_id,
-                journal_path="journal_rebalancing.jsonl",
+                decision=decision,
+                allocation_actuelle_usd=allocation_actuelle,
+                scoring_info=scoring_info,
+                state=etat,
+                config=config,
+                signaux_norm=signaux_norm,
             )
+        except TypeError:
+            # Fallback si la signature est plus simple dans la version actuelle
+            try:
+                plan_reeq = generer_plan_reequilibrage_contexte(
+                    decision,
+                    allocation_actuelle,
+                )
+            except Exception as exc:
+                print(f"[WARN] Impossible de générer le plan de rééquilibrage : {exc}")
+                plan_reeq = None
         except Exception as exc:
-            print(f"[WARN] Rééquilibrage simulé impossible : {exc}")
+            print(f"[WARN] Impossible de générer le plan de rééquilibrage : {exc}")
             plan_reeq = None
-        else:
-            updates["dernier_plan_reequilibrage"] = plan_reeq
+
+        # 6) Simuler l'allocation après rééquilibrage
+        allocation_simulee = None
+        if isinstance(plan_reeq, Mapping):
             actions = plan_reeq.get("actions")
+            if isinstance(actions, list):
+                allocation_simulee = _simuler_allocation_apres_reequilibrage(
+                    allocation_actuelle_usd=allocation_actuelle,
+                    actions=actions,
+                )
+                etat["allocation_simulee_apres_reequilibrage"] = allocation_simulee
 
-            if isinstance(actions, list) and actions:
-                print(f"[REEQ] {len(actions)} action(s) de rééquilibrage proposées.")
-            else:
-                print("[REEQ] Aucune action de rééquilibrage proposée.")
-
+        # 7) Journaliser les décisions de rééquilibrage simulées (journal_decisions.jsonl)
+        try:
+            context_value = getattr(decision, "context", None)
+            context_str = context_value or "inconnu"
             _journaliser_decisions(
                 plan=plan_reeq,
                 run_id=run_id,
-                context=decision.context,
+                context=context_str,
                 profil=profil_effectif,
                 mode="simulation",
             )
+        except Exception as exc:
+            print(f"[WARN] Echec de la journalisation des décisions : {exc}")
 
-            # 6) Calcul de l'allocation simulée après rééquilibrage (V5.1.4)
-            if isinstance(allocation_actuelle_usd, Mapping):
-                if isinstance(actions, list) and actions:
-                    allocation_apres = _simuler_allocation_apres_reequilibrage(
-                        allocation_actuelle_usd=allocation_actuelle_usd,
-                        actions=actions,
-                    )
-                else:
-                    # Pas d'action : l'allocation simulée = allocation actuelle
-                    allocation_apres = {
-                        "Prudent": float(allocation_actuelle_usd.get("Prudent", 0.0)),
-                        "Modere": float(allocation_actuelle_usd.get("Modere", 0.0)),
-                        "Risque": float(allocation_actuelle_usd.get("Risque", 0.0)),
-                    }
-
-                updates["allocation_simulee_apres_reequilibrage"] = allocation_apres
-                print(f"[PORTFOLIO] Allocation simulée après rééquilibrage: {allocation_apres}")
-
-        # 6bis) Snapshot stratégie / portefeuille (V5.1.5)
+        # 8) Journaliser le snapshot stratégie (STRATEGY_JOURNAL_PATH + journal stratég."""
         try:
             _journaliser_snapshot_strategie(
                 path=STRATEGY_JOURNAL_PATH,
                 run_id=run_id,
                 decision=decision,
                 profil_effectif=profil_effectif,
-                allocation_actuelle=allocation_actuelle_usd,
-                allocation_simulee=allocation_apres,
+                allocation_actuelle=allocation_actuelle,
+                allocation_simulee=allocation_simulee,
                 scoring_info=scoring_info,
                 nb_signaux=nb_signaux,
             )
         except Exception as exc:
-            print(f"[WARN] Impossible de journaliser le snapshot stratégie : {exc}")
+            print(f"[WARN] Echec de la journalisation du snapshot stratégie : {exc}")
 
-        # 7) Sauvegarde de l'état
-        etat = update_state(updates)
-
+        # 9) Sauvegarder l'état mis à jour
         try:
+            update_state(etat)
             save_state()
         except Exception as exc:
             print(f"[WARN] Impossible de sauvegarder l'état : {exc}")
 
-        print(
-            f"[OK] #{loop_idx} {decision.context} "
-            f"(score={decision.score:.4f}) "
-            f"→ run_id={run_id}"
-        )
-
-        if max_loops > 0 and loop_idx >= max_loops:
-            print("[INFO] Limite max_loops atteinte, arrêt propre.")
+        # 10) Gestion de la boucle (max_loops / interval)
+        if max_loops and loop_count >= max_loops:
+            print("[INFO] Nombre maximal de boucles atteint, arrêt du daemon.")
             break
 
-        time.sleep(interval_s)
+        time.sleep(interval)
 
     return 0
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())

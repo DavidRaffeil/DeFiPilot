@@ -3,7 +3,7 @@
 > 🗣️ **Langue / Language :** le bot fonctionne uniquement en **français** pour le moment.  
 > The bot currently works **in French only** for the moment.
 
-![Version](https://img.shields.io/badge/Version-V5.2%20Stable-blue)
+![Version](https://img.shields.io/badge/Version-V5.3%20Stable-blue)
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
 ![Made in France](https://img.shields.io/badge/Made%20in-France-lightgrey)
 ![Developed with ChatGPT](https://img.shields.io/badge/Developed%20with-ChatGPT-orange)
@@ -16,7 +16,7 @@
 1. [Introduction / Introduction](#1-introduction--introduction)  
 2. [Fonctionnalités principales / Key Features](#2-fonctionnalites-principales--key-features)  
 3. [Aperçu visuel / Visual Overview](#3-apercu-visuel--visual-overview)  
-4. [Nouveautés / What's New — Version 5.2](#4-nouveautes--whats-new--version-52)  
+4. [Nouveautés / What's New — Version 5.3](#4-nouveautes--whats-new--version-53)
 5. [Historique des versions / Past Versions](#5-historique-des-versions--past-versions)  
 6. [Caractéristiques techniques / Technical Highlights](#6-caracteristiques-techniques--technical-highlights)  
 7. [Prérequis / Requirements](#7-prerequis--requirements)  
@@ -99,25 +99,25 @@ DeFiPilot’s graphical interface displays key metrics, bot status, ControlPilot
 
 ---
 
-# 4. 🆕 Nouveautés / What's New — Version 5.2
+# 4. 🆕 Nouveautés / What's New — Version 5.3
 
 ## FR
-- Nouveau **rééquilibrage automatique du portefeuille** basé sur le contexte du marché et les signaux IA (ControlPilot).  
-- Ajout du module `core/rebalancing_simulator.py` : simulation propre, détection des écarts, recommandations et plan d’actions.  
-- Intégration complète des **signaux pondérés** dans le moteur de rééquilibrage (favorable / neutre / défavorable).  
-- Nouveau fichier `rebalancing_snapshot.jsonl` pour tracer toutes les décisions du rééquilibrage.  
-- Amélioration du scoring : adaptation dynamique selon le contexte et meilleure pondération par profil (Prudent / Modéré / Risque).  
-- Mise à jour de la stratégie pour intégrer le rééquilibrage en continu (simulation + mode réel limité).  
-- Stabilisation générale du pipeline décisionnel en préparation de V5.3 (optimisations IA via LabPilot).
+- Introduction d’un **journal stratégique dédié** : `journal_strategy.jsonl`.  
+  Toutes les décisions du moteur de stratégie sont désormais enregistrées de manière structurée.  
+- Intégration complète des **signaux normalisés de ControlPilot** dans le flux décisionnel.  
+- Ajout du module `core/journal_strategy.py` pour centraliser l’écriture des décisions stratégiques.  
+- Journalisation automatique d’un événement `strategy_decision` à chaque itération du daemon.  
+- Amélioration de la stabilité générale du pipeline (contextes, scoring, allocation simulée).  
+- Préparation de la V5.4 (ArbiPilot + améliorations temps réel).
 
 ## EN
-- New **automatic portfolio rebalancing** system driven by market context and AI signals (ControlPilot).  
-- Added `core/rebalancing_simulator.py`: clean simulation engine, drift detection, recommendations and action plan generation.  
-- Full integration of **weighted contextual signals** into the rebalancing engine (favorable / neutral / unfavorable).  
-- New `rebalancing_snapshot.jsonl` to record all rebalancing decisions.  
-- Improved scoring: dynamic adjustments based on context and better profile weighting (Conservative / Moderate / Risk).  
-- Updated strategy engine to support continuous rebalancing (simulation + limited real mode).  
-- Overall stabilization of the decision pipeline in preparation for V5.3 (AI enhancements via LabPilot).
+- Introduction of a dedicated **strategic journal**: `journal_strategy.jsonl`.  
+  Every strategy decision is now recorded in a clean, structured format.  
+- Full integration of **normalized ControlPilot signals** into the decision pipeline.  
+- Added `core/journal_strategy.py` to centralize strategic decision logging.  
+- Automatic logging of a `strategy_decision` event during each daemon loop.  
+- General pipeline stabilization (context evaluation, scoring, simulated allocation).  
+- Preparation for V5.4 (ArbiPilot + real-time improvements).
 
 
 ---
@@ -125,6 +125,7 @@ DeFiPilot’s graphical interface displays key metrics, bot status, ControlPilot
 # 5. 🕓 Historique des versions / Past Versions
 
 ## FR
+- **V5.3 :** Journal stratégique dédié (`journal_strategy.jsonl`), intégration complète des signaux normalisés de ControlPilot dans la stratégie, stabilisation du daemon.
 - **V5.2 :** Rééquilibrage automatique du portefeuille, intégration des signaux pondérés, nouveau snapshot de rééquilibrage, amélioration du scoring et stabilisation du pipeline décisionnel.  
 - **V5.1 :** Nouveau moteur de signaux IA, normalisation avancée, scoring dynamique, stratégie enrichie.  
 - **V5.0 :** Intégration IA ControlPilot, stabilité renforcée, dashboard optimisé.  
@@ -139,6 +140,7 @@ DeFiPilot’s graphical interface displays key metrics, bot status, ControlPilot
 - **V4.0 :** Passage au simulateur complet.
 
 ## EN
+- **V5.3:** Dedicated strategic journal (`journal_strategy.jsonl`), full integration of normalized ControlPilot signals into strategy, daemon stabilization.
 - **V5.2:** Automatic portfolio rebalancing, weighted signals integration, new rebalancing snapshot, improved scoring, and decision-pipeline stabilization.  
 - **V5.1:** New AI signal engine, advanced normalization, dynamic scoring, enriched strategy.  
 - **V5.0:** AI ControlPilot integration, improved stability, optimized dashboard.  
@@ -151,6 +153,7 @@ DeFiPilot’s graphical interface displays key metrics, bot status, ControlPilot
 - **V4.3:** LP simulation + detailed logging.  
 - **V4.2:** Weighted scoring + profile management.  
 - **V4.0:** Full simulation mode.
+
 
 
 ---
@@ -286,8 +289,9 @@ Logs are saved in `journal_*.jsonl` and `journal_*.csv`.
 # 10. 🚀 Feuille de route / Roadmap
 
 ## FR
-- **V5.3 :** Optimisations IA via LabPilot (analyse avancée des signaux, amélioration du moteur décisionnel).  
+- **V5.3 :** Journal stratégique dédié (`journal_strategy.jsonl`), intégration complète des signaux normalisés de ControlPilot dans la stratégie, stabilisation du daemon.  
 - **V5.4 :** Version préliminaire d’ArbiPilot (arbitrage inter-DEX).  
+- **V5.5 :** Optimisations IA via LabPilot (analyse avancée des signaux, amélioration du moteur décisionnel).  
 - **V6.0 :** Écosystème multi-bots autonome (DeFiPilot + ControlPilot + ArbiPilot + LabPilot).
 
 ### Versions finalisées
@@ -296,14 +300,16 @@ Logs are saved in `journal_*.jsonl` and `journal_*.csv`.
 - **V5.0 :** Intégration ControlPilot + stabilisation du mode réel.
 
 ## EN
-- **V5.3:** AI optimizations via LabPilot (advanced signal analysis, improved decision engine).  
+- **V5.3:** Dedicated strategic journal (`journal_strategy.jsonl`), full integration of normalized ControlPilot signals into strategy, daemon stabilization.  
 - **V5.4:** Preliminary version of ArbiPilot (inter-DEX arbitrage).  
+- **V5.5:** AI optimizations via LabPilot (advanced signal analysis, improved decision engine).  
 - **V6.0:** Autonomous multi-bot ecosystem (DeFiPilot + ControlPilot + ArbiPilot + LabPilot).
 
 ### Completed versions
 - **V5.2:** Automatic portfolio rebalancing, weighted signals, rebalancing snapshots, updated scoring/strategy.  
 - **V5.1:** Full AI-driven strategy (normalized signals, dynamic scoring, snapshots).  
 - **V5.0:** ControlPilot integration + real-mode stabilization.
+
 
 
 ---
@@ -431,7 +437,8 @@ You may use, modify and share the code provided that:
 
 # 16. 🔍 Dernière révision / Last Review
 
-**README V5.2 — mis à jour et consolidé.**
+**README V5.3 — mis à jour et consolidé.**
+
 
 ---
 
