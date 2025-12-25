@@ -1,0 +1,52 @@
+{
+  "version": "5.5.0",
+  "meta": { "name": "Strategy V5.5 configuration", "source": "Deep Search V5.4", "updated_at": "2025-12-14" },
+  "global": {
+    "enabled": true,
+    "dry_run_only": true,
+    "log_level": "INFO",
+    "cooldowns": { "decision_min_seconds": 900, "mode_switch_min_seconds": 1800 }
+  },
+  "modes": {
+    "NORMAL": { "description": {"fr":"Mode normal, opérations standard avec allocation risque élevée","en":"Normal mode, standard operations with higher risk allocation"}, "policy": { "allow_new_positions": true, "allow_rebalance": true, "allow_exit": true, "prefer_stables": false } },
+    "TENSION": { "description": {"fr":"Mode tension, vigilance accrue et préférence modérée pour les stablecoins","en":"Tension mode, increased vigilance and moderate preference for stablecoins"}, "policy": { "allow_new_positions": true, "allow_rebalance": true, "allow_exit": true, "prefer_stables": true } },
+    "ALERTE": { "description": {"fr":"Mode alerte, réduction rapide du risque et priorité aux actifs stables","en":"Alert mode, quick risk reduction and priority to stable assets"}, "policy": { "allow_new_positions": false, "allow_rebalance": true, "allow_exit": true, "prefer_stables": true } },
+    "CRISE":  { "description": {"fr":"Mode crise, gel des nouvelles positions et sécurisation renforcée","en":"Crisis mode, freeze on new positions with reinforced safety"}, "policy": { "allow_new_positions": false, "allow_rebalance": false, "allow_exit": true, "prefer_stables": true } },
+    "PANIC":  { "description": {"fr":"Mode panique, liquidation prioritaire et focalisation maximale sur la stabilité","en":"Panic mode, prioritized liquidation and maximum focus on stability"}, "policy": { "allow_new_positions": false, "allow_rebalance": false, "allow_exit": true, "prefer_stables": true } }
+  },
+  "triggers": {
+    "slippage": { "enabled": true, "thresholds_bps": { "TENSION": 150, "ALERTE": 300, "CRISE": 600, "PANIC": 1000 }, "lookback": { "type": "last_n_swaps", "n": 10 } },
+    "tvl_drop": { "enabled": true, "thresholds_pct": { "TENSION": 5, "ALERTE": 10, "CRISE": 20, "PANIC": 35 }, "lookback": { "type": "hours", "value": 24 } },
+    "drawdown": { "enabled": true, "thresholds_pct": { "TENSION": 3, "ALERTE": 6, "CRISE": 12, "PANIC": 20 }, "lookback": { "type": "days", "value": 7 } },
+    "apr_spike": { "enabled": true, "thresholds_pct": { "TENSION": 50, "ALERTE": 120, "CRISE": 250, "PANIC": 500 }, "lookback": { "type": "hours", "value": 48 } },
+    "stablecoin_depeg": { "enabled": true, "assets": ["USDC","DAI","USDT"], "thresholds_abs": { "TENSION": 0.995, "ALERTE": 0.990, "CRISE": 0.985, "PANIC": 0.975 }, "lookback": { "type": "minutes", "value": 60 } }
+  },
+  "mode_engine": {
+    "aggregation": { "method": "score", "weights": { "slippage": 1.0, "tvl_drop": 1.2, "drawdown": 1.4, "apr_spike": 0.8, "stablecoin_depeg": 1.5 } },
+    "promotion_rules": { "min_trigger_count": { "TENSION": 1, "ALERTE": 2, "CRISE": 3, "PANIC": 4 } },
+    "demotion_rules": { "stable_period_minutes": { "from_PANIC": 240, "from_CRISE": 180, "from_ALERTE": 120, "from_TENSION": 60 } }
+  },
+  "portfolio_actions": {
+    "target_allocations": {
+      "NORMAL": { "stable": 0.10, "risk": 0.90 },
+      "TENSION": { "stable": 0.30, "risk": 0.70 },
+      "ALERTE": { "stable": 0.60, "risk": 0.40 },
+      "CRISE": { "stable": 0.85, "risk": 0.15 },
+      "PANIC": { "stable": 0.95, "risk": 0.05 }
+    },
+    "exit_policy": { "method": "progressive", "max_steps": 3, "step_pct_of_risk_exposure": 0.35 },
+    "rebalance_policy": { "min_change_pct": 3, "max_ops_per_cycle": 2 }
+  },
+  "scoring_overrides": {
+    "mode_multipliers": {
+      "NORMAL": { "tvl": 1.0, "apr": 1.0, "risk": 1.0, "slippage": 1.0 },
+      "TENSION": { "tvl": 1.2, "apr": 0.9, "risk": 1.3, "slippage": 1.3 },
+      "ALERTE": { "tvl": 1.4, "apr": 0.8, "risk": 1.6, "slippage": 1.6 },
+      "CRISE": { "tvl": 1.6, "apr": 0.6, "risk": 2.0, "slippage": 2.0 },
+      "PANIC": { "tvl": 2.0, "apr": 0.4, "risk": 2.5, "slippage": 2.5 }
+    }
+  },
+  "safety": {
+    "hard_stops": { "max_single_pool_pct": 0.35, "min_tvl_usd": 1000000 }
+  }
+}

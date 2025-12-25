@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# run_defipilot.py — V5.5.0
 """
 run_defipilot.py — lance le journal_daemon + le dashboard GUI.
 
@@ -59,10 +60,12 @@ def main(argv: list[str] | None = None) -> int:
     pools_path = (root_dir / args.pools).resolve()
     cfg_path = (root_dir / args.cfg).resolve() if args.cfg else None
 
-    # On s'assure que le GUI lira le même fichier JSONL
+    strategy_cfg_default = (root_dir / "config" / "strategy_v5_5.json").resolve()
+    if "DEFIPILOT_STRATEGY_CFG" not in os.environ and strategy_cfg_default.exists():
+        os.environ["DEFIPILOT_STRATEGY_CFG"] = str(strategy_cfg_default)
+
     os.environ["DEFIPILOT_JOURNAL"] = str(journal_path)
 
-    # Commande pour lancer le daemon
     daemon_cmd = [
         sys.executable,
         str(root_dir / "journal_daemon.py"),
@@ -78,25 +81,25 @@ def main(argv: list[str] | None = None) -> int:
     if cfg_path is not None:
         daemon_cmd.extend(["--cfg", str(cfg_path)])
 
+    strategy_cfg_env = os.environ.get("DEFIPILOT_STRATEGY_CFG", "(non défini)")
+
     print("========================================")
     print(" DeFiPilot — Lancement global")
     print("========================================")
     print(f"Daemon :  {daemon_cmd}")
     print(f"Journal : {journal_path}")
     print(f"GUI     : gui/main_window.py")
+    print(f"Strategy: {strategy_cfg_env}")
     print("========================================")
 
-    # Lancement du daemon en arrière-plan
     try:
         daemon_proc = subprocess.Popen(daemon_cmd)
     except Exception as exc:
         print(f"[ERROR] Impossible de lancer journal_daemon.py : {exc}")
         return 1
 
-    # Petite pause pour laisser le daemon créer le JSONL si besoin
     time.sleep(1.0)
 
-    # Lancement du dashboard GUI (dans le même processus)
     try:
         from gui.main_window import MainWindow  # type: ignore
 
@@ -105,7 +108,6 @@ def main(argv: list[str] | None = None) -> int:
     except KeyboardInterrupt:
         print("[INFO] Arrêt demandé par l'utilisateur (Ctrl+C).")
     finally:
-        # On essaie d'arrêter proprement le daemon
         if daemon_proc.poll() is None:
             print("[INFO] Arrêt du daemon…")
             try:

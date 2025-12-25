@@ -1,6 +1,6 @@
-# main.py – V5.0
+# main.py – V5.5.0
 """
-Point d'entrée principal pour DeFiPilot V5.0.
+Point d'entrée principal pour DeFiPilot V5.5.0.
 
 Rôle de ce fichier :
 - Initialiser le logging de base.
@@ -20,8 +20,10 @@ import os
 import sys
 from typing import List, Optional, Callable, Any
 
+from core.strategy_config import load_strategy_config
 
-APP_VERSION = "V5.0"
+
+APP_VERSION = "V5.5.0"
 
 
 # ---------------------------------------------------------------------------
@@ -136,7 +138,6 @@ def run_gui() -> int:
         logger.info("Astuce : vérifie que le dossier 'gui' est bien à la racine du projet.")
         return 1
 
-    # On essaye d'appeler une fonction de lancement "standard"
     launch_func: Optional[Callable[[], Any]] = None
 
     if hasattr(gui_main, "run") and callable(getattr(gui_main, "run")):
@@ -154,7 +155,7 @@ def run_gui() -> int:
 
     try:
         launch_func()
-    except Exception as exc:  # pragma: no cover - protection runtime
+    except Exception as exc:  # pragma: no cover
         logger.exception("Erreur lors de l'exécution de la GUI : %s", exc)
         return 1
 
@@ -168,20 +169,12 @@ def run_gui() -> int:
 def run_cli(mode: str, argv: List[str]) -> int:
     """
     Tente de lancer le runner CLI principal.
-
-    Stratégie :
-    - Essaye d'importer `run_defipilot`.
-      - Si ce module contient une fonction `run()` ou `main(argv)`, on l'utilise.
-    - Sinon, loggue un message d'information et sort proprement.
-
-    Le paramètre `mode` permet éventuellement de transmettre une intention
-    spéciale ('simulate', etc.) au runner, si celui-ci la supporte.
     """
     logger = logging.getLogger("DeFiPilot.CLI")
 
     try:
         import run_defipilot  # type: ignore[import]
-    except Exception as exc:  # ImportError, ModuleNotFoundError, etc.
+    except Exception as exc:
         logger.error("Impossible d'importer run_defipilot : %s", exc)
         logger.info(
             "Si tu utilises un autre script CLI (start_defipilot.py, simulateur_*.py, etc.), "
@@ -189,15 +182,13 @@ def run_cli(mode: str, argv: List[str]) -> int:
         )
         return 1
 
-    # On essaie de détecter une fonction de lancement dans run_defipilot
     func_with_argv: Optional[Callable[[List[str], str], Any]] = None
     func_simple: Optional[Callable[[], Any]] = None
 
-    # Stratégie flexible : plusieurs signatures possibles
     if hasattr(run_defipilot, "main"):
         candidate = getattr(run_defipilot, "main")
         if callable(candidate):
-            func_with_argv = candidate  # on tentera main(argv, mode) puis main()
+            func_with_argv = candidate
     if hasattr(run_defipilot, "run") and callable(getattr(run_defipilot, "run")):
         func_simple = getattr(run_defipilot, "run")
 
@@ -211,10 +202,8 @@ def run_cli(mode: str, argv: List[str]) -> int:
     logger.info("Lancement du mode CLI (mode='%s') via run_defipilot", mode)
 
     try:
-        # On essaye d'abord main(argv, mode), puis main(argv), puis main()
         if func_with_argv is not None:
             try:
-                # type: ignore[arg-type]
                 func_with_argv(argv, mode)  # type: ignore[misc]
             except TypeError:
                 try:
@@ -223,7 +212,7 @@ def run_cli(mode: str, argv: List[str]) -> int:
                     func_with_argv()  # type: ignore[misc]
         elif func_simple is not None:
             func_simple()
-    except Exception as exc:  # pragma: no cover - protection runtime
+    except Exception as exc:  # pragma: no cover
         logger.exception("Erreur lors de l'exécution du runner CLI : %s", exc)
         return 1
 
@@ -237,16 +226,25 @@ def run_cli(mode: str, argv: List[str]) -> int:
 def main(argv: Optional[List[str]] = None) -> int:
     """
     Point d'entrée principal.
-
-    - Initialise le logging.
-    - Détecte le mode d'exécution.
-    - Route vers GUI ou CLI.
     """
     if argv is None:
         argv = sys.argv
 
     setup_logging()
     logger = logging.getLogger("DeFiPilot.Main")
+
+    try:
+        strategy_cfg = load_strategy_config("config/strategy_v5_5.json")
+        logger.info(
+            "Config stratégie V5.5 chargée: version=%s",
+            strategy_cfg.get("version"),
+        )
+    except (FileNotFoundError, ValueError, Exception) as exc:
+        logger.warning(
+            "Config stratégie V5.5 non chargée (%s). Continuer sans config V5.5.",
+            exc,
+        )
+        strategy_cfg = None
 
     mode = detect_mode(argv)
     logger.info("DeFiPilot %s – mode détecté : %s", APP_VERSION, mode)
@@ -259,10 +257,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         return run_gui()
 
     if mode in ("cli", "simulate"):
-        # Le mode "simulate" est géré à l'intérieur de run_cli via le paramètre `mode`.
         return run_cli(mode, argv)
 
-    # Mode par défaut : on tente la GUI, puis on retombe sur le CLI si la GUI n'est pas dispo
     logger.info("Mode par défaut : tentative de lancement GUI, puis fallback CLI.")
     gui_status = run_gui()
     if gui_status == 0:
