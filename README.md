@@ -3,7 +3,7 @@
 > 🗣️ **Langue / Language :** le bot fonctionne uniquement en **français** pour le moment.  
 > The bot currently works **in French only** for the moment.
 
-![Version](https://img.shields.io/badge/Version-V5.3%20Stable-blue)
+![Version](https://img.shields.io/badge/Version-V5.5%20Stable-blue)
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
 ![Made in France](https://img.shields.io/badge/Made%20in-France-lightgrey)
 ![Developed with ChatGPT](https://img.shields.io/badge/Developed%20with-ChatGPT-orange)
@@ -16,20 +16,19 @@
 1. [Introduction / Introduction](#1-introduction--introduction)  
 2. [Fonctionnalités principales / Key Features](#2-fonctionnalites-principales--key-features)  
 3. [Aperçu visuel / Visual Overview](#3-apercu-visuel--visual-overview)  
-4. [Nouveautés / What's New — Version 5.3](#4-nouveautes--whats-new--version-53)
+4. [Nouveautés / What's New — Version 5.5](#4-nouveautes--whats-new--version-55)  
 5. [Historique des versions / Past Versions](#5-historique-des-versions--past-versions)  
 6. [Caractéristiques techniques / Technical Highlights](#6-caracteristiques-techniques--technical-highlights)  
 7. [Prérequis / Requirements](#7-prerequis--requirements)  
 8. [Installation / Installation](#8-installation--installation)  
 9. [Utilisation / Usage](#9-utilisation--usage)  
 10. [Feuille de route / Roadmap](#10-feuille-de-route--roadmap)  
-11. [Vision du projet / Project Vision](#11-vision-du-projet--project-vision)  
+11. [Vision du projet / Project Vision](#11-vision-du-projet)  
 12. [FAQ / Foire aux questions](#12-faq--foire-aux-questions)  
 13. [À propos de l’auteur / About the Author](#13-a-propos-de-lauteur--about-the-author)  
 14. [Crédits techniques / Technical Credits](#14-credits-techniques--technical-credits)  
 15. [Licence / License](#15-licence--license)  
 16. [Dernière révision / Last Review](#16-derniere-revision--last-review)
-
 
 ---
 
@@ -99,34 +98,34 @@ DeFiPilot’s graphical interface displays key metrics, bot status, ControlPilot
 
 ---
 
-# 4. 🆕 Nouveautés / What's New — Version 5.3
+# 4. 🆕 Nouveautés / What's New — Version 5.5
 
-## FR
-- Introduction d’un **journal stratégique dédié** : `journal_strategy.jsonl`.  
-  Toutes les décisions du moteur de stratégie sont désormais enregistrées de manière structurée.  
-- Intégration complète des **signaux normalisés de ControlPilot** dans le flux décisionnel.  
-- Ajout du module `core/journal_strategy.py` pour centraliser l’écriture des décisions stratégiques.  
-- Journalisation automatique d’un événement `strategy_decision` à chaque itération du daemon.  
-- Amélioration de la stabilité générale du pipeline (contextes, scoring, allocation simulée).  
-- Préparation de la V5.4 (ArbiPilot + améliorations temps réel).
+## 📘 Fr
+- Introduction des **exits automatiques** basés sur le contexte du marché.  
+- Application des seuils et comportements issus de **Deep Search V5.4** (gestion des phases critiques, neutres et favorables).  
+- Ajout et utilisation du fichier stratégique finalisé : `strategy_v5_5.json`.  
+- Stabilisation complète du daemon (pipeline : signaux → scoring → stratégie → exits).  
+- Amélioration de la cohérence stratégique en conditions réelles et simulées.  
+- Préparation de la **V5.6** (optimisations du moteur + fondations ArbiPilot).
 
-## EN
-- Introduction of a dedicated **strategic journal**: `journal_strategy.jsonl`.  
-  Every strategy decision is now recorded in a clean, structured format.  
-- Full integration of **normalized ControlPilot signals** into the decision pipeline.  
-- Added `core/journal_strategy.py` to centralize strategic decision logging.  
-- Automatic logging of a `strategy_decision` event during each daemon loop.  
-- General pipeline stabilization (context evaluation, scoring, simulated allocation).  
-- Preparation for V5.4 (ArbiPilot + real-time improvements).
+---
 
+## 📗 En
+- Introduction of **automatic exits** based on market context.  
+- Integration of thresholds and crisis-behavior rules derived from **Deep Search V5.4**.  
+- Addition and use of the finalized strategy file: `strategy_v5_5.json`.  
+- Full stabilization of the daemon (pipeline: signals → scoring → strategy → exits).  
+- Improved strategic consistency in both real and simulated conditions.  
+- Preparation for **V5.6** (engine optimizations + ArbiPilot foundations).
 
 ---
 
 # 5. 🕓 Historique des versions / Past Versions
 
-## FR
-- **V5.3 :** Journal stratégique dédié (`journal_strategy.jsonl`), intégration complète des signaux normalisés de ControlPilot dans la stratégie, stabilisation du daemon.
-- **V5.2 :** Rééquilibrage automatique du portefeuille, intégration des signaux pondérés, nouveau snapshot de rééquilibrage, amélioration du scoring et stabilisation du pipeline décisionnel.  
+## 📘 Fr
+- **V5.5 :** Exits automatiques basés sur le contexte, application des seuils Deep Search V5.4, stratégie finalisée (`strategy_v5_5.json`), stabilisation complète du daemon.  
+- **V5.3 :** Journal stratégique dédié (`journal_strategy.jsonl`), intégration complète des signaux normalisés de ControlPilot, stabilisation du daemon.  
+- **V5.2 :** Rééquilibrage automatique du portefeuille, signaux pondérés, snapshots de rééquilibrage, mise à jour scoring/stratégie.  
 - **V5.1 :** Nouveau moteur de signaux IA, normalisation avancée, scoring dynamique, stratégie enrichie.  
 - **V5.0 :** Intégration IA ControlPilot, stabilité renforcée, dashboard optimisé.  
 - **V4.9 :** Agrégation avancée des signaux + détection d’anomalies.  
@@ -139,11 +138,14 @@ DeFiPilot’s graphical interface displays key metrics, bot status, ControlPilot
 - **V4.2 :** Scoring pondéré + gestion des profils.  
 - **V4.0 :** Passage au simulateur complet.
 
-## EN
-- **V5.3:** Dedicated strategic journal (`journal_strategy.jsonl`), full integration of normalized ControlPilot signals into strategy, daemon stabilization.
-- **V5.2:** Automatic portfolio rebalancing, weighted signals integration, new rebalancing snapshot, improved scoring, and decision-pipeline stabilization.  
+---
+
+## 📗 En
+- **V5.5:** Automatic exits based on market context, integration of Deep Search V5.4 thresholds, finalized strategy file (`strategy_v5_5.json`), full daemon stabilization.  
+- **V5.3:** Dedicated strategic journal (`journal_strategy.jsonl`), full integration of normalized ControlPilot signals, daemon stabilization.  
+- **V5.2:** Automatic portfolio rebalancing, weighted signals, rebalancing snapshots, updated scoring/strategy.  
 - **V5.1:** New AI signal engine, advanced normalization, dynamic scoring, enriched strategy.  
-- **V5.0:** AI ControlPilot integration, improved stability, optimized dashboard.  
+- **V5.0:** ControlPilot AI integration, improved stability, optimized dashboard.  
 - **V4.9:** Advanced signal aggregation + anomaly detection.  
 - **V4.8:** Simple signal collection (start of ControlPilot).  
 - **V4.7:** Full real-mode stabilization + auto-resume.  
@@ -153,8 +155,6 @@ DeFiPilot’s graphical interface displays key metrics, bot status, ControlPilot
 - **V4.3:** LP simulation + detailed logging.  
 - **V4.2:** Weighted scoring + profile management.  
 - **V4.0:** Full simulation mode.
-
-
 
 ---
 
@@ -186,7 +186,6 @@ DeFiPilot is built on a modular architecture designed for scalability and stabil
 
 The bot relies mainly on **Python 3.11**, **Web3.py**, **Tkinter**, **Pandas**, and the **DefiLlama** API.
 
-
 ---
 
 # 7. 🔧 Prérequis / Requirements
@@ -206,6 +205,7 @@ The bot relies mainly on **Python 3.11**, **Web3.py**, **Tkinter**, **Pandas**, 
 - Git installed
 
 ---
+
 # 8. ⚙️ Installation / Installation
 
 ## FR
@@ -259,8 +259,8 @@ LOG_LEVEL=INFO
 ```bash
 python check_setup.py
 ```
-
 ---
+
 # 9. ▶️ Utilisation / Usage
 
 ## FR
@@ -286,33 +286,43 @@ python run_defipilot.py
 Logs are saved in `journal_*.jsonl` and `journal_*.csv`.
 
 ---
+
 # 10. 🚀 Feuille de route / Roadmap
 
-## FR
-- **V5.3 :** Journal stratégique dédié (`journal_strategy.jsonl`), intégration complète des signaux normalisés de ControlPilot dans la stratégie, stabilisation du daemon.  
-- **V5.4 :** Version préliminaire d’ArbiPilot (arbitrage inter-DEX).  
-- **V5.5 :** Optimisations IA via LabPilot (analyse avancée des signaux, amélioration du moteur décisionnel).  
-- **V6.0 :** Écosystème multi-bots autonome (DeFiPilot + ControlPilot + ArbiPilot + LabPilot).
+## 📘 Fr
+
+### Prochaines versions
+- **V5.6 :** Optimisations du moteur stratégique, améliorations internes et fondations techniques pour ArbiPilot.  
+- **V6.0 :** Mode réel complet entièrement autonome (analyse → stratégie → transactions → sécurité).  
+- **V6.1 :** Synchronisation multi-bots (DeFiPilot + ControlPilot + ArbiPilot).  
+- **V6.2 :** Déploiement sur Orange Pi / infrastructure SBC.  
 
 ### Versions finalisées
-- **V5.2 :** Rééquilibrage automatique du portefeuille, signaux pondérés, snapshots de rééquilibrage, mise à jour scoring/stratégie.  
-- **V5.1 :** Stratégie IA complète (signaux normalisés, scoring dynamique, snapshots).  
-- **V5.0 :** Intégration ControlPilot + stabilisation du mode réel.
-
-## EN
-- **V5.3:** Dedicated strategic journal (`journal_strategy.jsonl`), full integration of normalized ControlPilot signals into strategy, daemon stabilization.  
-- **V5.4:** Preliminary version of ArbiPilot (inter-DEX arbitrage).  
-- **V5.5:** AI optimizations via LabPilot (advanced signal analysis, improved decision engine).  
-- **V6.0:** Autonomous multi-bot ecosystem (DeFiPilot + ControlPilot + ArbiPilot + LabPilot).
-
-### Completed versions
-- **V5.2:** Automatic portfolio rebalancing, weighted signals, rebalancing snapshots, updated scoring/strategy.  
-- **V5.1:** Full AI-driven strategy (normalized signals, dynamic scoring, snapshots).  
-- **V5.0:** ControlPilot integration + real-mode stabilization.
-
-
+- **V5.5 :** Exits automatiques, intégration des seuils Deep Search, stratégie finalisée `strategy_v5_5.json`, stabilisation du daemon.  
+- **V5.3 :** Journal stratégique dédié (`journal_strategy.jsonl`), intégration complète des signaux ControlPilot.  
+- **V5.2 :** Rééquilibrage automatique, signaux pondérés, snapshots et pipeline stabilisé.  
+- **V5.1 :** Nouveau moteur de signaux IA, scoring dynamique et stratégie enrichie.  
+- **V5.0 :** Intégration ControlPilot + stabilisation mode réel.
 
 ---
+
+## 📗 En
+
+### Upcoming Versions
+- **V5.6:** Engine optimizations, internal improvements, and technical foundations for ArbiPilot.  
+- **V6.0:** Fully autonomous real-mode engine (analysis → strategy → transactions → safety).  
+- **V6.1:** Multi-bot synchronization (DeFiPilot + ControlPilot + ArbiPilot).  
+- **V6.2:** Deployment on Orange Pi / SBC architecture.  
+
+### Completed Versions
+- **V5.5:** Automatic exits, Deep Search threshold integration, finalized `strategy_v5_5.json`, full daemon stabilization.  
+- **V5.3:** Dedicated strategic journal (`journal_strategy.jsonl`), full ControlPilot signal integration.  
+- **V5.2:** Automatic rebalancing, weighted signals, snapshots, and stabilized pipeline.  
+- **V5.1:** New AI signal engine, dynamic scoring, enriched strategy.  
+- **V5.0:** ControlPilot integration + real-mode stabilization.
+
+---
+
 # 11. 🌍 Vision du projet / Project Vision
 
 ## FR
@@ -330,6 +340,7 @@ DeFiPilot aims to evolve into a complete automated management platform including
 - Transparent and robust architecture focused on safety and clarity.
 
 ---
+
 # 12. ❓ FAQ / Foire aux questions
 
 ## FR
@@ -395,15 +406,63 @@ Yes, the modular architecture supports custom strategy modules.
 Yes, licensed under CC‑BY‑NC‑SA 4.0.
 
 ---
+
 # 13. 👤 À propos de l’auteur / About the Author
 
-## FR
-DeFiPilot est développé par un passionné d’automatisation, d’analyse de données et de finance décentralisée. Le projet a été conçu pour créer un outil pédagogique, robuste et réellement utilisable au quotidien pour explorer la DeFi de manière encadrée.
+## 📘 Fr
 
-## EN
-DeFiPilot is developed by an enthusiast of automation, data analysis, and decentralized finance. The project aims to provide an educational, robust and practical tool to explore DeFi safely and efficiently.
+**David Raffeil** est un passionné d’automatisation, de finance décentralisée et d’ingénierie logicielle appliquée.  
+Il développe DeFiPilot depuis 2023 avec l’objectif de construire un écosystème complet et pédagogique autour de la DeFi, accessible aux utilisateurs motivés mais non spécialistes du développement.
+
+Issu d’un parcours autodidacte, il a progressivement acquis des compétences en :
+- architecture logicielle (Python 3.11, modules multi-couches)
+- analyse on-chain et extraction de signaux DeFi
+- automatisation, gestion d’état et reprise après coupure
+- intégration Web3 et interactions blockchain sécurisées
+- conception d’interfaces graphiques (Tkinter)
+- structuration de journaux avancés (CSV/JSONL)
+- méthodologie Git (branches, versions, tags, releases)
+
+Son approche se caractérise par :
+- un souci permanent de **fiabilité**
+- une obsession de la **transparence**
+- une volonté d’apprendre en construisant
+- un usage pragmatique de l’IA (ChatGPT) comme copilote de développement
+
+DeFiPilot est conçu comme un projet de long terme :  
+une plateforme modulaire, extensible, méthodologiquement propre, pouvant évoluer vers un cluster multi-bots (DeFiPilot, ControlPilot, ArbiPilot, LabPilot).
+
+David souhaite également partager son expérience pour inspirer d’autres autodidactes à se lancer dans des projets techniques ambitieux, même en partant de zéro.
 
 ---
+
+## 📗 En
+
+**David Raffeil** is an enthusiast of automation, decentralized finance and applied software engineering.  
+He has been developing DeFiPilot since 2023 with the goal of building a complete and educational DeFi ecosystem, accessible to motivated users—even those without a technical background.
+
+Coming from a fully self-taught path, he progressively developed skills in:
+- software architecture (Python 3.11, multi-layer modules)
+- on-chain analysis and DeFi signal extraction
+- automation, state management and crash-safe recovery
+- Web3 integration and secure blockchain interactions
+- graphical interface design (Tkinter)
+- advanced logging systems (CSV/JSONL)
+- Git methodology (branches, versions, tags, releases)
+
+His approach is guided by:
+- a constant focus on **reliability**
+- strong commitment to **transparency**
+- learning by building real projects
+- pragmatic use of AI (ChatGPT) as a development copilot
+
+DeFiPilot is intended as a long-term project:  
+a modular, scalable platform that will evolve into a multi-bot cluster (DeFiPilot, ControlPilot, ArbiPilot, LabPilot).
+
+David also hopes to share his journey to inspire other self-taught developers to tackle ambitious technical projects, even starting from scratch.
+
+---
+
 # 14. 🧩 Crédits techniques / Technical Credits
 
 ## FR
@@ -417,28 +476,81 @@ DeFiPilot is developed by an enthusiast of automation, data analysis, and decent
 - Built on **Web3.py**, **Tkinter**, **Pandas**, **DefiLlama API**.
 
 ---
+
 # 15. 📜 Licence / License
 
-## FR
-Ce projet est distribué sous licence **CC‑BY‑NC‑SA 4.0**.  
-Vous pouvez utiliser, modifier et partager le code tant que :  
-- L’usage n’est **pas commercial**.  
-- L’auteur est crédité.  
-- Les modifications sont partagées sous la même licence.
+## 📘 Fr — Licence d’utilisation
 
-## EN
-This project is released under **CC‑BY‑NC‑SA 4.0**.  
-You may use, modify and share the code provided that:  
-- Usage is **non‑commercial**.  
-- Proper credit is given.  
-- Derivative works remain under the same license.
+DeFiPilot est distribué sous une **licence d’utilisation personnelle et non commerciale**, sauf accord formel avec l’auteur.
+
+Vous êtes autorisé à :
+- utiliser le logiciel pour un usage **strictement personnel** ;
+- modifier le code pour vos propres besoins ;
+- étudier et analyser le fonctionnement du projet ;
+- exécuter le logiciel en mode simulation ou réel sous votre propre responsabilité.
+
+Vous n’êtes pas autorisé à :
+- utiliser le logiciel dans un cadre **commercial**, professionnel ou lucratif **sans un contrat écrit signé avec l’auteur (David Raffeil)** ;
+- vendre, louer, héberger ou distribuer une version modifiée ou non modifiée à des fins commerciales ;
+- intégrer tout ou partie du projet dans un produit ou service commercial sans accord contractuel.
+
+Toute redistribution non commerciale doit :
+- créditer clairement l’auteur original (**David Raffeil**) ;
+- inclure un lien vers le dépôt GitHub d’origine ;
+- mentionner les éventuelles modifications.
+
+### 🛡️ Clause de non-responsabilité
+
+Le logiciel est fourni **“tel quel”, sans garantie** d’exactitude, de performance ou de sécurité.  
+L’auteur ne peut être tenu responsable :
+- de pertes financières directes ou indirectes ;
+- d’une mauvaise configuration ou d’un usage inadapté ;
+- d’erreurs liées à la blockchain ou à des RPC tiers ;
+- de comportements inattendus dus à des smart contracts externes ;
+- d’une utilisation non conforme aux recommandations.
+
+L’utilisateur reconnaît utiliser DeFiPilot **à ses propres risques**, en comprenant les risques inhérents à la DeFi et aux interactions on-chain.
+
+---
+
+## 📗 En — Usage License
+
+DeFiPilot is distributed under a **personal and non-commercial use license**, unless a formal agreement is signed with the author.
+
+You are allowed to:
+- use the software for **personal use only**;
+- modify the code for your own needs;
+- study and analyze the project;
+- run the software in simulation or real mode at your own risk.
+
+You are not allowed to:
+- use the software in any **commercial, professional, or profit-oriented context without a written contract signed with the author (David Raffeil)**;
+- sell, rent, host, or distribute modified or unmodified versions for commercial purposes;
+- integrate any part of the project into a commercial product or service without contractual approval.
+
+Any non-commercial redistribution must:
+- clearly credit the original author (**David Raffeil**) ;
+- include a link to the original GitHub repository ;
+- state any modifications made.
+
+### 🛡️ Disclaimer
+
+This software is provided **“as is”, without any warranty** of accuracy, performance, or safety.  
+The author cannot be held responsible for:
+- direct or indirect financial losses ;
+- misconfiguration or improper usage ;
+- blockchain or third-party RPC failures ;
+- unexpected behavior due to external smart contracts ;
+- any use that does not follow the recommendations.
+
+The user acknowledges that they use DeFiPilot **at their own risk**, understanding the inherent risks of DeFi and on-chain operations.
 
 ---
 
 # 16. 🔍 Dernière révision / Last Review
 
-**README V5.3 — mis à jour et consolidé.**
-
+**README V5.5 — mis à jour et consolidé.**  
+**README V5.5 — updated and consolidated.**
 
 ---
 
