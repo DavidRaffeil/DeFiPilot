@@ -80,3 +80,11 @@ journal_*.csv
 .DS_Store
 Thumbs.db
 EOF
+
+defipilot.state
+
+# --- Fichiers locaux / archives à ignorer (base V5.5) ---
+defipilot.state
+journal_daemon.BROKEN.py
+test/
+versions_archivées/
