@@ -3,7 +3,7 @@
 > 🗣️ **Langue / Language :** le bot fonctionne uniquement en **français** pour le moment.  
 > The bot currently works **in French only** for the moment.
 
-![Version](https://img.shields.io/badge/Version-V5.5%20Stable-blue)
+![Version](https://img.shields.io/badge/Version-V6.0%20Stable-blue)
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
 ![Made in France](https://img.shields.io/badge/Made%20in-France-lightgrey)
 ![Developed with ChatGPT](https://img.shields.io/badge/Developed%20with-ChatGPT-orange)
@@ -16,7 +16,7 @@
 1. [Introduction / Introduction](#1-introduction--introduction)  
 2. [Fonctionnalités principales / Key Features](#2-fonctionnalites-principales--key-features)  
 3. [Aperçu visuel / Visual Overview](#3-apercu-visuel--visual-overview)  
-4. [Nouveautés / What's New — Version 5.5](#4-nouveautes--whats-new--version-55)  
+4. [Nouveautés / What's New — Version 6.0](#4-nouveautes--whats-new--version-60)  
 5. [Historique des versions / Past Versions](#5-historique-des-versions--past-versions)  
 6. [Caractéristiques techniques / Technical Highlights](#6-caracteristiques-techniques--technical-highlights)  
 7. [Prérequis / Requirements](#7-prerequis--requirements)  
@@ -98,31 +98,30 @@ DeFiPilot’s graphical interface displays key metrics, bot status, ControlPilot
 
 ---
 
-# 4. 🆕 Nouveautés / What's New — Version 5.5
+# 4. 🆕 Nouveautés / What's New — Version 6.0
 
 ## 📘 Fr
-- Introduction des **exits automatiques** basés sur le contexte du marché.  
-- Application des seuils et comportements issus de **Deep Search V5.4** (gestion des phases critiques, neutres et favorables).  
-- Ajout et utilisation du fichier stratégique finalisé : `strategy_v5_5.json`.  
-- Stabilisation complète du daemon (pipeline : signaux → scoring → stratégie → exits).  
-- Amélioration de la cohérence stratégique en conditions réelles et simulées.  
-- Préparation de la **V5.6** (optimisations du moteur + fondations ArbiPilot).
+- **Refonte majeure du Core (V6 Architecture) :** Transition complète vers l'exécution unifiée via `main_v6_core.py` et `run_defipilot_v6.py`.
+- **Scoring & Évaluation des Pools :** Algorithme de scoring des opportunités optimisé et directement couplé à la stratégie V6 (`strategy_v6_0.json`).
+- **Journalisation de Stratégie & Daemon Sécurisé :** Intégration du daemon de suivi stratégique en arrière-plan (`journal_daemon_v6_secure.py`).
+- **Refonte des modules d'exécution :** Stabilisation des modules d'interaction liquidité et résolution des problématiques d'ABI.
+- **Réorganisation & Nettoyage :** Archivage des modules V5 et pré-core dans le répertoire `legacy_v6_precore/`.
 
 ---
 
 ## 📗 En
-- Introduction of **automatic exits** based on market context.  
-- Integration of thresholds and crisis-behavior rules derived from **Deep Search V5.4**.  
-- Addition and use of the finalized strategy file: `strategy_v5_5.json`.  
-- Full stabilization of the daemon (pipeline: signals → scoring → strategy → exits).  
-- Improved strategic consistency in both real and simulated conditions.  
-- Preparation for **V5.6** (engine optimizations + ArbiPilot foundations).
+- **Major Core Refactoring (V6 Architecture):** Full transition to the unified V6 execution flow using `main_v6_core.py` and `run_defipilot_v6.py`.
+- **Pool Scoring & Evaluation:** Enhanced opportunity scoring algorithm directly wired into the V6 strategy configuration (`strategy_v6_0.json`).
+- **Strategy Logging & Secure Daemon:** Integration of a background logging daemon (`journal_daemon_v6_secure.py`) for live monitoring.
+- **Execution Modules Update:** Stabilized real-liquidity execution candidate modules and resolved ABI handling edge-cases.
+- **Codebase Cleanup:** Clean directory structure with legacy pre-core scripts relocated to `legacy_v6_precore/`.
 
 ---
 
 # 5. 🕓 Historique des versions / Past Versions
 
 ## 📘 Fr
+- **V6.0 :** Refonte Core V6, scoring des pools, daemon de journalisation de stratégie sécurisé, refonte de la couche d'exécution réelle et nettoyage legacy.  
 - **V5.5 :** Exits automatiques basés sur le contexte, application des seuils Deep Search V5.4, stratégie finalisée (`strategy_v5_5.json`), stabilisation complète du daemon.  
 - **V5.3 :** Journal stratégique dédié (`journal_strategy.jsonl`), intégration complète des signaux normalisés de ControlPilot, stabilisation du daemon.  
 - **V5.2 :** Rééquilibrage automatique du portefeuille, signaux pondérés, snapshots de rééquilibrage, mise à jour scoring/stratégie.  
@@ -141,6 +140,7 @@ DeFiPilot’s graphical interface displays key metrics, bot status, ControlPilot
 ---
 
 ## 📗 En
+- **V6.0:** Core V6 refactoring, pool scoring engine, secure strategy logging daemon, execution layer fixes and workspace reorganization.  
 - **V5.5:** Automatic exits based on market context, integration of Deep Search V5.4 thresholds, finalized strategy file (`strategy_v5_5.json`), full daemon stabilization.  
 - **V5.3:** Dedicated strategic journal (`journal_strategy.jsonl`), full integration of normalized ControlPilot signals, daemon stabilization.  
 - **V5.2:** Automatic portfolio rebalancing, weighted signals, rebalancing snapshots, updated scoring/strategy.  
@@ -151,8 +151,6 @@ DeFiPilot’s graphical interface displays key metrics, bot status, ControlPilot
 - **V4.7:** Full real-mode stabilization + auto-resume.  
 - **V4.6:** Dynamic strategy with automatic adjustments.  
 - **V4.5:** GUI improvements + contextual display.  
-- **V4.4:** Global launch + initial supervision.  
-- **V4.3:** LP simulation + detailed logging.  
 - **V4.2:** Weighted scoring + profile management.  
 - **V4.0:** Full simulation mode.
 
@@ -163,26 +161,24 @@ DeFiPilot’s graphical interface displays key metrics, bot status, ControlPilot
 ## FR
 DeFiPilot repose sur une architecture modulaire, pensée pour garantir évolutivité et stabilité :
 
-- **`core/`** — Analyse, scoring, stratégie, transactions, gestion des wallets, rééquilibrage (`rebalancing_simulator.py`).  
-- **`gui/`** — Interface Tkinter (rafraîchissement, affichage, widgets personnalisés).  
-- **`cli/`** — Exécution en mode console, outils rapides, smoke tests.  
-- **`control/`** — Module IA ControlPilot (signaux + agrégation).  
-- **`config/`** — Paramètres généraux, profils, fichiers JSON de configuration.  
-- **`journal/`** — Système de logs (CSV + JSONL), rotation, journaux par modules, snapshots du rééquilibrage (`rebalancing_snapshot.jsonl`).  
-- **`state/`** — Gestion du fichier `.state` (reprise automatique).  
+- **`main_v6_core.py` / `run_defipilot_v6.py`** — Points d'entrée principaux du moteur V6.  
+- **`core/`** — Analyse, scoring des pools, garde-fous (`guardrails.py`), validation d'environnement (`env_validator.py`), CLI (`cli.py`), exécution réelle des transactions (`execution/`).  
+- **`config/`** — Configurations stratégiques (`strategy_v6_0.json`, `strategy_v5_5.json`), paramètres généraux.  
+- **`journal_daemon_v6_secure.py` / `analyser_logs.py`** — Daemon de suivi de stratégie et utilitaire d'analyse des journaux.  
+- **`legacy_v6_precore/`** — Archivage des anciens lanceurs et scripts pré-V6 pour garantie de rétrocompatibilité.  
+- **`data/`** — État persistant du bot (`state.json` et `state_backup.json`).
 
 Le bot utilise principalement **Python 3.11**, **Web3.py**, **Tkinter**, **Pandas**, et l’API **DefiLlama**.
 
 ## EN
 DeFiPilot is built on a modular architecture designed for scalability and stability:
 
-- **`core/`** — Analysis, scoring, strategy, transactions, wallet management, rebalancing (`rebalancing_simulator.py`).  
-- **`gui/`** — Tkinter interface (refresh engine, display, custom widgets).  
-- **`cli/`** — Console execution, quick tools, smoke tests.  
-- **`control/`** — ControlPilot AI module (signals + aggregation).  
-- **`config/`** — Global settings, profiles, JSON configuration files.  
-- **`journal/`** — Log system (CSV + JSONL), rotation, per-module logs, rebalancing snapshots (`rebalancing_snapshot.jsonl`).  
-- **`state/`** — `.state` file management (auto-resume).  
+- **`main_v6_core.py` / `run_defipilot_v6.py`** — Core entry points for the V6 engine execution.  
+- **`core/`** — Analysis, pool scoring, guardrails (`guardrails.py`), environment validation (`env_validator.py`), CLI (`cli.py`), real-world execution scripts (`execution/`).  
+- **`config/`** — Strategic configurations (`strategy_v6_0.json`, `strategy_v5_5.json`), global parameters.  
+- **`journal_daemon_v6_secure.py` / `analyser_logs.py`** — Secure background strategy daemon and log analytics tool.  
+- **`legacy_v6_precore/`** — Archive folder containing legacy launchers for backward compatibility.  
+- **`data/`** — State persistence engine (`state.json` and `state_backup.json`).
 
 The bot relies mainly on **Python 3.11**, **Web3.py**, **Tkinter**, **Pandas**, and the **DefiLlama** API.
 
@@ -210,80 +206,67 @@ The bot relies mainly on **Python 3.11**, **Web3.py**, **Tkinter**, **Pandas**, 
 
 ## FR
 1. **Cloner le dépôt :**
-```bash
 git clone https://github.com/DavidRaffeil/DeFiPilot.git
 cd DeFiPilot
-```
+
 2. **Créer l’environnement virtuel et installer les dépendances :**
-```bash
 python3.11 -m venv .venv
 source .venv/bin/activate  # Windows : .venv\Scripts\activate
 pip install -U pip
 pip install -r requirements.txt
-```
+
 3. **Configurer le fichier `.env` :**
-```dotenv
 NETWORK=polygon
 RPC_URL=https://polygon-mainnet.infura.io/v3/<PROJECT_ID>
-WALLEΤ_ADDRESS=<VOTRE_ADRESSE_WALLET> # remplacer par votre adresse
+WALLET_ADDRESS=<VOTRE_ADRESSE_WALLET> # remplacer par votre adresse
 LOG_LEVEL=INFO
 
-```
 4. **Vérifier l’installation :**
-```bash
 python check_setup.py
-```
 
 ## EN
 1. **Clone the repository:**
-```bash
 git clone https://github.com/DavidRaffeil/DeFiPilot.git
 cd DeFiPilot
-```
+
 2. **Create a virtual environment and install dependencies:**
-```bash
 python3.11 -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -U pip
 pip install -r requirements.txt
-```
+
 3. **Configure the `.env` file:**
-```dotenv
 NETWORK=polygon
 RPC_URL=https://polygon-mainnet.infura.io/v3/<PROJECT_ID>
-WALLEΤ_ADDRESS=<YOUR_WALLET_ADDRESS> # replace with your address
+WALLET_ADDRESS=<YOUR_WALLET_ADDRESS> # replace with your address
 LOG_LEVEL=INFO
 
-```
 4. **Verify installation:**
-```bash
 python check_setup.py
-```
+
 ---
 
 # 9. ▶️ Utilisation / Usage
 
 ## FR
-- **Interface graphique :**
-```bash
-python start_defipilot.py
-```
-- **Mode console (headless) :**
-```bash
-python run_defipilot.py
-```
-Les journaux sont enregistrés dans `journal_*.jsonl` et `journal_*.csv`.
+- **Lancement V6 Core (Mode principal) :**
+python run_defipilot_v6.py
+
+- **Lancement du Daemon de Journalisation Sécurisé :**
+python journal_daemon_v6_secure.py
+
+- **Analyse des journaux d'exécution :**
+python analyser_logs.py
 
 ## EN
-- **Graphical interface:**
-```bash
-python start_defipilot.py
-```
-- **Headless mode:**
-```bash
-python run_defipilot.py
-```
-Logs are saved in `journal_*.jsonl` and `journal_*.csv`.
+- **Launch V6 Core Engine (Main mode):**
+python run_defipilot_v6.py
+
+- **Launch Secure Background Logging Daemon:**
+python journal_daemon_v6_secure.py
+
+- **Analyze execution logs:**
+python analyser_logs.py
 
 ---
 
@@ -292,12 +275,11 @@ Logs are saved in `journal_*.jsonl` and `journal_*.csv`.
 ## 📘 Fr
 
 ### Prochaines versions
-- **V5.6 :** Optimisations du moteur stratégique, améliorations internes et fondations techniques pour ArbiPilot.  
-- **V6.0 :** Mode réel complet entièrement autonome (analyse → stratégie → transactions → sécurité).  
 - **V6.1 :** Synchronisation multi-bots (DeFiPilot + ControlPilot + ArbiPilot).  
 - **V6.2 :** Déploiement sur Orange Pi / infrastructure SBC.  
 
 ### Versions finalisées
+- **V6.0 :** Mode unifié V6 Core, scoring des pools, daemon de journalisation sécurisé, réorganisation du dépôt.  
 - **V5.5 :** Exits automatiques, intégration des seuils Deep Search, stratégie finalisée `strategy_v5_5.json`, stabilisation du daemon.  
 - **V5.3 :** Journal stratégique dédié (`journal_strategy.jsonl`), intégration complète des signaux ControlPilot.  
 - **V5.2 :** Rééquilibrage automatique, signaux pondérés, snapshots et pipeline stabilisé.  
@@ -309,12 +291,11 @@ Logs are saved in `journal_*.jsonl` and `journal_*.csv`.
 ## 📗 En
 
 ### Upcoming Versions
-- **V5.6:** Engine optimizations, internal improvements, and technical foundations for ArbiPilot.  
-- **V6.0:** Fully autonomous real-mode engine (analysis → strategy → transactions → safety).  
 - **V6.1:** Multi-bot synchronization (DeFiPilot + ControlPilot + ArbiPilot).  
 - **V6.2:** Deployment on Orange Pi / SBC architecture.  
 
 ### Completed Versions
+- **V6.0:** Unified V6 Core mode, pool scoring engine, secure background logging daemon, codebase cleanup.  
 - **V5.5:** Automatic exits, Deep Search threshold integration, finalized `strategy_v5_5.json`, full daemon stabilization.  
 - **V5.3:** Dedicated strategic journal (`journal_strategy.jsonl`), full ControlPilot signal integration.  
 - **V5.2:** Automatic rebalancing, weighted signals, snapshots, and stabilized pipeline.  
@@ -348,7 +329,7 @@ DeFiPilot aims to evolve into a complete automated management platform including
 Oui, si le mode réel est activé et correctement configuré. En mode simulation, aucune transaction blockchain n’est envoyée.
 
 **2. Puis‑je utiliser DeFiPilot sans interface graphique ?**  
-Oui, le bot peut fonctionner en mode console (headless) via `run_defipilot.py`.
+Oui, le bot fonctionne en ligne de commande de façon optimale avec `run_defipilot_v6.py`.
 
 **3. Quels réseaux sont supportés ?**  
 Polygon est supporté en natif. D’autres blockchains seront ajoutées progressivement.
@@ -360,7 +341,7 @@ Elles sont chargées via `.env` et jamais écrites dans les journaux.
 Elle dépend de la configuration, généralement quelques secondes.
 
 **6. Comment fonctionne la reprise automatique ?**  
-L’état est stocké dans un fichier `.state`, permettant au bot de reprendre après une coupure.
+L’état est stocké dans le dossier `data/` (`state.json`), permettant au bot de reprendre après une coupure.
 
 **7. Comment fonctionne la supervision IA ?**  
 ControlPilot fournit des signaux contextuels (favorable, neutre, défavorable) influençant la stratégie.
@@ -369,7 +350,7 @@ ControlPilot fournit des signaux contextuels (favorable, neutre, défavorable) i
 Principalement de DefiLlama et des RPC blockchain.
 
 **9. Puis‑je ajouter mes propres stratégies ?**  
-Oui, l’architecture modulaire permet d’étendre facilement les stratégies.
+Oui, l’architecture modulaire permet d’étendre facilement les stratégies via le dossier `config/`.
 
 **10. Le projet est‑il open source ?**  
 Oui, sous licence CC‑BY‑NC‑SA 4.0.
@@ -379,7 +360,7 @@ Oui, sous licence CC‑BY‑NC‑SA 4.0.
 Yes, if real mode is enabled and properly configured. In simulation mode, no blockchain transactions are sent.
 
 **2. Can I run DeFiPilot without the GUI?**  
-Yes, the bot can run headless using `run_defipilot.py`.
+Yes, the bot runs efficiently via CLI using `run_defipilot_v6.py`.
 
 **3. Which networks are supported?**  
 Polygon is supported natively; other networks will be added later.
@@ -391,7 +372,7 @@ They are loaded via `.env` and never written to logs.
 It depends on configuration, usually a few seconds.
 
 **6. How does auto‑resume work?**  
-Bot state is stored in a `.state` file, allowing recovery after a shutdown.
+Bot state is stored in `data/` (`state.json`), allowing recovery after a shutdown.
 
 **7. How does AI supervision work?**  
 ControlPilot provides contextual signals (favorable, neutral, unfavorable) affecting strategy.
@@ -400,7 +381,7 @@ ControlPilot provides contextual signals (favorable, neutral, unfavorable) affec
 Mainly from DefiLlama and blockchain RPC endpoints.
 
 **9. Can I add my own strategies?**  
-Yes, the modular architecture supports custom strategy modules.
+Yes, the modular architecture supports custom strategy configurations in `config/`.
 
 **10. Is the project open source?**  
 Yes, licensed under CC‑BY‑NC‑SA 4.0.
@@ -504,7 +485,7 @@ Toute redistribution non commerciale doit :
 Le logiciel est fourni **“tel quel”, sans garantie** d’exactitude, de performance ou de sécurité.  
 L’auteur ne peut être tenu responsable :
 - de pertes financières directes ou indirectes ;
-- d’une mauvaise configuration ou d’un usage inadapté ;
+- d’une mauvaise configuration ou d'un usage inadapté ;
 - d’erreurs liées à la blockchain ou à des RPC tiers ;
 - de comportements inattendus dus à des smart contracts externes ;
 - d’une utilisation non conforme aux recommandations.
@@ -549,12 +530,12 @@ The user acknowledges that they use DeFiPilot **at their own risk**, understandi
 
 # 16. 🔍 Dernière révision / Last Review
 
-**README V5.5 — mis à jour et consolidé.**  
-**README V5.5 — updated and consolidated.**
+**README V6.0 — mis à jour et consolidé.**  
+**README V6.0 — updated and consolidated.**
 
 ---
 
-© 2023-2025 DeFiPilot — Tous droits réservés.  
+© 2023-2026 DeFiPilot — Tous droits réservés.  
 Projet distribué sous licence CC-BY-NC-SA 4.0.  
-© 2023-2025 DeFiPilot — All rights reserved.  
+© 2023-2026 DeFiPilot — All rights reserved.  
 Project distributed under the CC-BY-NC-SA 4.0 license.
