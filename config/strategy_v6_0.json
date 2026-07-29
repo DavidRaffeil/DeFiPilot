@@ -1,0 +1,63 @@
+{
+  "version": "6.0",
+  "description": "Strategie DeFiPilot V6.0 — logique deterministe context/profil/exits",
+
+  "mode_execution": "simulation",
+  "mode_global": "NORMAL",
+
+  "profile_default": "prudent",
+  "capital_initial_usdc": 1.0,
+
+  "allocations": {
+    "prudent": 1.0,
+    "modere": 0.0,
+    "agressif": 0.0,
+    "max_concurrent": 1,
+    "min_pct": 0.05,
+    "max_pct": 1.0
+  },
+
+  "rebalance": {
+    "enabled": false,
+    "threshold_pct": 0.1,
+    "cooldown_minutes": 0
+  },
+
+  "market_guardrails": {
+    "enabled": true,
+    "min_tvl_usd": 100000,
+    "max_apr_pct": 10000,
+    "cooldown_minutes": 0,
+    "FAVORABLE": {
+      "risk_caps": { "prudent": 1.0, "modere": 1.0, "agressif": 1.1 }
+    },
+    "NEUTRE": {
+      "risk_caps": { "prudent": 0.9, "modere": 1.0, "agressif": 1.0 }
+    },
+    "DEFAVORABLE": {
+      "risk_caps": { "prudent": 0.7, "modere": 0.8, "agressif": 0.9 }
+    }
+  },
+
+  "exits": {
+    "prudent": false,
+    "modere": false,
+    "agressif": false
+  },
+
+  "limites": {
+    "max_invest_par_jour_usd": 5.0,
+    "max_invest_par_pool_usd": 5.0,
+    "max_invest_par_bucket_usd": {
+      "prudent": 0.0,
+      "modere": 0.0,
+      "agressif": 0.0
+    }
+  },
+
+  "allocations_cibles": {
+    "prudent": 0.0,
+    "modere": 0.0,
+    "agressif": 0.0
+  }
+}

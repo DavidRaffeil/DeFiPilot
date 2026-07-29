@@ -1,0 +1,13 @@
+{
+  "dernier_scoring_pools": {
+    "profil": "modere",
+    "solde_reference_usd": 0.0,
+    "resultats_top3": [],
+    "gain_total_journalier_usd": 0.0
+  },
+  "allocation_simulee_apres_reequilibrage": {
+    "Prudent": 0.0,
+    "Modere": 0.0,
+    "Risque": 0.0
+  }
+}

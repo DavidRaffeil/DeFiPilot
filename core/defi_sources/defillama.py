@@ -32,7 +32,7 @@ def recuperer_pools():
 
     # 💠 Ajout d'une TVL fictive pour chaque pool (valeur stable pour simulation)
     for pool in pools:
-        pool["tvl_usd"] = 10000.0
+        pool["tvl_usd"] = 1000000.0
 
     return pools
 

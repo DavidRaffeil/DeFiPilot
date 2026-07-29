@@ -1,0 +1,91 @@
+{
+  "global": {
+    "dry_run_only": true
+  },
+  "modes": {
+    "NORMAL": {
+      "policy": {
+        "allow_new_positions": true,
+        "allow_rebalance": true,
+        "allow_exit": true,
+        "prefer_stables": false
+      }
+    },
+    "TENSION": {
+      "policy": {
+        "allow_new_positions": true,
+        "allow_rebalance": true,
+        "allow_exit": true,
+        "prefer_stables": false
+      }
+    },
+    "ALERTE": {
+      "policy": {
+        "allow_new_positions": false,
+        "allow_rebalance": true,
+        "allow_exit": true,
+        "prefer_stables": false
+      }
+    },
+    "CRISE": {
+      "policy": {
+        "allow_new_positions": false,
+        "allow_rebalance": true,
+        "allow_exit": true,
+        "prefer_stables": false
+      }
+    },
+    "PANIC": {
+      "policy": {
+        "allow_new_positions": false,
+        "allow_rebalance": false,
+        "allow_exit": true,
+        "prefer_stables": true
+      }
+    }
+  },
+  "portfolio_actions": {
+    "target_allocations": {
+      "NORMAL": {
+        "Prudent": 0.5,
+        "Modere": 0.3,
+        "Risque": 0.2
+      },
+      "TENSION": {
+        "Prudent": 0.6,
+        "Modere": 0.3,
+        "Risque": 0.1
+      },
+      "ALERTE": {
+        "Prudent": 0.7,
+        "Modere": 0.25,
+        "Risque": 0.05
+      },
+      "CRISE": {
+        "Prudent": 0.8,
+        "Modere": 0.2,
+        "Risque": 0.0
+      },
+      "PANIC": {
+        "Prudent": 0.9,
+        "Modere": 0.1,
+        "Risque": 0.0
+      }
+    },
+    "rebalance_policy": {
+      "min_shift_usd": 10.0,
+      "max_shift_ratio": 0.3,
+      "tolerance_pct": 5.0
+    },
+    "exit_policy": {
+      "enable_global_exit": true,
+      "panic_exit_all": true
+    }
+  },
+  "safety": {
+    "hard_stops": {
+      "max_drawdown_pct": 40.0,
+      "max_volatilite": 0.9
+    }
+  }
+}

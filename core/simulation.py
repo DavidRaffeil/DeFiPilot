@@ -1,19 +1,25 @@
+# core/simulation.py – V6.0 Stress Engine
+
 import csv
 import os
+import time
+import logging
 from datetime import datetime
 
 FICHIER_JOURNAL = "logs/journal_gain_simule.csv"
 FICHIER_SWAP_LP = "logs/journal_swaps_lp.csv"
 
+LOGGER = logging.getLogger("DeFiPilot.V6Simulation")
+
+
 def enregistrer_gain_simule(date, pool, gain, score):
-    """Ajoute une entrée dans le journal des gains simulés."""
     os.makedirs("logs", exist_ok=True)
     with open(FICHIER_JOURNAL, mode="a", newline="", encoding="utf-8") as fichier:
         writer = csv.writer(fichier)
         writer.writerow([date, pool, gain, score])
 
+
 def afficher_gains_historique():
-    """Affiche un résumé des gains par jour."""
     if not os.path.exists(FICHIER_JOURNAL):
         print("Aucun journal de gains trouvé.")
         return
@@ -28,82 +34,49 @@ def afficher_gains_historique():
             gain = float(gain)
             journaux[date] = journaux.get(date, 0) + gain
 
-    print("📈 Résumé des rendements journaliers :")
+    print("Résumé des rendements journaliers :")
     for date, gain in sorted(journaux.items()):
-        print(f"  • {date} : {gain:.4f} USDC")
+        print(f"{date} : {gain:.4f} USDC")
 
-def enregistrer_swap_lp(date, nom_pool, montant_token1, montant_token2):
-    """Enregistre un swap LP simulé."""
-    os.makedirs("logs", exist_ok=True)
-    with open(FICHIER_SWAP_LP, mode="a", newline="", encoding="utf-8") as fichier:
-        writer = csv.writer(fichier)
-        writer.writerow([date.isoformat(), nom_pool, montant_token1, montant_token2])
 
-def swap_lp_existe(date, nom_pool):
-    """Vérifie si un swap LP est déjà enregistré pour ce jour et cette pool."""
-    if not os.path.exists(FICHIER_SWAP_LP):
-        return False
+def run_simulation(argv: list[str]) -> int:
+    """
+    Moteur minimal de stress test V6.0.
+    Boucle stable avec écriture périodique.
+    """
 
-    with open(FICHIER_SWAP_LP, mode="r", encoding="utf-8") as fichier:
-        lecteur = csv.reader(fichier)
-        for ligne in lecteur:
-            if len(ligne) != 4:
-                continue
-            date_ligne, nom, _, _ = ligne
-            if date_ligne == date.isoformat() and nom == nom_pool:
-                return True
-    return False
+    LOGGER.info("Démarrage moteur simulation stress test V6.0")
 
-def lire_swaps_lp(date):
-    """Lit tous les swaps LP enregistrés pour une date donnée."""
-    resultats = []
-    if not os.path.exists(FICHIER_SWAP_LP):
-        return resultats
+    iteration = 0
+    valeur = 100.0
 
-    with open(FICHIER_SWAP_LP, mode="r", encoding="utf-8") as fichier:
-        lecteur = csv.reader(fichier)
-        for ligne in lecteur:
-            if len(ligne) != 4:
-                continue
-            date_ligne, nom_pool, token1, token2 = ligne
-            if date_ligne == date.isoformat():
-                resultats.append((nom_pool, float(token1), float(token2)))
-    return resultats
+    try:
+        while True:
+            iteration += 1
 
-def calculer_stats_lp():
-    """Calcule les statistiques globales LP (nombre de swaps, gains, score moyen)."""
-    stats = {}
-    if not os.path.exists(FICHIER_JOURNAL):
-        return []
+            # Petit calcul stable
+            valeur *= 1.0001
 
-    with open(FICHIER_JOURNAL, mode="r", encoding="utf-8") as fichier:
-        lecteur = csv.reader(fichier)
-        for ligne in lecteur:
-            if len(ligne) != 4:
-                continue
-            _, pool, gain, score = ligne
-            try:
-                gain = float(gain)
-                score = float(score)
-            except ValueError:
-                continue
-            if pool not in stats:
-                stats[pool] = {"occurences": 0, "total_gain": 0.0, "total_score": 0.0}
-            stats[pool]["occurences"] += 1
-            stats[pool]["total_gain"] += gain
-            stats[pool]["total_score"] += score
+            # Toutes les 100 itérations on log
+            if iteration % 100 == 0:
+                LOGGER.info(
+                    "Iteration %d | Valeur simulée: %.4f",
+                    iteration,
+                    valeur,
+                )
 
-    resultats = []
-    for pool, donnees in stats.items():
-        occurences = donnees["occurences"]
-        gain_moyen = donnees["total_gain"] / occurences
-        score_moyen = donnees["total_score"] / occurences
-        resultats.append({
-            "pool": pool,
-            "occurences": occurences,
-            "gain_moyen": gain_moyen,
-            "score_moyen": score_moyen,
-        })
+                enregistrer_gain_simule(
+                    datetime.now().date().isoformat(),
+                    "STRESS_POOL",
+                    0.01,
+                    50.0,
+                )
 
-    resultats = sorted(resultats, key=lambda x: x["gain_moyen"], reverse=True)
-    return resultats
+            time.sleep(0.001)  # limite CPU volontaire
+
+    except KeyboardInterrupt:
+        LOGGER.info("Arrêt manuel du stress test (Ctrl+C)")
+        return 0
+    except Exception as e:
+        LOGGER.exception("Erreur inattendue pendant la simulation: %s", e)
+        return 1

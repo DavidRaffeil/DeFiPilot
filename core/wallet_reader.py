@@ -122,8 +122,15 @@ def lire_solde_erc20(
     """
 
     try:
-        contrat = web3.eth.contract(address=token_address, abi=ERC20_ABI_MIN)
-        balance: int = contrat.functions.balanceOf(holder).call()
+        contrat = web3.eth.contract(
+            address=Web3.to_checksum_address(token_address),
+            abi=ERC20_ABI_MIN
+        )
+       
+        balance: int = contrat.functions.balanceOf(
+            Web3.to_checksum_address(holder)
+        ).call()
+
         decimals: int = contrat.functions.decimals().call()
         return balance, decimals
     except Exception:
@@ -146,7 +153,10 @@ def lire_soldes_tokens(
 
     soldes: dict[str, float] = {}
     for symbole, config in tokens.items():
-        token_address = str(config.get("address", "")).strip()
+        token_address = Web3.to_checksum_address(
+            str(config.get("address", "")).strip()
+        )
+
         if not token_address:
             continue
 
@@ -168,6 +178,29 @@ def lire_soldes_tokens(
 
     return soldes
 
+def verifier_fonds_disponibles(
+    soldes: dict[str, float],
+    besoins: dict[str, float]
+) -> tuple[bool, str | None]:
+    """Vérifie que les soldes couvrent les besoins d'une action.
+
+    Args:
+        soldes: soldes disponibles du wallet.
+        besoins: montants nécessaires pour l'action.
+
+    Returns:
+        (True, None) si tout est suffisant,
+        (False, symbole) si un token manque.
+    """
+
+    for symbole, montant in besoins.items():
+
+        solde = soldes.get(symbole, 0.0)
+
+        if solde < montant:
+            return False, symbole
+
+    return True, None
 
 def lire_soldes_depuis_env(
     tokens: Mapping[str, dict[str, Any]] | None = None,
@@ -194,3 +227,4 @@ def lire_soldes_depuis_env(
         soldes.update(lire_soldes_tokens(web3, adresse, tokens))
 
     return soldes
+

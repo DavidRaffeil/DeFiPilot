@@ -1,33 +1,22 @@
-# core/journal_strategy.py – V5.3.0
+# core/journal_strategy.py — V6.0.0
 from __future__ import annotations
 
 import json
 import logging
-import os
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional, Sequence
+from typing import Any, Dict, Mapping, Optional, Sequence
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_STRATEGY_JOURNAL_PATH = Path("data/logs/journal_strategie.jsonl")
+
 
 def _get_strategy_journal_path() -> Path:
-    """
-    Retourne le chemin du journal de stratégie.
-
-    Utilise la variable d'environnement ``DEFIPILOT_STRATEGY_JOURNAL`` si
-    définie, sinon ``data/journal_strategy.jsonl``.
-    """
-    env_path = os.environ.get("DEFIPILOT_STRATEGY_JOURNAL")
-    if env_path:
-        return Path(env_path)
-    return Path("data") / "journal_strategy.jsonl"
+    return DEFAULT_STRATEGY_JOURNAL_PATH
 
 
 def _ensure_parent_dir(path: Path) -> None:
-    """
-    S'assure que le répertoire parent du fichier existe.
-    """
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
     except Exception:
@@ -38,9 +27,7 @@ def _ensure_parent_dir(path: Path) -> None:
 
 
 def _now_iso_utc() -> str:
-    """
-    Retourne la date/heure courante au format ISO 8601 en UTC.
-    """
+    """Retourne la date/heure courante au format ISO 8601 en UTC."""
     return (
         datetime.now(timezone.utc)
         .replace(microsecond=0)
@@ -55,7 +42,7 @@ def journaliser_entree_strategique(
     version: str,
     run_id: str,
     context: str,
-    profil: str,
+    profil: Optional[str] = None,
     decision_score: Optional[float] = None,
     nb_signaux: Optional[int] = None,
     source_signaux: Optional[str] = None,
@@ -66,34 +53,23 @@ def journaliser_entree_strategique(
     performance: Optional[Mapping[str, Any]] = None,
     meta: Optional[Mapping[str, Any]] = None,
     timestamp: Optional[str] = None,
+    **kwargs: Any,
 ) -> Dict[str, Any]:
     """
     Construit et écrit une entrée de journal stratégique dans le fichier JSONL.
 
-    Cette fonction est volontairement générique pour pouvoir être utilisée
-    aussi bien par le moteur de stratégie que par un module de rééquilibrage.
-
-    :param event_type: Type d'événement (ex: ``"strategy_decision"``,
-        ``"rebalancing_applied"``).
-    :param version: Version de DeFiPilot au moment de la décision (ex: ``"V5.3.0"``).
-    :param run_id: Identifiant de la boucle/cycle courant (souvent celui du
-        journal des signaux).
-    :param context: Contexte de marché détecté (ex: ``"favorable"``,
-        ``"neutre"``, ``"defavorable"``).
-    :param profil: Profil d'investissement choisi pour ce cycle
-        (ex: ``"Prudent"``, ``"Modere"``, ``"Risque"``).
-    :param decision_score: Score global de décision (si disponible).
-    :param nb_signaux: Nombre total de signaux utilisés.
-    :param source_signaux: Source principale des signaux (fichier ou module).
-    :param allocation_avant_usd: Allocation avant décision, en USD par profil.
-    :param allocation_apres_usd: Allocation après décision, en USD par profil.
-    :param delta_allocation_usd: Différence allocation_apres - allocation_avant.
-    :param pools_selectionnees: Liste des pools retenues pour ce cycle.
-    :param performance: Bloc de performance (gain du jour, gain cumulé, etc.).
-    :param meta: Bloc libre pour ajouter des informations contextuelles.
-    :param timestamp: Horodatage ISO 8601 (si None, l'heure courante UTC est utilisée).
-    :return: Le dictionnaire représentant l'entrée écrite.
+    Compatible V6.0 : accepte l'alias `profil_effectif` via kwargs.
     """
+
+    # Alias V6.0 : profil_effectif -> profil (fallback uniquement)
+    if profil is None:
+        profil_effectif = kwargs.get("profil_effectif")
+        if isinstance(profil_effectif, str) and profil_effectif.strip():
+            profil = profil_effectif
+        else:
+            # Aucun profil fourni : on sécurise sans lever d'exception bloquante
+            profil = "inconnu"
+
     entry: Dict[str, Any] = {
         "timestamp": timestamp or _now_iso_utc(),
         "version": version,
@@ -147,80 +123,26 @@ def journaliser_entree_strategique(
 
 
 def lire_derniere_entree_strategique() -> Optional[Dict[str, Any]]:
-    """
-    Lit et retourne la dernière entrée du journal de stratégie.
-
-    :return: Un dictionnaire représentant la dernière entrée, ou None si le
-        journal est vide ou inaccessible.
-    """
+    """Lit et retourne la dernière entrée du journal de stratégie."""
     path = _get_strategy_journal_path()
     if not path.exists():
         return None
 
     try:
         with path.open("r", encoding="utf-8") as f:
-            last_line: Optional[str] = None
-            for line in f:
-                line = line.strip()
-                if line:
-                    last_line = line
-
-        if not last_line:
-            return None
-
-        return json.loads(last_line)
+            lignes = f.readlines()
+            if not lignes:
+                return None
+            return json.loads(lignes[-1])
     except Exception:
         logger.exception(
-            "Erreur lors de la lecture de la dernière entrée du journal de stratégie : %s",
+            "Erreur lors de la lecture du journal de stratégie : %s",
             path,
         )
         return None
 
 
-def lire_historique_strategie(max_lignes: Optional[int] = None) -> List[Dict[str, Any]]:
-    """
-    Lit l'historique complet (ou partiel) du journal de stratégie.
-
-    :param max_lignes: Nombre maximal de lignes à retourner en partant de la fin.
-        Si None, toutes les lignes sont retournées.
-    :return: Une liste de dictionnaires représentant les entrées du journal.
-    """
-    path = _get_strategy_journal_path()
-    if not path.exists():
-        return []
-
-    try:
-        entries: List[Dict[str, Any]] = []
-        with path.open("r", encoding="utf-8") as f:
-            if max_lignes is None or max_lignes <= 0:
-                for line in f:
-                    line = line.strip()
-                    if not line:
-                        continue
-                    try:
-                        entries.append(json.loads(line))
-                    except json.JSONDecodeError:
-                        logger.warning(
-                            "Ligne JSON invalide ignorée dans le journal de stratégie : %r",
-                            line,
-                        )
-            else:
-                # Lecture simple puis découpe depuis la fin.
-                all_lines: List[str] = [ln.strip() for ln in f if ln.strip()]
-                slice_lines = all_lines[-max_lignes:]
-                for line in slice_lines:
-                    try:
-                        entries.append(json.loads(line))
-                    except json.JSONDecodeError:
-                        logger.warning(
-                            "Ligne JSON invalide ignorée dans le journal de stratégie : %r",
-                            line,
-                        )
-
-        return entries
-    except Exception:
-        logger.exception(
-            "Erreur lors de la lecture de l'historique du journal de stratégie : %s",
-            path,
-        )
-        return []
+__all__ = [
+    "journaliser_entree_strategique",
+    "lire_derniere_entree_strategique",
+]
