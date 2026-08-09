@@ -21,6 +21,8 @@ def maj_historique(historique, nom_pool, gain):
     historique[nom_pool]["total_gain"] += gain
 
 def calculer_bonus(historique, nom_pool, max_bonus=0.15, max_malus=-0.10):
+    if not isinstance(historique, dict) or not isinstance(nom_pool, (str, int, float)):
+        return 0.0
     if nom_pool not in historique:
         return 0.0
     count = historique[nom_pool]["count"]

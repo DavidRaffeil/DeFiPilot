@@ -35,11 +35,16 @@ from control.control_pilot import lire_signaux_consolides
 from core.market_signals_adapter import calculer_contexte_et_policy
 from core.rebalancing import generer_plan_reequilibrage_contexte
 from core.signals_normalizer import normaliser_signaux, SignalNormalise
-from core.state_manager import get_state, update_state, save_state
+from core.state_manager import get_state, update_state, save_state, load_state
 from core.wallet_reader import lire_soldes_depuis_env
 from core.scoring import calculer_scores_et_gains, charger_ponderations
 from core.strategy_snapshot import journaliser_decision
 from core.journal_strategy import journaliser_entree_strategique
+from core.system_health import (
+    enregistrer_heartbeat,
+    nettoyer_fichiers_temporaires,
+    rotate_log_file,
+)
 
 
 VERSION = "V6.0.0"
@@ -69,6 +74,10 @@ def _ensure_mapping(obj: Any) -> Mapping[str, Any]:
 def _append_jsonl(path: Path, payload: dict[str, Any]) -> None:
     """Ajoute un événement JSON sérialisé sur une ligne dans le fichier JSONL donné."""
     path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        rotate_log_file(path)
+    except Exception:
+        pass
     with path.open("a", encoding="utf-8") as handle:
         json.dump(payload, handle, ensure_ascii=False)
         handle.write("\n")
@@ -170,18 +179,26 @@ def _charger_signaux_normalises(limit: int = 50) -> list[SignalNormalise]:
 
 def _calculer_scoring_pools(
     pools_stats: list[dict[str, Any]],
-    profil_nom: str,
+    profil_nom: Any,
     solde_total_usd: float,
     historique_pools: Any,
 ) -> dict[str, Any]:
-    """Calcule le scoring des pools à partir de core.scoring.
+    """Calcule le scoring des pools à partir de core.scoring."""
+    if isinstance(profil_nom, Mapping):
+        top_cat = max(profil_nom.items(), key=lambda item: _to_float(item[1]) or 0.0)[0] if profil_nom else "modere"
+        top_lower = str(top_cat).lower()
+        if "prudent" in top_lower:
+            nom_str = "prudent"
+        elif "agress" in top_lower or "risq" in top_lower:
+            nom_str = "agressif"
+        else:
+            nom_str = "modere"
+    elif isinstance(profil_nom, str) and profil_nom.strip():
+        nom_str = profil_nom.strip().lower()
+    else:
+        nom_str = "modere"
 
-    - Utilise charger_ponderations(profil_nom) pour récupérer les pondérations.
-    - Construit un dict de profil compatible avec calculer_scores_et_gains().
-    - Passe un historique_pools si disponible, sinon un dict vide.
-    - Retourne un résumé (profil, solde de référence, top3, gain total/jour).
-    """
-    base = charger_ponderations(profil_nom)
+    base = charger_ponderations(nom_str)
 
     profil = {
         "nom": profil_nom,
@@ -212,7 +229,7 @@ def _calculer_scoring_pools(
     )
 
     scoring_info: dict[str, Any] = {
-        "profil": profil_nom,
+        "profil": nom_str,
         "solde_reference_usd": solde_ref,
         "resultats_top3": resultats_top3,
         "gain_total_journalier_usd": gain_total,
@@ -320,6 +337,7 @@ def _journaliser_decisions(
             "run_id": run_id,
             "version": VERSION,
             "source": "reequilibrage_simule",
+            "tag": "[SIMULATION / DRY-RUN]",
             "mode": mode,
             "context": context,
             "profil": profil,
@@ -364,6 +382,7 @@ def _journaliser_snapshot_strategie(
         .replace("+00:00", "Z"),
         "run_id": run_id,
         "version": VERSION,
+        "tag": "[SIMULATION / DRY-RUN]",
         "context": getattr(decision, "context", None),
         "decision_score": getattr(decision, "score", None),
         "profil": profil_effectif,
@@ -496,20 +515,11 @@ def main(argv: list[str] | None = None) -> int:
         print("[ERROR] Format de pools invalide (attendu: liste de dicts ou clé 'pools').")
         return 1
 
-    config: Mapping[str, Any] = {}
-    if args.cfg is not None:
-        cfg_path = Path(args.cfg)
-        if cfg_path.exists():
-            try:
-                config_obj = _read_json(cfg_path)
-                config = _ensure_mapping(config_obj)
-            except Exception as exc:
-                print(f"[WARN] Impossible de lire la configuration {cfg_path} : {exc}")
-        else:
-            print(f"[WARN] Fichier de configuration introuvable : {cfg_path}")
+    cfg_filename = args.cfg or "config/strategy_v6_0.json"
+    cfg_path = Path(cfg_filename)
 
     # Chargement/initialisation de l'état
-    etat: StateDict = get_state() or {}
+    etat: StateDict = load_state() or {}
 
     # Lecture des soldes du wallet au démarrage (lecture seule, best effort)
     try:
@@ -519,15 +529,21 @@ def main(argv: list[str] | None = None) -> int:
     except Exception as exc:
         print(f"[WARN] Impossible de lire les soldes du wallet : {exc}")
 
+    # Nettoyage des fichiers temporaires obsolètes au démarrage
+    try:
+        nettoyer_fichiers_temporaires()
+    except Exception:
+        pass
+
     # Boucle principale
     interval = max(1, int(args.interval))
     max_loops = int(args.max_loops or 0)
     loop_count = 0
 
     print(
-        f"[INFO] Journaliseur continu démarré.\n"
+        f"[SIMULATION / DRY-RUN] [INFO] Journaliseur continu démarré.\n"
         f"       pools   = {pools_path}\n"
-        f"       cfg     = {args.cfg or '(aucune)'}\n"
+        f"       cfg     = {cfg_path}\n"
         f"       journal = {STRATEGY_JOURNAL_PATH}\n"
         f"       interval= {interval}s, max_loops={max_loops or 'illimité'}"
     )
@@ -540,7 +556,21 @@ def main(argv: list[str] | None = None) -> int:
             .replace("+00:00", "Z")
         )
 
-        print(f"[LOOP] run_id={run_id} (boucle {loop_count})")
+        try:
+            enregistrer_heartbeat(loop_count=loop_count, run_id=run_id)
+        except Exception:
+            pass
+
+        # Rechargement dynamique de la configuration de stratégie
+        config: Mapping[str, Any] = {}
+        if cfg_path.exists():
+            try:
+                config_obj = _read_json(cfg_path)
+                config = _ensure_mapping(config_obj)
+            except Exception as exc:
+                print(f"[WARN] Impossible de recharger la configuration {cfg_path} : {exc}")
+
+        print(f"[SIMULATION / DRY-RUN] [LOOP] run_id={run_id} (boucle {loop_count})")
 
         # 1) Charger les signaux normalisés
         signaux_norm = _charger_signaux_normalises(limit=50)

@@ -74,6 +74,7 @@ def journaliser_entree_strategique(
         "timestamp": timestamp or _now_iso_utc(),
         "version": version,
         "run_id": run_id,
+        "tag": kwargs.get("tag", "[SIMULATION / DRY-RUN]"),
         "event_type": event_type,
         "context": context,
         "profil": profil,

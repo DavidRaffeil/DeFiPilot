@@ -3,30 +3,31 @@
     "native": 0.11180264551973874
   },
   "dernier_scoring_pools": {
-    "profil": "Prudent",
-    "solde_reference_usd": 5000.0,
+    "profil": "prudent",
+    "solde_reference_usd": 0.0,
     "resultats_top3": [
       [
         "AaveV3 | Aave USDT",
         0.045,
-        0.01
+        0.0
       ],
       [
         "UniswapV3 | USDC/WETH",
         0.185,
-        0.03
+        0.0
       ],
       [
         "QuickSwap | WMATIC/WETH",
         0.35,
-        0.05
+        0.0
       ]
     ],
-    "gain_total_journalier_usd": 0.09
+    "gain_total_journalier_usd": 0.0
   },
   "allocation_simulee_apres_reequilibrage": {
-    "Prudent": 2800.0,
-    "Modere": 1450.0,
-    "Risque": 750.0
-  }
+    "Prudent": 0.0,
+    "Modere": 0.0,
+    "Risque": 0.0
+  },
+  "test_resilience_id": "resilience_valid_123"
 }

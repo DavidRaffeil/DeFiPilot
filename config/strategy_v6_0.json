@@ -3,10 +3,20 @@
   "description": "Strategie DeFiPilot V6.0 — logique deterministe context/profil/exits",
 
   "mode_execution": "simulation",
+  "dry_run": true,
+  "slippage_tolerance_pct": 0.5,
+  "max_slippage_pct": 1.0,
   "mode_global": "NORMAL",
 
   "profile_default": "prudent",
   "capital_initial_usdc": 1.0,
+
+  "trading_pairs": [
+    "USDC-WETH",
+    "USDC-USDT",
+    "WETH-WBTC",
+    "USDC-POL"
+  ],
 
   "allocations": {
     "prudent": 1.0,
@@ -18,9 +28,16 @@
   },
 
   "rebalance": {
-    "enabled": false,
-    "threshold_pct": 0.1,
-    "cooldown_minutes": 0
+    "enabled": true,
+    "threshold_pct": 0.05,
+    "cooldown_minutes": 15,
+    "min_trade_amount_usd": 1.0
+  },
+
+  "risk_management": {
+    "stop_loss_pct": 5.0,
+    "take_profit_pct": 10.0,
+    "max_drawdown_pct": 15.0
   },
 
   "market_guardrails": {
@@ -46,12 +63,12 @@
   },
 
   "limites": {
-    "max_invest_par_jour_usd": 5.0,
-    "max_invest_par_pool_usd": 5.0,
+    "max_invest_par_jour_usd": 50.0,
+    "max_invest_par_pool_usd": 20.0,
     "max_invest_par_bucket_usd": {
-      "prudent": 0.0,
-      "modere": 0.0,
-      "agressif": 0.0
+      "prudent": 50.0,
+      "modere": 30.0,
+      "agressif": 20.0
     }
   },
 

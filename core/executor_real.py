@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from typing import Any, Dict
 from core.swap_reel import executer_swap_reel
+from core.dry_run_guard import is_dry_run_enabled, DryRunSafetyViolation
 
 ALLOWED_STATUSES = {"EXECUTED", "BLOCKED", "CRITICAL"}
 
@@ -63,15 +64,14 @@ def executer_action_reelle(action: dict, run_id: str) -> dict:
         kind = action.get("kind")
         
         if kind == "swap":
-            # Si on est en simulation (dry_run), on simule l'opération sans solliciter le DEX
-            if action.get("dry_run") is True:
+            is_dry = action.get("dry_run") is True or is_dry_run_enabled()
+            if is_dry:
                 return {
                     "status": "EXECUTED",
                     "tx_hash": None,
-                    "details": {"status": "SUCCESS", "reason": "simulation_swap_ok"}
+                    "details": {"status": "SUCCESS", "reason": "simulation_swap_ok", "mode": "[SIMULATION / DRY-RUN]"}
                 }
             
-            # Bloc d'exécution réelle : uniquement exécuté si dry_run n'est pas True
             params = action.get("params", {})
             TOKENS = {
                 "USDC": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
@@ -87,12 +87,19 @@ def executer_action_reelle(action: dict, run_id: str) -> dict:
                     token_in=tokenA,
                     token_out=tokenB,
                     amount_in_wei=int(params.get("amountA", 0) * 10**6),
-                    confirm=True
+                    confirm=True,
+                    dry_run=is_dry
                 )
                 return {
                     "status": "EXECUTED",
                     "tx_hash": result.get("tx_hash"),
                     "details": result
+                }
+            except DryRunSafetyViolation as e:
+                return {
+                    "status": "BLOCKED",
+                    "tx_hash": None,
+                    "details": {"status": "BLOCKED", "reason": "dry_run_safety_violation", "error": str(e)}
                 }
             except Exception as e:
                 return {
