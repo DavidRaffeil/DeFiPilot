@@ -23,6 +23,7 @@ from web3.exceptions import ContractLogicError, ABIFunctionNotFound
 
 from core.real_wallet import get_wallet_address, get_private_key
 from core.execution.journal import enregistrer_liquidity_csv, enregistrer_liquidity_jsonl
+from core.dry_run_guard import assert_dry_run_safe, is_dry_run_enabled
 
 logger = logging.getLogger(__name__)
 
@@ -199,18 +200,18 @@ def ajouter_liquidite_reelle(
             except Exception:
                 gas_price = int(30 * 1e9)
 
-            nonce = w3.eth.get_transaction_count(wallet_cs)
-            private_key = get_private_key(wallet_name)
-            if not private_key:
-                raise RuntimeError("private key introuvable")
-
-            if dry_run:
+            if is_dry_run_enabled({"dry_run": dry_run}):
                 tx_status = "skipped(dry_run)"
                 logger.info(
-                    "[V3.8.18] DRY-RUN addLiquidity %s/%s A=%s B=%s slippage=%s",
+                    "[SIMULATION / DRY-RUN] addLiquidity %s/%s A=%s B=%s slippage=%s",
                     tokenA_symbol, tokenB_symbol, amountA, amountB, slippage,
                 )
             else:
+                assert_dry_run_safe(action_type="add_liquidity", config={"dry_run": dry_run})
+                private_key = get_private_key(wallet_name)
+                if not private_key:
+                    raise RuntimeError("private key introuvable")
+
                 tx = router_contract.functions.addLiquidity(
                     tokenA_cs,
                     tokenB_cs,
@@ -334,8 +335,8 @@ def ajouter_liquidite_reelle(
             "slippage_bps": slippage_bps,
         }
 
-        enregistrer_liquidity_csv(**data_v38)
-        enregistrer_liquidity_jsonl(**data_v38)
+        enregistrer_liquidity_csv(data_v38)
+        enregistrer_liquidity_jsonl(data_v38)
     except Exception as log_exc:
         logger.error("[V3.8.18] ⚠️ Journalisation standard échouée: %s", log_exc)
 

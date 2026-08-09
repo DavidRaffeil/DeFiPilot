@@ -91,7 +91,41 @@ def mettre_a_jour_solde(gain):
     os.makedirs("data", exist_ok=True)
     with open(FICHIER_WALLET, "w", encoding="utf-8") as f:
         json.dump({"solde": nouveau_solde}, f, indent=2)
+    with open("solde_simule.json", "w", encoding="utf-8") as f:
+        json.dump({"solde": nouveau_solde}, f, indent=2)
     return nouveau_solde
+
+
+def appliquer_ordre_simule(montant_usd: float, gas_usd: float = 0.05, slippage_pct: float = 0.5) -> dict:
+    """Appliquer une transaction simulée sur le solde virtuel avec frais de Gas et slippage.
+
+    - montant_usd : montant engagé dans l'ordre.
+    - gas_usd : coût estimé du Gas en USD.
+    - slippage_pct : pourcentage de perte par slippage.
+
+    Retourne les détails de la mise à jour du solde.
+    """
+    solde_avant = charger_solde()
+    perte_slippage_usd = round(montant_usd * (slippage_pct / 100.0), 4)
+    frais_totaux_usd = round(gas_usd + perte_slippage_usd, 4)
+    solde_apres = round(max(0.0, solde_avant - frais_totaux_usd), 4)
+
+    os.makedirs("data", exist_ok=True)
+    with open(FICHIER_WALLET, "w", encoding="utf-8") as f:
+        json.dump({"solde": solde_apres}, f, indent=2)
+    with open("solde_simule.json", "w", encoding="utf-8") as f:
+        json.dump({"solde": solde_apres}, f, indent=2)
+
+    return {
+        "tag": "[SIMULATION / DRY-RUN]",
+        "solde_avant_usd": solde_avant,
+        "solde_apres_usd": solde_apres,
+        "montant_ordre_usd": montant_usd,
+        "gas_usd": gas_usd,
+        "slippage_pct": slippage_pct,
+        "perte_slippage_usd": perte_slippage_usd,
+        "frais_totaux_usd": frais_totaux_usd,
+    }
 
 
 def ligne_deja_presente(date_str):

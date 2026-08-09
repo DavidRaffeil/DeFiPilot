@@ -2,17 +2,24 @@
 """Coeur d'exécution DeFiPilot V6.0.
 
 Ce module centralise la logique de démarrage (détection de mode,
-initialisation du logging, routage GUI/CLI/Simulation) sans dépendre
-d'un launcher externe.
+initialisation du logging, verrou de sécurité Dry-Run, routage GUI/CLI/Simulation)
+sans dépendre d'un launcher externe.
 """
 
 from __future__ import annotations
 
-from pathlib import Path
 import importlib
+import json
 import logging
+from pathlib import Path
 import sys
-from typing import Callable, Optional
+from typing import Any, Callable, Dict, Optional
+
+from core.dry_run_guard import (
+    DryRunSafetyViolation,
+    is_dry_run_enabled,
+    set_dry_run_mode,
+)
 
 APP_VERSION: str = "V6.0"
 _LOGGER_NAME = "DeFiPilot.V6Core"
@@ -21,6 +28,21 @@ _LOGGER_NAME = "DeFiPilot.V6Core"
 def get_project_root() -> Path:
     """Retourner le dossier projet (répertoire du fichier courant)."""
     return Path(__file__).resolve().parent
+
+
+def load_strategy_config() -> Dict[str, Any]:
+    """Charger la configuration de stratégie V6.0 si disponible."""
+    cfg_path = get_project_root() / "config" / "strategy_v6_0.json"
+    if not cfg_path.exists():
+        return {}
+    try:
+        with cfg_path.open("r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as exc:
+        logging.getLogger(_LOGGER_NAME).warning(
+            "Impossible de charger strategy_v6_0.json: %s", exc
+        )
+        return {}
 
 
 def setup_logging(log_filename: str = "main_v6_core.log") -> None:
@@ -119,6 +141,13 @@ def run_cli(argv: list[str]) -> int:
         if isinstance(result, int):
             return 0 if result == 0 else 1
         return 0
+    except DryRunSafetyViolation as exc:
+        logger.critical(
+            "[SIMULATION / DRY-RUN] [SAFETY LOCK] Tentative d'action réelle bloquée en mode simulation : %s",
+            exc,
+        )
+        print(f"[SIMULATION / DRY-RUN] [SAFETY LOCK BLOCKED] {exc}")
+        return 0
     except (ImportError, AttributeError):
         print("CLI V6 indisponible : composant manquant.")
         return 2
@@ -134,19 +163,26 @@ def run_simulation(argv: list[str]) -> int:
     try:
         simulation_func = _resolve_callable("core.simulation", ["run_simulation", "main_simulation"])
         if simulation_func is None:
-            print("Simulation V6 indisponible")
+            print("[SIMULATION / DRY-RUN] Simulation V6 indisponible")
             return 2
 
         result = simulation_func(argv)
         if isinstance(result, int):
             return 0 if result == 0 else 1
         return 0
+    except DryRunSafetyViolation as exc:
+        logger.critical(
+            "[SIMULATION / DRY-RUN] [SAFETY LOCK] Tentative d'action réelle bloquée en simulation : %s",
+            exc,
+        )
+        print(f"[SIMULATION / DRY-RUN] [SAFETY LOCK BLOCKED] {exc}")
+        return 0
     except (ImportError, AttributeError):
-        print("Simulation V6 indisponible")
+        print("[SIMULATION / DRY-RUN] Simulation V6 indisponible")
         return 2
     except Exception:
         logger.exception("Erreur inattendue pendant l'exécution de la simulation.")
-        print("Une erreur inattendue est survenue pendant l'exécution de la simulation.")
+        print("[SIMULATION / DRY-RUN] Une erreur inattendue est survenue pendant l'exécution de la simulation.")
         return 1
 
 
@@ -155,9 +191,16 @@ def main(argv: list[str] | None = None) -> int:
     args = sys.argv[1:] if argv is None else argv
     setup_logging()
 
-    mode = detect_mode(args)
     logger = logging.getLogger(_LOGGER_NAME)
+    strategy_cfg = load_strategy_config()
+
+    mode = detect_mode(args)
     logger.info("Mode détecté : %s", mode)
+
+    # Activer le verrou Dry-Run si en mode simulation ou si configuré dans strategy_v6_0.json
+    if mode == "simulate" or is_dry_run_enabled(strategy_cfg):
+        set_dry_run_mode(True)
+        logger.info("[SIMULATION / DRY-RUN] Garde-fou (Safety Lock) actif : toute transaction réelle est verrouillée.")
 
     if mode == "help":
         print_help()

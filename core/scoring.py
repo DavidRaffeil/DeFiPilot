@@ -1,54 +1,61 @@
-# core/scoring.py – Version V1.8 avec bonus historique
-"""Module de calcul de score des pools DeFi.
+# core/scoring.py – Version V6.0 Multi-Facteurs
+"""Module de calcul de score multi-critères des pools DeFi (V6.0).
 
-Cette version combine APR, TVL et un bonus/malus basé sur l'historique.
-Elle est utilisée comme base pour les versions ultérieures (V5.x / V6.x).
-
-Fonctions principales
----------------------
-- charger_ponderations(profil_nom): retourne les pondérations APR/TVL d'un profil.
-- charger_profil_utilisateur(): construit un profil utilisateur par défaut.
-- calculer_score_pool(): calcule le score d'une pool.
-- calculer_scores(): applique le scoring à une liste de pools.
-- calculer_scores_et_gains(): renvoie le top 3 et un estimateur de gains.
+Cette version combine de manière déterministe :
+- Rendement (APR/APY) avec pénalité sur les taux excessifs/anormaux (> 1000%),
+- Liquidité (TVL échelle logarithmique + tendance de croissance TVL),
+- Volume 24h & turnover Volume/TVL (avec imputation si manquant),
+- Facteur de risque / volatilité de la paire,
+- Bonus/malus basé sur l'historique des performances.
 """
 
 from __future__ import annotations
 
+import math
 from typing import Any, Iterable, Mapping
 
 from core import historique
 
 
-# Pondérations de base par profil de risque
+# Pondérations multi-facteurs par profil de risque
 PROFILS: dict[str, dict[str, float]] = {
     "prudent": {
-        "apr": 0.2,
-        "tvl": 0.8,
+        "apr": 0.20,
+        "tvl": 0.50,
+        "volume": 0.20,
+        "risk": 0.10,
         "historique_max_bonus": 0.10,
         "historique_max_malus": -0.05,
     },
     "modere": {
-        "apr": 0.3,
-        "tvl": 0.7,
+        "apr": 0.35,
+        "tvl": 0.35,
+        "volume": 0.20,
+        "risk": 0.10,
         "historique_max_bonus": 0.15,
         "historique_max_malus": -0.10,
     },
     "equilibre": {
-        "apr": 0.5,
-        "tvl": 0.5,
+        "apr": 0.45,
+        "tvl": 0.30,
+        "volume": 0.15,
+        "risk": 0.10,
         "historique_max_bonus": 0.20,
         "historique_max_malus": -0.10,
     },
     "dynamique": {
-        "apr": 0.7,
-        "tvl": 0.3,
+        "apr": 0.60,
+        "tvl": 0.20,
+        "volume": 0.10,
+        "risk": 0.10,
         "historique_max_bonus": 0.25,
         "historique_max_malus": -0.15,
     },
     "agressif": {
-        "apr": 0.8,
-        "tvl": 0.2,
+        "apr": 0.75,
+        "tvl": 0.10,
+        "volume": 0.10,
+        "risk": 0.05,
         "historique_max_bonus": 0.30,
         "historique_max_malus": -0.20,
     },
@@ -57,35 +64,96 @@ PROFILS: dict[str, dict[str, float]] = {
 
 def _to_float(value: Any, default: float = 0.0) -> float:
     """Convertit une valeur en float, avec valeur par défaut en cas d'échec."""
-
     try:
         return float(value)
     except (TypeError, ValueError):
         return default
 
 
-def _extraire_pool_id(pool: Mapping[str, Any] | None) -> str:
-    """Extrait un identifiant stable et hashable pour une pool.
+def _extraire_valeur_cle(pool: Mapping[str, Any], cles: list[str], default: float = 0.0) -> float:
+    """Extraire la première valeur numérique trouvée pour une liste de clés alternatives."""
+    if not isinstance(pool, Mapping):
+        return default
+    for cle in cles:
+        valeur = pool.get(cle)
+        if isinstance(valeur, (int, float)):
+            return float(valeur)
+        if isinstance(valeur, str):
+            try:
+                return float(valeur.strip().replace("%", ""))
+            except ValueError:
+                pass
+    return default
 
-    On privilégie les champs explicites (pool_id, id, address).
-    À défaut, on reconstruit un identifiant à partir de
-    (plateforme, chaîne, token0, token1, nom).
+
+def _normaliser_apr(apr_raw: float) -> float:
+    """Normaliser le rendement (APR/APY).
+
+    - Convertit le décimal en pourcentage si apr <= 5.0 (ex. 0.05 -> 5%, 2.5 -> 250%).
+    - Applique une pénalité progressive sur les APRs excessifs/anormaux (> 1000%).
     """
+    if apr_raw <= 0:
+        return 0.0
+    apr = apr_raw * 100.0 if apr_raw <= 5.0 else apr_raw
 
+    if apr > 1000.0:
+        score = 100.0 - min(50.0, (apr - 1000.0) / 100.0)
+    else:
+        score = min(100.0, apr)
+    return max(0.0, score)
+
+
+def _normaliser_tvl(tvl_usd: float, tvl_trend: float = 0.0) -> float:
+    """Normaliser la TVL avec échelle logarithmique et tendance.
+
+    Log10(max(1, TVL)) * 12.5 (1M TVL -> 75, 10M TVL -> 87.5, 100M TVL -> 100).
+    """
+    if tvl_usd <= 0:
+        return 0.0
+    score_base = min(100.0, math.log10(max(1.0, tvl_usd)) * 12.5)
+    facteur_tendance = 1.0 + max(-0.10, min(0.10, tvl_trend))
+    return max(0.0, min(100.0, score_base * facteur_tendance))
+
+
+def _normaliser_volume(volume_24h: float, tvl_usd: float) -> float:
+    """Normaliser le volume 24h avec imputation si manquant."""
+    if volume_24h <= 0:
+        # Imputation automatique : volume estimé à 10% de la TVL
+        volume_24h = max(0.0, tvl_usd * 0.10)
+
+    if volume_24h <= 0:
+        return 0.0
+
+    score_base = min(100.0, math.log10(max(1.0, volume_24h)) * 15.0)
+    return max(0.0, score_base)
+
+
+def _normaliser_risque(risk_val: float, apr_raw: float) -> float:
+    """Normaliser la note de risque/volatilité (0.0 = ultra sûr, 1.0 = très risqué)."""
+    if risk_val <= 0 and apr_raw > 0:
+        apr_pct = apr_raw * 100.0 if apr_raw <= 1.0 else apr_raw
+        risk_val = min(1.0, max(0.05, apr_pct / 200.0))
+    elif risk_val <= 0:
+        risk_val = 0.20
+
+    score_secu = max(0.0, 100.0 * (1.0 - min(1.0, risk_val)))
+    return score_secu
+
+
+def _extraire_pool_id(pool: Mapping[str, Any] | None) -> str:
+    """Extrait un identifiant stable et hashable pour une pool."""
     if not isinstance(pool, Mapping):
         return ""
 
-    # 1) Identifiant explicite si disponible
-    for cle in ("pool_id", "id", "address"):
+    for cle in ("pool_id", "id", "address", "pool", "nom", "name", "symbols", "pair"):
         valeur = pool.get(cle)
         if isinstance(valeur, str) and valeur.strip():
             return valeur.strip()
-        if valeur is not None:
+        if valeur is not None and not isinstance(valeur, (dict, list)):
             valeur_str = str(valeur).strip()
             if valeur_str:
                 return valeur_str
 
-    # 2) Construction à partir des métadonnées de la pool
     plateforme = pool.get("plateforme") or pool.get("platform")
     chaine = pool.get("chaine") or pool.get("chain")
     token0 = pool.get("token0") or pool.get("token_a") or pool.get("asset0")
@@ -100,22 +168,22 @@ def _extraire_pool_id(pool: Mapping[str, Any] | None) -> str:
 
 
 def charger_ponderations(profil_nom: str) -> Mapping[str, float]:
-    """Retourne les pondérations associées à un profil de risque.
-
-    Si le profil n'existe pas, on renvoie le profil "modere".
-    """
-
+    """Retourne les pondérations associées à un profil de risque."""
     return PROFILS.get(profil_nom, PROFILS["modere"])
 
 
 def charger_profil_utilisateur() -> dict[str, Any]:
     """Construit un profil utilisateur par défaut compatible avec le scoring."""
-
     profil_nom = "modere"
     base = PROFILS.get(profil_nom, PROFILS["modere"])
     return {
         "nom": profil_nom,
-        "ponderations": {"apr": base["apr"], "tvl": base["tvl"]},
+        "ponderations": {
+            "apr": base["apr"],
+            "tvl": base["tvl"],
+            "volume": base.get("volume", 0.20),
+            "risk": base.get("risk", 0.10),
+        },
         "historique_max_bonus": base["historique_max_bonus"],
         "historique_max_malus": base["historique_max_malus"],
     }
@@ -127,22 +195,25 @@ def calculer_score_pool(
     historique_pools: Any,
     profil: Mapping[str, Any],
 ) -> float:
-    """Calcule le score d'une pool en combinant APR, TVL et historique.
+    """Calcule le score multi-facteurs d'une pool (APR, TVL, Volume, Risque, Historique)."""
+    apr_raw = _extraire_valeur_cle(pool, ["apr", "apy", "rendement", "apr_pct"], default=0.0)
+    tvl_raw = _extraire_valeur_cle(pool, ["tvl_usd", "tvl", "liquidity", "tvlUSD"], default=0.0)
+    vol_raw = _extraire_valeur_cle(pool, ["volume_24h", "volume", "volume_usd", "volume24h"], default=0.0)
+    trend_raw = _extraire_valeur_cle(pool, ["tvl_trend", "tvl_growth", "tvl_change_pct"], default=0.0)
+    risk_raw = _extraire_valeur_cle(pool, ["risk_score", "volatilite", "volatility", "risk_level"], default=0.0)
 
-    - `ponderations["apr"]` et `ponderations["tvl"]` pondèrent respectivement APR et TVL.
-    - `historique_pools` est transmis au module `historique` pour calculer un bonus/malus.
-    - `profil` contient `historique_max_bonus` et `historique_max_malus`.
-    """
+    poids_apr = float(ponderations.get("apr", 0.35))
+    poids_tvl = float(ponderations.get("tvl", 0.35))
+    poids_vol = float(ponderations.get("volume", 0.20))
+    poids_risk = float(ponderations.get("risk", 0.10))
 
-    apr = _to_float(pool.get("apr"))
-    tvl = _to_float(pool.get("tvl_usd"))
+    s_apr = _normaliser_apr(apr_raw)
+    s_tvl = _normaliser_tvl(tvl_raw, trend_raw)
+    s_vol = _normaliser_volume(vol_raw, tvl_raw)
+    s_risk = _normaliser_risque(risk_raw, apr_raw)
 
-    poids_apr = float(ponderations.get("apr", 0.0))
-    poids_tvl = float(ponderations.get("tvl", 0.0))
+    score_brut = (s_apr * poids_apr) + (s_tvl * poids_tvl) + (s_vol * poids_vol) + (s_risk * poids_risk)
 
-    score = apr * poids_apr + tvl * poids_tvl
-
-    # Identifiant pour l'historique : on essaie d'abord l'ID technique, sinon un nom lisible
     pool_id = _extraire_pool_id(pool)
     if not pool_id:
         pool_id = f"{pool.get('plateforme')} | {pool.get('nom')}"
@@ -154,12 +225,12 @@ def calculer_score_pool(
             max_bonus=float(profil.get("historique_max_bonus", 0.15)),
             max_malus=float(profil.get("historique_max_malus", -0.10)),
         )
-    except Exception as exc:  # défense : ne jamais casser tout le scoring pour un bug d'historique
+    except Exception as exc:
         print(f"[WARN] Bonus historique ignoré pour {pool_id} : {exc}")
         bonus = 0.0
 
-    score *= 1.0 + float(bonus)
-    return round(score, 2)
+    score_final = score_brut * (1.0 + float(bonus))
+    return round(score_final, 2)
 
 
 def calculer_scores(
@@ -168,12 +239,7 @@ def calculer_scores(
     historique_pools: Any,
     profil: Mapping[str, Any],
 ) -> list[dict[str, Any]]:
-    """Ajoute un score à chaque pool et retourne la liste filtrée.
-
-    - Ignorer les pools sans identifiant exploitable (warning).
-    - En cas d'erreur sur une pool, on loggue et on continue.
-    """
-
+    """Ajoute un score multi-facteurs à chaque pool et retourne la liste filtrée."""
     pools_valides: list[dict[str, Any]] = []
 
     for pool in pools:
@@ -192,7 +258,6 @@ def calculer_scores(
             print(f"[WARN] Échec scoring pool {pool_id} : {exc}")
             continue
 
-        # On travaille sur une copie pour éviter de modifier l'objet d'origine si ce n'est pas un dict
         pool_dict = dict(pool)
         pool_dict["score"] = score
         pools_valides.append(pool_dict)
@@ -206,16 +271,12 @@ def calculer_scores_et_gains(
     solde: float,
     historique_pools: Any,
 ) -> tuple[list[tuple[str, float, float]], float]:
-    """Calcule le top 3 des pools et les gains estimés pour un solde donné.
-
-    Retourne :
-    - une liste de tuples (nom_pool, apr, gain_journalier)
-    - le gain total journalier sur le top 3
-    """
-
+    """Calcule le top 3 des pools et les gains estimés pour un solde donné."""
     ponderations = profil.get("ponderations") or {
         "apr": PROFILS["modere"]["apr"],
         "tvl": PROFILS["modere"]["tvl"],
+        "volume": PROFILS["modere"]["volume"],
+        "risk": PROFILS["modere"]["risk"],
     }
 
     pools_scored = calculer_scores(pools, ponderations, historique_pools, profil)
@@ -232,8 +293,9 @@ def calculer_scores_et_gains(
             continue
 
         apr = _to_float(pool.get("apr"))
+        apr_pct = apr * 100.0 if apr <= 1.0 else apr
         nom = f"{pool.get('plateforme')} | {pool.get('nom')}"
-        gain = round((solde * apr / 100.0) / 365.0, 2)  # estimation de gain journalier
+        gain = round((solde * apr_pct / 100.0) / 365.0, 2)
         resultats.append((nom, apr, gain))
         gain_total += gain
 

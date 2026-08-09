@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 def _valider_parametres(*args, **kwargs):
     pass
@@ -36,6 +36,11 @@ DEFAULT_PARAMS: Dict[str, Any] = {
     "max_shift_ratio": 0.3,
     "min_total_usd": 10.0,
     "max_actions": 20,
+    "min_trade_amount_usd": 1.0,
+    "min_profitability_ratio": 1.5,
+    "estimated_gas_usd_per_action": 0.05,
+    "slippage_pct": 0.5,
+    "min_score_delta": 0.5,
 }
 
 # =====================
@@ -117,6 +122,43 @@ def _calculer_allocation_cible_usd(
 
 
 # =====================
+# Arbitrage & Rentabilité Nette
+# =====================
+
+
+def _verifier_rentabilite_nette(
+    actions: List[Dict[str, Any]],
+    options: Dict[str, Any],
+    total_usd: float,
+    expected_apr_gain_pct: float = 0.02,
+) -> Tuple[bool, Optional[str], float, float]:
+    """Vérifie si les gains de rendement projetés dépassent les frais de Gas et de slippage."""
+    if not actions:
+        return True, None, 0.0, 0.0
+
+    gas_per_action = float(options.get("estimated_gas_usd_per_action", DEFAULT_PARAMS["estimated_gas_usd_per_action"]))
+    slippage_pct = float(options.get("slippage_pct", DEFAULT_PARAMS["slippage_pct"]))
+    min_profitability_ratio = float(options.get("min_profitability_ratio", DEFAULT_PARAMS["min_profitability_ratio"]))
+
+    nb_actions = len(actions)
+    total_gas = nb_actions * gas_per_action
+    total_slippage = sum(float(a.get("montant_usd", 0.0)) * (slippage_pct / 100.0) for a in actions)
+    frais_totaux = total_gas + total_slippage
+
+    volume_realloue = sum(float(a.get("montant_usd", 0.0)) for a in actions if a.get("action") == "augmenter")
+    gain_projetes = volume_realloue * expected_apr_gain_pct
+
+    if frais_totaux > 0 and gain_projetes < frais_totaux * min_profitability_ratio:
+        motif = (
+            f"Rentabilité nette insuffisante : frais estimatifs ({frais_totaux:.2f} USD) "
+            f"supérieurs au gain net projeté ({gain_projetes:.2f} USD x ratio {min_profitability_ratio})."
+        )
+        return False, motif, frais_totaux, gain_projetes
+
+    return True, None, frais_totaux, gain_projetes
+
+
+# =====================
 # Construction des actions
 # =====================
 
@@ -133,6 +175,7 @@ def _construire_actions(
     motif_annulation = None
 
     max_shift_ratio = float(options.get("max_shift_ratio", DEFAULT_PARAMS["max_shift_ratio"]))
+    min_trade_amount_usd = float(options.get("min_trade_amount_usd", DEFAULT_PARAMS["min_trade_amount_usd"]))
     plafond = max_shift_ratio * total_usd
 
     for cat in CATEGORIES:
@@ -141,8 +184,13 @@ def _construire_actions(
         delta = cible - actuel
         if abs(delta) <= 0:
             continue
-        action = "augmenter" if delta > 0 else "reduire"
+
         montant = abs(delta)
+        # Filtrage par montant minimum de transaction
+        if montant < min_trade_amount_usd:
+            continue
+
+        action = "augmenter" if delta > 0 else "reduire"
         actions.append({
             "categorie": cat,
             "action": action,
@@ -263,7 +311,11 @@ def generer_plan_reequilibrage_contexte(
     total = _determiner_total_usd(allocation_actuelle, total_usd)
 
     limites = params_strategie.get("limites", {})
-    options = {**DEFAULT_PARAMS, **limites}
+    rebalance_cfg = params_strategie.get("rebalance", {})
+    if isinstance(rebalance_cfg, dict):
+        options = {**DEFAULT_PARAMS, **limites, **rebalance_cfg}
+    else:
+        options = {**DEFAULT_PARAMS, **limites}
 
     mode_execution = params_strategie.get("mode_execution", "simulation")
     mode_safety = "reel" if isinstance(mode_execution, str) and mode_execution.lower() == "reel" else "simulation"
@@ -277,6 +329,7 @@ def generer_plan_reequilibrage_contexte(
 
     signaux_summary = _resumer_signaux(signaux_normalises)
     plan: Dict[str, Any] = {
+        "tag": "[SIMULATION / DRY-RUN]" if mode_safety == "simulation" else "[REEL]",
         "context": contexte,
         "profil": profil,
         "run_id": run_id,
@@ -296,6 +349,12 @@ def generer_plan_reequilibrage_contexte(
         _journaliser_plan(plan, journal_path)
         return plan
 
+    if isinstance(rebalance_cfg, dict):
+        if rebalance_cfg.get("enabled") is False:
+            safety["motif_annulation"] = "Rééquilibrage désactivé dans la stratégie (rebalance.enabled = False)."
+            _journaliser_plan(plan, journal_path)
+            return plan
+
     if total <= 0.0:
         safety["motif_annulation"] = "Total du portefeuille non valide."
         _journaliser_plan(plan, journal_path)
@@ -306,8 +365,34 @@ def generer_plan_reequilibrage_contexte(
         _journaliser_plan(plan, journal_path)
         return plan
 
+    # Arbitrage par écart de score minimum (min_score_delta)
+    min_score_delta = options.get("min_score_delta")
+    score_delta = params_strategie.get("score_delta")
+    if isinstance(min_score_delta, (int, float)) and isinstance(score_delta, (int, float)):
+        if float(score_delta) < float(min_score_delta):
+            safety["motif_annulation"] = (
+                f"Écart de score ({float(score_delta):.2f}) inférieur au seuil d'arbitrage minimum ({float(min_score_delta):.2f})."
+            )
+            _journaliser_plan(plan, journal_path)
+            return plan
+
     allocation_cible = _calculer_allocation_cible_usd(profil, contexte, total, signaux_summary)
     plan["allocation_cible_usd"] = allocation_cible
+
+    # Vérification du seuil de rééquilibrage threshold_pct
+    if isinstance(rebalance_cfg, dict) and "threshold_pct" in rebalance_cfg:
+        threshold_pct = float(rebalance_cfg.get("threshold_pct", 0.05))
+        max_delta_pct = max(
+            abs((allocation_cible.get(cat, 0.0) - allocation_actuelle.get(cat, 0.0)) / total)
+            for cat in CATEGORIES
+        ) if total > 0 else 0.0
+
+        if max_delta_pct < threshold_pct:
+            safety["motif_annulation"] = (
+                f"Écarts d'allocation ({max_delta_pct*100:.2f}%) inférieurs au seuil configuré ({threshold_pct*100:.2f}%)."
+            )
+            _journaliser_plan(plan, journal_path)
+            return plan
 
     actions, meta_safety = _construire_actions(
         allocation_actuelle, allocation_cible, contexte, options, total
@@ -315,6 +400,14 @@ def generer_plan_reequilibrage_contexte(
     safety["plan_reduit"] = meta_safety.get("plan_reduit", False)
     if meta_safety.get("motif_annulation"):
         safety["motif_annulation"] = meta_safety.get("motif_annulation")
+
+    # Arbitrage par rentabilité nette (frais de gas et slippage vs gain projeté)
+    est_rentable, motif_rentabilite, frais_totaux, gain_projetes = _verifier_rentabilite_nette(actions, options, total)
+    if not est_rentable:
+        safety["motif_annulation"] = motif_rentabilite
+        plan["actions"] = []
+        _journaliser_plan(plan, journal_path)
+        return plan
 
     plan["actions"] = _preparer_actions_executables(
         actions_brutes=actions,

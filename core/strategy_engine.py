@@ -220,10 +220,25 @@ class StrategyEngine:
         pools: List[PoolCandidate],
         context: Optional[StrategyContext] = None,
     ) -> List[PoolCandidate]:
-        max_concurrent = self.cfg["allocations"]["max_concurrent"]
+        max_concurrent = self.cfg.get("allocations", {}).get("max_concurrent", 1)
         if not pools:
             self._log_warn("Aucune pool fournie ; sélection vide")
             return []
+
+        # Filtrage par la liste blanche des paires de trading si configurée
+        trading_pairs = self.cfg.get("trading_pairs")
+        if isinstance(trading_pairs, list) and trading_pairs:
+            allowed_norm = {p.upper().replace("/", "-").replace("_", "-") for p in trading_pairs}
+            filtered_pools = []
+            for p in pools:
+                sym_norm = p.symbols.upper().replace("/", "-").replace("_", "-")
+                pid_norm = p.pool_id.upper().replace("/", "-").replace("_", "-")
+                if any(pair in sym_norm or pair in pid_norm or sym_norm in pair for pair in allowed_norm):
+                    filtered_pools.append(p)
+            pools = filtered_pools
+            if not pools:
+                self._log_warn("Aucune pool ne correspond à la liste blanche trading_pairs")
+                return []
 
         if any(pool.score is not None for pool in pools):
             sorted_pools = sorted(
@@ -239,7 +254,7 @@ class StrategyEngine:
             )
 
         selected = sorted_pools[:max_concurrent]
-        self._log_info(f"Sélection de {len(selected)} pools candidates")
+        self._log_info(f"Sélection de {len(selected)} pools candidates (filtrées par trading_pairs)")
         return selected
 
     def _compute_exposure_factor(self, context: Optional[StrategyContext]) -> float:
@@ -330,6 +345,7 @@ class StrategyEngine:
 
     def build_actions(self, allocs: List[Allocation], snapshot: PortfolioSnapshot) -> List[Action]:
         actions: List[Action] = []
+        max_slippage = float(self.cfg.get("max_slippage_pct", 1.0))
         for allocation in allocs:
             invest_amount = float(self.cfg.get("capital_initial_usdc", 5.0))
             if invest_amount < 0.5:
@@ -358,7 +374,7 @@ class StrategyEngine:
                 self._log_warn(f"Fonds insuffisants pour {token_manquant}")
                 continue
 
-            actions.append(Action(kind="swap", params={"tokenA": token_a, "tokenB": token_b, "amountA": swap_amount}, dry_run=True))
+            actions.append(Action(kind="swap", params={"tokenA": token_a, "tokenB": token_b, "amountA": swap_amount, "max_slippage_pct": max_slippage}, dry_run=True))
             actions.append(Action(kind="add_liquidity", params={"tokenA": token_a, "tokenB": token_b, "amountA": swap_amount, "amountB": 0.0}, dry_run=True))
             actions.append(Action(kind="stake", params={"pool_id": allocation.pool_id, "amount_lp": invest_amount}, dry_run=True))
         
@@ -372,8 +388,10 @@ class StrategyEngine:
         pools: Optional[List[PoolCandidate]] = None,
         context: Optional[StrategyContext] = None,
     ) -> Dict[str, Any]:
-        """Orchestration V6.0 sans plantage si liste vide."""
+        """Orchestration V6.0 sans plantage si liste vide et rechargement dynamique."""
+        self.cfg = self.load_config()
         self.validate_config()
+        self.profile = self.cfg.get("profile_default", "prudent")
         snapshot = self.snapshot_portfolio()
 
         market = self.detect_market_state()
