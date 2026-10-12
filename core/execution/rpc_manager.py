@@ -101,6 +101,15 @@ class RPCManager:
             try:
                 provider = Web3.HTTPProvider(url, request_kwargs={"timeout": self.timeout})
                 w3 = Web3(provider)
+                try:
+                    from web3.middleware import ExtraDataToPOAMiddleware
+                    w3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
+                except Exception:
+                    try:
+                        from web3.middleware import geth_poa_middleware
+                        w3.middleware_onion.inject(geth_poa_middleware, layer=0)
+                    except Exception:
+                        pass
                 if w3.is_connected():
                     self.current_index = index
                     self.logger.debug(f"Connexion Web3 réussie via le RPC: {url}")
