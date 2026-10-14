@@ -77,8 +77,17 @@ def setup_logging(log_filename: str = "main_v6_core.log") -> None:
     logging.getLogger(_LOGGER_NAME).info("Logging initialisé. Fichier: %s", log_file)
 
 
+def is_dry_run_requested(argv: list[str]) -> bool:
+    """Indiquer si le drapeau --dry-run est présent dans les arguments CLI."""
+    return "--dry-run" in argv
+
+
 def detect_mode(argv: list[str]) -> str:
-    """Déterminer le mode d'exécution à partir des arguments CLI."""
+    """Déterminer le mode d'exécution à partir des arguments CLI.
+
+    Le drapeau --dry-run n'est pas un mode : il se combine avec n'importe quel
+    mode (voir is_dry_run_requested) et ne modifie pas le mode détecté.
+    """
     if "--help" in argv or "-h" in argv:
         return "help"
     if "--gui" in argv:
@@ -98,6 +107,8 @@ def print_help() -> None:
     print("--cli")
     print("--simulate")
     print("--help")
+    print("Options :")
+    print("--dry-run  (force le verrou de sécurité, combinable avec les modes)")
 
 
 def run_gui() -> int:
@@ -197,8 +208,13 @@ def main(argv: list[str] | None = None) -> int:
     mode = detect_mode(args)
     logger.info("Mode détecté : %s", mode)
 
-    # Activer le verrou Dry-Run si en mode simulation ou si configuré dans strategy_v6_0.json
-    if mode == "simulate" or is_dry_run_enabled(strategy_cfg):
+    # Activer le verrou Dry-Run : drapeau --dry-run (prioritaire, quoi qu'il arrive),
+    # mode simulation, ou configuration dans strategy_v6_0.json
+    if is_dry_run_requested(args):
+        set_dry_run_mode(True)
+        logger.info("[SIMULATION / DRY-RUN] Drapeau --dry-run détecté : verrou forcé, ignore la configuration.")
+        logger.info("[SIMULATION / DRY-RUN] Garde-fou (Safety Lock) actif : toute transaction réelle est verrouillée.")
+    elif mode == "simulate" or is_dry_run_enabled(strategy_cfg):
         set_dry_run_mode(True)
         logger.info("[SIMULATION / DRY-RUN] Garde-fou (Safety Lock) actif : toute transaction réelle est verrouillée.")
 

@@ -88,3 +88,7 @@ defipilot.state
 journal_daemon.BROKEN.py
 test/
 versions_archivées/
+
+# --- Fichiers d'état générés par les tests / exécutions ---
+solde_simule.json
+data/health.json

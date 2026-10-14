@@ -7,13 +7,27 @@ strictement en lecture, sans transaction ni signature.
 """
 from __future__ import annotations
 
+import logging
 import os
 from typing import Any, Mapping
 
 from web3 import Web3
 
+from core.dry_run_guard import get_dry_run_mode
+
+LOGGER = logging.getLogger("DeFiPilot.WalletReader")
+
 ENV_RPC_URL = "DEFIPILOT_RPC_URL"
 ENV_WALLET_ADDRESS = "DEFIPILOT_WALLET_ADDRESS"
+
+# Valeurs utilisées uniquement en mode Dry-Run (aucun appel réseau).
+DRY_RUN_DUMMY_ADDRESS = "0x000000000000000000000000000000000000dEaD"
+DRY_RUN_SIMULATED_BALANCES: dict[str, float] = {
+    "native": 0.5,
+    "USDC": 1000.0,
+    "ETH": 0.5,
+    "WETH": 0.5,
+}
 
 ERC20_ABI_MIN = [
     {
@@ -68,6 +82,13 @@ def lire_adresse_env() -> str:
 
     adresse = os.environ.get(ENV_WALLET_ADDRESS, "").strip()
     if not adresse:
+        if get_dry_run_mode():
+            LOGGER.warning(
+                "[DRY-RUN MOCK] %s absent : adresse factice utilisée (%s).",
+                ENV_WALLET_ADDRESS,
+                DRY_RUN_DUMMY_ADDRESS,
+            )
+            return DRY_RUN_DUMMY_ADDRESS
         raise ValueError(
             "Variable d'environnement DEFIPILOT_WALLET_ADDRESS manquante ou vide."
         )
@@ -216,6 +237,15 @@ def lire_soldes_depuis_env(
     Raises:
         ValueError: Si la configuration nécessaire est absente ou invalide.
     """
+
+    # Mock uniquement si le RPC n'est pas configuré ET que le dry-run est actif.
+    if not os.environ.get(ENV_RPC_URL, "").strip() and get_dry_run_mode():
+        LOGGER.warning(
+            "[DRY-RUN MOCK] %s absent : soldes simulés utilisés %s (aucune lecture RPC).",
+            ENV_RPC_URL,
+            DRY_RUN_SIMULATED_BALANCES,
+        )
+        return dict(DRY_RUN_SIMULATED_BALANCES)
 
     rpc_url = lire_rpc_env()
     adresse = lire_adresse_env()

@@ -13,6 +13,7 @@
 
   "trading_pairs": [
     "USDC-WETH",
+    "USDC-ETH",
     "USDC-USDT",
     "WETH-WBTC",
     "USDC-POL"
