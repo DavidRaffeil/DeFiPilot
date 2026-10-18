@@ -84,5 +84,12 @@
     "profit_threshold_usd": 1.0,
     "sweep_pct": 0.5,
     "target_asset": "USDC"
+  },
+
+  "compounding": {
+    "enabled": true,
+    "initial_reinvest_pct": 1.0,
+    "daily_decay_pct": 0.05,
+    "min_reinvest_pct": 0.20
   }
 }
