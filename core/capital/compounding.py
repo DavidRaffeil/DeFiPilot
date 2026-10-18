@@ -53,6 +53,10 @@ class TimeDecayCompounder:
         self.pool_id: Optional[str] = None
         self.entry_timestamp: Optional[Decimal] = None
 
+    @property
+    def enabled(self) -> bool:
+        return self.config.enabled
+
     def get_reinvestment_rate(self, current_timestamp: Any, pool_id: str) -> Decimal:
         cfg = self.config
         now = _dec(current_timestamp)

@@ -62,5 +62,57 @@ class TestE2ESimulationCycle(unittest.TestCase):
         self.assertIn("allocation_simulee_apres_reequilibrage", etat)
 
 
+class TestCapitalCycleCompounding(unittest.TestCase):
+    DAY = 86400
+    T0 = 1_700_000_000
+
+    def _manager(self, cfg=None):
+        import main_v6_core
+        self.reinvested, self.secured = [], []
+        return main_v6_core.CapitalCycleManager(
+            main_v6_core.load_strategy_config() if cfg is None else cfg,
+            reinvest_action=lambda amt, pool: self.reinvested.append((amt, pool)),
+            secure_action=lambda amt: self.secured.append(amt),
+        )
+
+    def test_cycle_routes_allocation_and_logs(self) -> None:
+        from decimal import Decimal
+
+        mgr = self._manager()
+        self.assertTrue(mgr.compounder.enabled)
+        with self.assertLogs("DeFiPilot.V6Core", level="INFO") as cap:
+            r0 = mgr.process_profit("100", self.T0, "poolA")
+            r5 = mgr.process_profit(Decimal("100"), self.T0 + 5 * self.DAY, "poolA")
+        self.assertEqual(r0["reinvest_amount"], Decimal("100.000000"))
+        self.assertEqual(r5["rate"], Decimal("0.75"))
+        self.assertEqual(r5["reinvest_amount"], Decimal("75.000000"))
+        self.assertEqual(r5["secured_amount"], Decimal("25.000000"))
+        for v in r5.values():
+            self.assertIsInstance(v, Decimal)
+        self.assertEqual(self.reinvested[-1], (Decimal("75.000000"), "poolA"))
+        self.assertEqual(self.secured, [Decimal("25.000000")])
+        self.assertEqual(mgr.secured_reserve, Decimal("25.000000"))
+        self.assertTrue(any("pool=poolA jours=5 taux=0.75" in m for m in cap.output))
+
+    def test_pool_change_resets(self) -> None:
+        from decimal import Decimal
+
+        mgr = self._manager()
+        mgr.process_profit("10", self.T0, "poolA")
+        r = mgr.process_profit("10", self.T0 + 9 * self.DAY, "poolB")
+        self.assertEqual(r["rate"], Decimal("1.0"))
+        self.assertEqual(r["secured_amount"], Decimal("0"))
+
+    def test_disabled_or_missing_config_is_classic(self) -> None:
+        from decimal import Decimal
+
+        for cfg in ({}, {"compounding": {"enabled": False}}):
+            mgr = self._manager(cfg)
+            r = mgr.process_profit("100", self.T0 + 30 * self.DAY, "poolA")
+            self.assertEqual(r["reinvest_amount"], Decimal("100.000000"))
+            self.assertEqual(r["secured_amount"], Decimal("0"))
+            self.assertEqual(self.secured, [])
+
+
 if __name__ == "__main__":
     unittest.main()

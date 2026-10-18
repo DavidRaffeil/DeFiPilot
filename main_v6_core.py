@@ -13,8 +13,10 @@ import json
 import logging
 from pathlib import Path
 import sys
-from typing import Any, Callable, Dict, Optional
+from decimal import ROUND_DOWN, Decimal
+from typing import Any, Callable, Dict, Mapping, Optional
 
+from core.capital.compounding import TimeDecayCompounder
 from core.dry_run_guard import (
     DryRunSafetyViolation,
     is_dry_run_enabled,
@@ -127,6 +129,72 @@ def run_gui() -> int:
         logger.exception("Erreur inattendue lors du lancement de l'interface graphique.")
         print("Une erreur inattendue est survenue lors du lancement de l'interface graphique.")
         return 1
+
+
+_QUANT = Decimal("0.000001")
+
+
+class CapitalCycleManager:
+    """Répartit les profits récoltés entre réinvestissement et réserve sécurisée.
+
+    Si la section `compounding` est absente ou désactivée, comportement classique :
+    100 % du profit est réinvesti, sans dégressivité.
+    """
+
+    def __init__(
+        self,
+        strategy_cfg: Optional[Mapping[str, Any]] = None,
+        reinvest_action: Optional[Callable[[Decimal, str], Any]] = None,
+        secure_action: Optional[Callable[[Decimal], Any]] = None,
+    ) -> None:
+        cfg = strategy_cfg or {}
+        comp_cfg = cfg.get("compounding")
+        self.compounder: Optional[TimeDecayCompounder] = (
+            TimeDecayCompounder(comp_cfg) if isinstance(comp_cfg, Mapping) else None
+        )
+        self._reinvest_action = reinvest_action
+        self._secure_action = secure_action
+        self.reinvested_total = Decimal("0")
+        self.secured_reserve = Decimal("0")
+        self._logger = logging.getLogger(_LOGGER_NAME)
+
+    def process_profit(
+        self, profit_amount: Any, current_timestamp: Any, pool_id: str
+    ) -> Dict[str, Decimal]:
+        profit = profit_amount if isinstance(profit_amount, Decimal) else Decimal(str(profit_amount))
+
+        if self.compounder is not None and self.compounder.enabled:
+            alloc = self.compounder.calculate_allocation(profit, current_timestamp, pool_id)
+            reinvest, secured, rate = (
+                alloc["reinvest_amount"], alloc["secured_amount"], alloc["rate"],
+            )
+            days = int(
+                max(Decimal(0), Decimal(str(current_timestamp)) - self.compounder.entry_timestamp)
+                / Decimal(86400)
+            )
+            self._logger.info(
+                "[COMPOUNDING] pool=%s jours=%d taux=%s reinvest=%s secured=%s",
+                pool_id, days, rate, reinvest, secured,
+            )
+        else:
+            reinvest = profit.quantize(_QUANT, rounding=ROUND_DOWN)
+            secured = profit - reinvest
+            rate = Decimal("1")
+            self._logger.info(
+                "[COMPOUNDING] désactivé : réinvestissement classique pool=%s reinvest=%s",
+                pool_id, reinvest,
+            )
+
+        if reinvest > 0:
+            self.reinvested_total += reinvest
+            if self._reinvest_action is not None:
+                self._reinvest_action(reinvest, pool_id)
+        if secured > 0:
+            self.secured_reserve += secured
+            if self._secure_action is not None:
+                self._secure_action(secured)
+
+        return {"rate": rate, "reinvest_amount": reinvest, "secured_amount": secured}
 
 
 def _resolve_callable(module_name: str, func_names: list[str]) -> Optional[Callable[..., object]]:
