@@ -3,7 +3,7 @@
 > 🗣️ **Langue / Language :** le bot fonctionne uniquement en **français** pour le moment.  
 > The bot currently works **in French only** for the moment.
 
-![Version](https://img.shields.io/badge/Version-V6.2.0%20Stable-blue)
+![Version](https://img.shields.io/badge/Version-V6.3.0%20Stable-blue)
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
 ![Made in France](https://img.shields.io/badge/Made%20in-France-lightgrey)
 ![Developed with Antigravity & Gemini](https://img.shields.io/badge/Developed%20with-Antigravity%20%26%20Gemini-purple)
@@ -16,7 +16,7 @@
 1. [Introduction / Introduction](#1-introduction--introduction)  
 2. [Fonctionnalités principales / Key Features](#2-fonctionnalites-principales--key-features)  
 3. [Aperçu visuel / Visual Overview](#3-apercu-visuel--visual-overview)  
-4. [Nouveautés / What's New — Version 6.2.0](#4-nouveautes--whats-new--version-620)  
+4. [Nouveautés / What's New — Version 6.3.0](#4-nouveautes--whats-new--version-630)  
 5. [Historique des versions / Past Versions](#5-historique-des-versions--past-versions)  
 6. [Caractéristiques techniques / Technical Highlights](#6-caracteristiques-techniques--technical-highlights)  
 7. [Prérequis / Requirements](#7-prerequis--requirements)  
@@ -65,6 +65,7 @@ DeFiPilot aims to be a serious and sustainable foundation for automated DeFi inv
 - Scoring pondéré basé sur plusieurs profils (Prudent, Modéré, Risque).  
 - Mode simulation complet avec garde-fou (`DryRunGuard`) pour tests sécurisés sans risque.  
 - Mode réel avec moteur d'exécution Web3, gestion EIP-1559, slippage guard et confirmations on-chain.  
+- **Gestion active du capital** : sécurisation automatique des profits (`ProfitSweeper`) et réinvestissement dégressif (`TimeDecayCompounder`).  
 - Interface graphique Tkinter avec rafraîchissement automatique.  
 - Multi-wallets avec séparation des usages.  
 - Supervision IA via ControlPilot (signaux contextuels).  
@@ -77,6 +78,7 @@ DeFiPilot aims to be a serious and sustainable foundation for automated DeFi inv
 - Weighted scoring based on multiple profiles (Conservative, Moderate, Risk).  
 - Full simulation mode with safety guard (`DryRunGuard`) for zero-risk testing.  
 - Real mode powered by Web3 execution engine, EIP-1559 gas estimation, slippage guard, and on-chain confirmations.  
+- **Active capital management**: automated profit sweeping (`ProfitSweeper`) and dynamic time-decay compounding (`TimeDecayCompounder`).  
 - Tkinter GUI with automatic refresh.  
 - Multi‑wallet support.  
 - AI supervision via ControlPilot (context signals).  
@@ -98,31 +100,36 @@ DeFiPilot’s graphical interface displays key metrics, bot status, ControlPilot
 
 ---
 
-# 4. 🆕 Nouveautés / What's New — Version 6.2.0
+# 4. 🆕 Nouveautés / What's New — Version 6.3.0
 
 ## 📘 Fr
-- **Moteur d'exécution on-chain validé :** Validation réussie en conditions réelles sur Polygon Mainnet (swap contrôlé USDC $\rightarrow$ POL).
-- **Consensus Bor PoA (Polygon) :** Injection native de `ExtraDataToPOAMiddleware` dans `RPCManager` pour supprimer les erreurs d'en-tête de bloc (`ExtraDataLengthError`).
-- **Gestionnaire de gaz EIP-1559 :** Implémentation de `GasEstimator` avec seuil de sécurité (cap à 600 Gwei) et priorité plancher garantie à 30 Gwei.
-- **Protection anti-drain (`SlippageGuard`) :** Calcul de cotation dynamique et vérification stricte du slippage maximum (1 %).
-- **Script d'exécution contrôlée :** Script `scripts/execute_controlled_test_swap.py` avec modes `--dry-run` et confirmation `--confirm`.
-- **Suite de tests étendue :** 45 tests unitaires automatisés validés à 100 %.
+- **Gestion active du capital (Phase 2.1 & 2.2) :**
+  - **`ProfitSweeper` (`core/capital/profit_sweeper.py`) :** Détection automatique des profits excédentaires et sécurisation d'une quote-part dès franchissement du seuil paramétré.
+  - **`TimeDecayCompounder` (`core/capital/compounding.py`) :** Algorithme de réinvestissement composé dynamique dépendant de la durée d'exposition dans la pool (départ à 100 %, dégressivité quotidienne paramétrable, plancher de sécurité garanti à 20 %).
+  - **Calculs financiers haute précision :** Arithmétique stricte en `Decimal` avec arrondi tronqué (`ROUND_DOWN`) à 6 décimales pour éliminer les risques de floating-point.
+  - **Réinitialisation automatique :** Réinitialisation transparente de l'âge d'exposition lors des rotations ou sorties de pool.
+- **Orchestration centrale (`CapitalCycleManager`) :** Intégration dans `main_v6_core.py` pour aiguiller avec précision les profits vers les callbacks de réinvestissement (`reinvest_action`) et de sécurisation (`secure_action`).
+- **Journalisation structurée :** Traçage clair et normalisé des allocations dans les logs (`[COMPOUNDING]`).
+- **Suite de tests étendue :** Validation complète portée à **72 tests unitaires et E2E** exécutés au vert sans régression.
 
 ---
 
 ## 📗 En
-- **Validated On-Chain Execution Engine:** Successful live validation on Polygon Mainnet (controlled USDC $\rightarrow$ POL swap).
-- **Bor PoA Consensus Support:** Built-in `ExtraDataToPOAMiddleware` injection in `RPCManager` preventing block header length errors (`ExtraDataLengthError`).
-- **EIP-1559 Gas Estimator:** Dynamic fee estimation with a 600 Gwei safety cap and a 30 Gwei priority fee floor.
-- **Anti-Drain Protection (`SlippageGuard`):** Real-time Quoter pricing with strict 1% maximum slippage enforcement.
-- **Controlled Execution Script:** Added `scripts/execute_controlled_test_swap.py` supporting both `--dry-run` and explicit `--confirm` modes.
-- **Extended Test Suite:** 45 automated unit tests passing at 100%.
+- **Active Capital Management (Phases 2.1 & 2.2):**
+  - **`ProfitSweeper` (`core/capital/profit_sweeper.py`):** Automated profit detection and sweeping mechanism securing profits when exceeding defined thresholds.
+  - **`TimeDecayCompounder` (`core/capital/compounding.py`):** Dynamic time-decay compounding engine based on pool holding duration (starts at 100%, configurable daily decay rate, 20% safety floor).
+  - **High-Precision Financial Arithmetic:** Strict `Decimal` calculations using 6-decimal floor truncation (`ROUND_DOWN`) to eliminate floating-point drift.
+  - **Automatic Age Reset:** Seamless exposure age reset upon pool rotations or exits.
+- **Core Orchestration (`CapitalCycleManager`):** Embedded into `main_v6_core.py` to route profits between reinvestment (`reinvest_action`) and safety reserves (`secure_action`).
+- **Structured Logging:** Standardized execution tracking in logs (`[COMPOUNDING]`).
+- **Expanded Test Suite:** Full test coverage upgraded to **72 unit and E2E tests**, all passing green with zero regressions.
 
 ---
 
 # 5. 🕓 Historique des versions / Past Versions
 
 ## 📘 Fr
+- **V6.3.0 :** Couche de gestion active du capital (`ProfitSweeper` + `TimeDecayCompounder`), orchestration `CapitalCycleManager` dans `main_v6_core.py` et validation de 72 tests au vert.  
 - **V6.2.0 :** Moteur d'exécution on-chain réel validé sur Polygon Mainnet, intégration PoA Bor, GasEstimator EIP-1559 calibré, SlippageGuard, script de swap sécurisé et 45 tests unitaires au vert.  
 - **V6.1 :** Moteur de simulation sécurisé (Dry-Run Guard), algorithme de scoring fiabilisé, gestion de résilience système (`system_health.py`) et validation complète par tests E2E (29 tests au vert).  
 - **V6.0 :** Refonte Core V6, scoring des pools, daemon de journalisation de stratégie sécurisé, refonte de la couche d'exécution réelle et nettoyage legacy.  
@@ -144,6 +151,7 @@ DeFiPilot’s graphical interface displays key metrics, bot status, ControlPilot
 ---
 
 ## 📗 En
+- **V6.3.0:** Active capital management layer (`ProfitSweeper` + `TimeDecayCompounder`), `CapitalCycleManager` orchestration in `main_v6_core.py`, and 72 passing tests.  
 - **V6.2.0:** Validated live on-chain execution engine on Polygon Mainnet, Bor PoA middleware integration, calibrated EIP-1559 GasEstimator, SlippageGuard, guarded test swap script, and 45 passing unit tests.  
 - **V6.1:** Secured dry-run simulation mode (Dry-Run Guard), refined scoring algorithm, system health resilience (`system_health.py`), and full validation with 29 E2E integration tests.  
 - **V6.0:** Core V6 refactoring, pool scoring engine, secure strategy logging daemon, execution layer fixes and workspace reorganization.  
@@ -167,12 +175,12 @@ DeFiPilot’s graphical interface displays key metrics, bot status, ControlPilot
 ## FR
 DeFiPilot repose sur une architecture modulaire, pensée pour garantir évolutivité et stabilité :
 
-- **`main_v6_core.py` / `run_defipilot_v6.py`** — Points d'entrée principaux du moteur V6.  
-- **`core/`** — Analyse, scoring des pools, garde-fous (`guardrails.py`, `dry_run_guard.py`), suivi de santé système (`system_health.py`), validation d'environnement (`env_validator.py`), CLI (`cli.py`), exécution on-chain sécurisée (`execution/` avec `rpc_manager.py`, `gas_estimator.py`, `slippage_guard.py`).  
+- **`main_v6_core.py` / `run_defipilot_v6.py`** — Points d'entrée principaux du moteur V6 et orchestration du capital (`CapitalCycleManager`).  
+- **`core/`** — Analyse, scoring des pools, gestion active du capital (`capital/` avec `profit_sweeper.py`, `compounding.py`), garde-fous (`guardrails.py`, `dry_run_guard.py`), suivi de santé système (`system_health.py`), validation d'environnement (`env_validator.py`), CLI (`cli.py`), exécution on-chain sécurisée (`execution/` avec `rpc_manager.py`, `gas_estimator.py`, `slippage_guard.py`).  
 - **`scripts/`** — Outils opérationnels contrôlés (`execute_controlled_test_swap.py`, `preflight_check.py`).  
-- **`config/`** — Configurations stratégiques (`strategy_v6_0.json`, `strategy_v5_5.json`), paramètres généraux.  
+- **`config/`** — Configurations stratégiques (`strategy_v6_0.json`, `strategy_v5_5.json`), paramètres de seuil et de compounding.  
 - **`journal_daemon_v6_secure.py` / `analyser_logs.py`** — Daemon de suivi de stratégie et utilitaire d'analyse des journaux.  
-- **`tests/`** — Suite de 45 tests automatisés couvrant les simulations E2E, le scoring, la résilience, la gestion du gaz EIP-1559, le slippage et le mode dry-run.  
+- **`tests/`** — Suite de 72 tests automatisés couvrant les simulations E2E, le scoring, la résilience, la gestion du gaz EIP-1559, le slippage, le mode dry-run, le balayage de profits et le compounding dégressif.  
 - **`data/`** — État persistant du bot (`state.json`, `health.json`).
 
 Le bot utilise principalement **Python 3.11**, **Web3.py**, **Tkinter**, **Pandas**, et l’API **DefiLlama**.
@@ -180,12 +188,12 @@ Le bot utilise principalement **Python 3.11**, **Web3.py**, **Tkinter**, **Panda
 ## EN
 DeFiPilot is built on a modular architecture designed for scalability and stability:
 
-- **`main_v6_core.py` / `run_defipilot_v6.py`** — Core entry points for the V6 engine execution.  
-- **`core/`** — Analysis, pool scoring, safety guards (`guardrails.py`, `dry_run_guard.py`), system health management (`system_health.py`), environment validation (`env_validator.py`), CLI (`cli.py`), secure on-chain execution (`execution/` with `rpc_manager.py`, `gas_estimator.py`, `slippage_guard.py`).  
+- **`main_v6_core.py` / `run_defipilot_v6.py`** — Core entry points for the V6 engine execution and capital orchestration (`CapitalCycleManager`).  
+- **`core/`** — Analysis, pool scoring, active capital management (`capital/` with `profit_sweeper.py`, `compounding.py`), safety guards (`guardrails.py`, `dry_run_guard.py`), system health management (`system_health.py`), environment validation (`env_validator.py`), CLI (`cli.py`), secure on-chain execution (`execution/` with `rpc_manager.py`, `gas_estimator.py`, `slippage_guard.py`).  
 - **`scripts/`** — Controlled operational tools (`execute_controlled_test_swap.py`, `preflight_check.py`).  
-- **`config/`** — Strategic configurations (`strategy_v6_0.json`, `strategy_v5_5.json`), global parameters.  
+- **`config/`** — Strategic configurations (`strategy_v6_0.json`, `strategy_v5_5.json`), sweeping thresholds and compounding parameters.  
 - **`journal_daemon_v6_secure.py` / `analyser_logs.py`** — Secure background strategy daemon and log analytics tool.  
-- **`tests/`** — Automated test suite with 45 tests covering E2E simulations, scoring, resilience, EIP-1559 gas estimation, slippage, and dry-run safety.  
+- **`tests/`** — Automated test suite with 72 tests covering E2E simulations, scoring, resilience, EIP-1559 gas estimation, slippage, dry-run safety, profit sweeping, and time-decay compounding.  
 - **`data/`** — State persistence engine (`state.json`, `health.json`).
 
 The bot relies mainly on **Python 3.11**, **Web3.py**, **Tkinter**, **Pandas**, and the **DefiLlama** API.
@@ -258,7 +266,7 @@ The bot relies mainly on **Python 3.11**, **Web3.py**, **Tkinter**, **Pandas**, 
 
 ## FR
 - **Lancement V6 Core (Mode principal) :** `python run_defipilot_v6.py`
-- **Exécution des tests automatisés (45 tests) :** `pytest`
+- **Exécution des tests automatisés (72 tests) :** `pytest`
 - **Test de pré-vol environnement :** `python scripts/preflight_check.py`
 - **Test de swap contrôlé (Dry-Run) :** `python scripts/execute_controlled_test_swap.py --dry-run`
 - **Lancement du Daemon de Journalisation :** `python journal_daemon_v6_secure.py`
@@ -266,7 +274,7 @@ The bot relies mainly on **Python 3.11**, **Web3.py**, **Tkinter**, **Pandas**, 
 
 ## EN
 - **Launch V6 Core Engine (Main mode):** `python run_defipilot_v6.py`
-- **Run automated test suite (45 tests):** `pytest`
+- **Run automated test suite (72 tests):** `pytest`
 - **Environment preflight check:** `python scripts/preflight_check.py`
 - **Controlled test swap (Dry-Run):** `python scripts/execute_controlled_test_swap.py --dry-run`
 - **Launch Secure Background Logging Daemon:** `python journal_daemon_v6_secure.py`
@@ -279,10 +287,12 @@ The bot relies mainly on **Python 3.11**, **Web3.py**, **Tkinter**, **Pandas**, 
 ## 📘 Fr
 
 ### Prochaines versions
-- **V6.3 :** Synchronisation multi-bots (DeFiPilot + ControlPilot + ArbiPilot).  
-- **V6.4 :** Déploiement sur Orange Pi / infrastructure SBC.  
+- **V6.4 :** Branchement des callbacks on-chain de réinjection et mise en réserve de capital sur Polygon.  
+- **V6.5 :** Synchronisation multi-bots (DeFiPilot + ControlPilot + ArbiPilot).  
+- **V6.6 :** Déploiement sur Orange Pi / infrastructure SBC.  
 
 ### Versions finalisées
+- **V6.3.0 :** Gestion du capital (`ProfitSweeper`, `TimeDecayCompounder`), orchestration `CapitalCycleManager` et 72 tests automatisés validés.  
 - **V6.2.0 :** Moteur d'exécution on-chain validé en direct sur Polygon, intégration PoA Bor, gestion EIP-1559, SlippageGuard et 45 tests unitaires.  
 - **V6.1 :** Simulation sécurisée (Dry-Run Guard), scoring de rééquilibrage, gestion de santé système et suite de 29 tests E2E.  
 - **V6.0 :** Mode unifié V6 Core, scoring des pools, daemon de journalisation sécurisé, réorganisation du dépôt.  
@@ -297,10 +307,12 @@ The bot relies mainly on **Python 3.11**, **Web3.py**, **Tkinter**, **Pandas**, 
 ## 📗 En
 
 ### Upcoming Versions
-- **V6.3:** Multi-bot synchronization (DeFiPilot + ControlPilot + ArbiPilot).  
-- **V6.4:** Deployment on Orange Pi / SBC architecture.  
+- **V6.4:** Live on-chain execution wiring for reinvestment and capital reserve transfers on Polygon.  
+- **V6.5:** Multi-bot synchronization (DeFiPilot + ControlPilot + ArbiPilot).  
+- **V6.6:** Deployment on Orange Pi / SBC architecture.  
 
 ### Completed Versions
+- **V6.3.0:** Capital management layer (`ProfitSweeper`, `TimeDecayCompounder`), `CapitalCycleManager` orchestration, and 72 validated automated tests.  
 - **V6.2.0:** Validated live on-chain execution on Polygon Mainnet, Bor PoA integration, EIP-1559 handling, SlippageGuard, and 45 unit tests.  
 - **V6.1:** Secured dry-run simulation, rebalancing scoring, system health resilience, and 29 E2E test suite.  
 - **V6.0:** Unified V6 Core mode, pool scoring engine, secure background logging daemon, codebase cleanup.  
@@ -362,37 +374,6 @@ Oui, l’architecture modulaire permet d’étendre facilement les stratégies v
 
 **10. Le projet est‑il open source ?**  
 Oui, sous licence CC‑BY‑NC‑SA 4.0.
-
-## EN
-**1. Does DeFiPilot perform transactions automatically?**  
-Yes, if real mode is enabled and confirmed via the execution pipeline. In simulation mode, no blockchain transactions are sent thanks to the `DryRunGuard` safety layer.
-
-**2. Can I run DeFiPilot without the GUI?**  
-Yes, the bot runs efficiently via CLI using `run_defipilot_v6.py`.
-
-**3. Which networks are supported?**  
-Polygon is supported natively with Bor PoA compatibility handling. Other networks will be added later.
-
-**4. Are private keys stored in plain text?**  
-They are loaded via `.env` and never written to logs.
-
-**5. What is the analysis frequency?**  
-It depends on configuration, usually a few seconds.
-
-**6. How does auto‑resume work?**  
-Bot state is stored in `data/` (`state.json` and `health.json`), allowing recovery after a shutdown.
-
-**7. How does AI supervision work?**  
-ControlPilot provides contextual signals (favorable, neutral, unfavorable) affecting strategy.
-
-**8. Where does market data come from?**  
-Mainly from DefiLlama, DEX Quoters, and blockchain RPC endpoints.
-
-**9. Can I add my own strategies?**  
-Yes, the modular architecture supports custom strategy configurations in `config/`.
-
-**10. Is the project open source?**  
-Yes, licensed under CC‑BY‑NC‑SA 4.0.
 
 ---
 
@@ -538,8 +519,8 @@ The user acknowledges that they use DeFiPilot **at their own risk**, understandi
 
 # 16. 🔍 Dernière révision / Last Review
 
-**README V6.2.0 — mis à jour et consolidé.**  
-**README V6.2.0 — updated and consolidated.**
+**README V6.3.0 — mis à jour et consolidé.**  
+**README V6.3.0 — updated and consolidated.**
 
 ---
 
