@@ -17,6 +17,7 @@ from decimal import ROUND_DOWN, Decimal
 from typing import Any, Callable, Dict, Mapping, Optional
 
 from core.capital.compounding import TimeDecayCompounder
+from core.capital.profit_sweeper import ProfitSweeper
 from core.dry_run_guard import (
     DryRunSafetyViolation,
     is_dry_run_enabled,
@@ -135,16 +136,23 @@ _QUANT = Decimal("0.000001")
 
 
 class CapitalCycleManager:
-    """Répartit les profits récoltés entre réinvestissement et réserve sécurisée.
+    """Cycle de capital : compounding dégressif, réserve interne, balayage par palier.
 
-    Si la section `compounding` est absente ou désactivée, comportement classique :
-    100 % du profit est réinvesti, sans dégressivité.
+    1. TimeDecayCompounder répartit 100 % du profit brut (réinvesti / sécurisé).
+    2. La part réinvestie appelle `reinvest_action(pool_id, reinvest_amount)`.
+    3. La part sécurisée alimente `accumulated_reserve` (aucune transaction).
+    4. ProfitSweeper surveille la réserve : dès que le seuil est atteint,
+       `secure_action(amount)` est appelé et la réserve est décrémentée du montant
+       balayé (total si sweep_pct = 1, partiel sinon).
+
+    Si `compounding` est absent ou désactivé : réinvestissement classique à 100 %.
+    Sans section `profit_sweeper` (ou désactivée) : la réserve s'accumule sans sweep.
     """
 
     def __init__(
         self,
         strategy_cfg: Optional[Mapping[str, Any]] = None,
-        reinvest_action: Optional[Callable[[Decimal, str], Any]] = None,
+        reinvest_action: Optional[Callable[[str, Decimal], Any]] = None,
         secure_action: Optional[Callable[[Decimal], Any]] = None,
     ) -> None:
         cfg = strategy_cfg or {}
@@ -154,9 +162,26 @@ class CapitalCycleManager:
         )
         self._reinvest_action = reinvest_action
         self._secure_action = secure_action
+
+        sweep_cfg = cfg.get("profit_sweeper")
+        self.sweeper: Optional[ProfitSweeper] = None
+        if isinstance(sweep_cfg, Mapping):
+            # L'exécution réelle est portée par le callback `secure_action`
+            # (le verrou dry-run s'applique à ce niveau).
+            self.sweeper = ProfitSweeper(
+                sweep_cfg,
+                dry_run=False,
+                executor=lambda amount, _asset: self._do_secure(amount),
+            )
+
         self.reinvested_total = Decimal("0")
-        self.secured_reserve = Decimal("0")
+        self.accumulated_reserve = Decimal("0")
+        self.swept_total = Decimal("0")
         self._logger = logging.getLogger(_LOGGER_NAME)
+
+    def _do_secure(self, amount: Decimal) -> None:
+        if self._secure_action is not None:
+            self._secure_action(amount)
 
     def process_profit(
         self, profit_amount: Any, current_timestamp: Any, pool_id: str
@@ -188,13 +213,43 @@ class CapitalCycleManager:
         if reinvest > 0:
             self.reinvested_total += reinvest
             if self._reinvest_action is not None:
-                self._reinvest_action(reinvest, pool_id)
+                self._reinvest_action(pool_id, reinvest)
         if secured > 0:
-            self.secured_reserve += secured
-            if self._secure_action is not None:
-                self._secure_action(secured)
+            self.accumulated_reserve += secured
 
-        return {"rate": rate, "reinvest_amount": reinvest, "secured_amount": secured}
+        swept = self._sweep_if_needed()
+
+        return {
+            "rate": rate,
+            "reinvest_amount": reinvest,
+            "secured_amount": secured,
+            "swept_amount": swept,
+            "accumulated_reserve": self.accumulated_reserve,
+        }
+
+    def _sweep_if_needed(self) -> Decimal:
+        """Balayer la réserve si le seuil est atteint ; retourne le montant balayé."""
+        zero = Decimal("0")
+        if self.sweeper is None:
+            return zero
+
+        # La réserve est du profit déjà isolé : référence de capital = 0.
+        result = self.sweeper.evaluate(self.accumulated_reserve, zero)
+        if not (result.triggered and result.executed):
+            self._logger.info(
+                "[PROFIT_SWEEPER] pas de sweep (%s) reserve=%s seuil=%s",
+                result.reason, self.accumulated_reserve,
+                self.sweeper.config.profit_threshold_usd,
+            )
+            return zero
+
+        self.accumulated_reserve -= result.amount
+        self.swept_total += result.amount
+        self._logger.info(
+            "[PROFIT_SWEEPER] sweep=%s %s reserve_restante=%s",
+            result.amount, result.target_asset, self.accumulated_reserve,
+        )
+        return result.amount
 
 
 def _resolve_callable(module_name: str, func_names: list[str]) -> Optional[Callable[..., object]]:

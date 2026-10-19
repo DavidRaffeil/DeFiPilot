@@ -71,7 +71,7 @@ class TestCapitalCycleCompounding(unittest.TestCase):
         self.reinvested, self.secured = [], []
         return main_v6_core.CapitalCycleManager(
             main_v6_core.load_strategy_config() if cfg is None else cfg,
-            reinvest_action=lambda amt, pool: self.reinvested.append((amt, pool)),
+            reinvest_action=lambda pool, amt: self.reinvested.append((pool, amt)),
             secure_action=lambda amt: self.secured.append(amt),
         )
 
@@ -89,9 +89,11 @@ class TestCapitalCycleCompounding(unittest.TestCase):
         self.assertEqual(r5["secured_amount"], Decimal("25.000000"))
         for v in r5.values():
             self.assertIsInstance(v, Decimal)
-        self.assertEqual(self.reinvested[-1], (Decimal("75.000000"), "poolA"))
-        self.assertEqual(self.secured, [Decimal("25.000000")])
-        self.assertEqual(mgr.secured_reserve, Decimal("25.000000"))
+        self.assertEqual(self.reinvested[-1], ("poolA", Decimal("75.000000")))
+        # réserve 25 >= seuil 1.0 → sweep partiel (sweep_pct 0.5) = 12.5
+        self.assertEqual(self.secured, [Decimal("12.500000")])
+        self.assertEqual(r5["swept_amount"], Decimal("12.500000"))
+        self.assertEqual(mgr.accumulated_reserve, Decimal("12.500000"))
         self.assertTrue(any("pool=poolA jours=5 taux=0.75" in m for m in cap.output))
 
     def test_pool_change_resets(self) -> None:
