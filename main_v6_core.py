@@ -11,6 +11,7 @@ from __future__ import annotations
 import importlib
 import json
 import logging
+import os
 from pathlib import Path
 import sys
 from decimal import ROUND_DOWN, Decimal
@@ -135,6 +136,126 @@ def run_gui() -> int:
 _QUANT = Decimal("0.000001")
 
 
+_USDC_POLYGON = "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359"
+_USDC_DECIMALS = 6
+
+
+class CapitalActionError(RuntimeError):
+    """Action de capital refusée ou impossible (la réserve ne doit pas être modifiée)."""
+
+
+def is_valid_wallet_address(address: Optional[str]) -> bool:
+    """Adresse EVM valide : `0x` + 40 caractères hexadécimaux (42 au total)."""
+    if not isinstance(address, str) or len(address) != 42 or not address.startswith("0x"):
+        return False
+    try:
+        int(address[2:], 16)
+    except ValueError:
+        return False
+    return True
+
+
+def build_capital_actions(
+    dry_run: Optional[bool] = None,
+    env: Optional[Mapping[str, str]] = None,
+    transfer_executor: Optional[Callable[[Dict[str, Any]], Any]] = None,
+    liquidity_executor: Optional[Callable[[str, Decimal], Any]] = None,
+    state_getter: Optional[Callable[[], Dict[str, Any]]] = None,
+    state_setter: Optional[Callable[[Dict[str, Any]], Any]] = None,
+) -> tuple[Callable[[str, Decimal], Dict[str, Any]], Callable[[Decimal], Dict[str, Any]]]:
+    """Construire `(reinvest_action, secure_action)` pour CapitalCycleManager.
+
+    - `dry_run=None` : lit le verrou global à chaque appel (`is_dry_run_enabled`).
+    - `transfer_executor(descriptor)` : envoie réellement le transfert ERC-20.
+    - `liquidity_executor(pool_id, amount)` : module d'exécution de liquidité V6.
+    En mode réel, l'absence d'exécuteur lève `CapitalActionError` (rien n'est envoyé).
+    """
+    logger = logging.getLogger(_LOGGER_NAME)
+
+    def _is_dry() -> bool:
+        return is_dry_run_enabled() if dry_run is None else bool(dry_run)
+
+    def _get_state() -> Dict[str, Any]:
+        if state_getter is not None:
+            return state_getter()
+        from core.state_manager import get_state
+        return get_state()
+
+    def _set_state(state: Dict[str, Any]) -> Any:
+        if state_setter is not None:
+            return state_setter(state)
+        from core.state_manager import update_state
+        return update_state(state)
+
+    def secure_action(amount: Decimal) -> Dict[str, Any]:
+        if _is_dry():
+            logger.info(
+                "[PROFIT_SWEEPER] [SIMULATION] Balayage sécurisé de %s USDC vers la réserve "
+                "externe (aucun transfert on-chain)", amount,
+            )
+            return {"status": "simulated", "amount": amount}
+
+        environ = os.environ if env is None else env
+        address = environ.get("RESERVE_WALLET_ADDRESS") or environ.get("SAFE_WALLET_ADDRESS")
+        if not is_valid_wallet_address(address):
+            logger.critical(
+                "[SECURITY] Balayage annulé : RESERVE_WALLET_ADDRESS non définie ou invalide"
+            )
+            raise CapitalActionError(
+                "Balayage annulé : RESERVE_WALLET_ADDRESS non définie ou invalide"
+            )
+
+        try:
+            from web3 import Web3
+            address = Web3.to_checksum_address(address)
+        except ImportError:
+            pass
+        except ValueError as exc:
+            logger.critical("[SECURITY] Balayage annulé : adresse de réserve invalide (%s)", exc)
+            raise CapitalActionError("Balayage annulé : adresse de réserve invalide") from exc
+
+        descriptor = {
+            "kind": "erc20_transfer",
+            "token": _USDC_POLYGON,
+            "to": address,
+            "amount": amount,
+            "amount_raw": int(amount * (10 ** _USDC_DECIMALS)),
+        }
+        if transfer_executor is None:
+            logger.critical(
+                "[SECURITY] Balayage annulé : aucun exécuteur de transfert ERC-20 configuré"
+            )
+            raise CapitalActionError("Aucun exécuteur de transfert ERC-20 configuré")
+        logger.info("[PROFIT_SWEEPER] Transfert ERC-20 de %s USDC vers %s", amount, address)
+        result = transfer_executor(descriptor)
+        return {"status": "executed", "amount": amount, "to": address, "result": result}
+
+    def reinvest_action(pool_id: str, reinvest_amount: Decimal) -> Dict[str, Any]:
+        if _is_dry():
+            logger.info(
+                "[COMPOUNDING] [SIMULATION] Réinvestissement de %s dans la pool %s",
+                reinvest_amount, pool_id,
+            )
+            state = dict(_get_state())
+            positions = dict(state.get("positions_simulees") or {})
+            previous = Decimal(str(positions.get(pool_id, "0")))
+            positions[pool_id] = str(previous + reinvest_amount)  # str : JSON sans perte
+            state["positions_simulees"] = positions
+            _set_state(state)
+            return {"status": "simulated", "pool_id": pool_id, "amount": reinvest_amount}
+
+        if liquidity_executor is None:
+            logger.critical(
+                "[COMPOUNDING] Réinvestissement réel annulé : aucun module de liquidité configuré "
+                "(pool %s)", pool_id,
+            )
+            raise CapitalActionError("Aucun module d'exécution de liquidité configuré")
+        result = liquidity_executor(pool_id, reinvest_amount)
+        return {"status": "executed", "pool_id": pool_id, "amount": reinvest_amount, "result": result}
+
+    return reinvest_action, secure_action
+
+
 class CapitalCycleManager:
     """Cycle de capital : compounding dégressif, réserve interne, balayage par palier.
 
@@ -175,6 +296,7 @@ class CapitalCycleManager:
             )
 
         self.reinvested_total = Decimal("0")
+        self.pending_reinvest = Decimal("0")
         self.accumulated_reserve = Decimal("0")
         self.swept_total = Decimal("0")
         self._logger = logging.getLogger(_LOGGER_NAME)
@@ -211,9 +333,16 @@ class CapitalCycleManager:
             )
 
         if reinvest > 0:
-            self.reinvested_total += reinvest
-            if self._reinvest_action is not None:
-                self._reinvest_action(pool_id, reinvest)
+            try:
+                if self._reinvest_action is not None:
+                    self._reinvest_action(pool_id, reinvest)
+                self.reinvested_total += reinvest
+            except Exception as exc:
+                self.pending_reinvest += reinvest
+                self._logger.critical(
+                    "[COMPOUNDING] Réinvestissement échoué pool=%s montant=%s : %s (en attente=%s)",
+                    pool_id, reinvest, exc, self.pending_reinvest,
+                )
         if secured > 0:
             self.accumulated_reserve += secured
 
@@ -234,7 +363,15 @@ class CapitalCycleManager:
             return zero
 
         # La réserve est du profit déjà isolé : référence de capital = 0.
-        result = self.sweeper.evaluate(self.accumulated_reserve, zero)
+        try:
+            result = self.sweeper.evaluate(self.accumulated_reserve, zero)
+        except Exception as exc:
+            # Réserve intacte : le transfert n'a pas eu lieu.
+            self._logger.critical(
+                "[PROFIT_SWEEPER] Sweep échoué, réserve inchangée=%s : %s",
+                self.accumulated_reserve, exc,
+            )
+            return zero
         if not (result.triggered and result.executed):
             self._logger.info(
                 "[PROFIT_SWEEPER] pas de sweep (%s) reserve=%s seuil=%s",
