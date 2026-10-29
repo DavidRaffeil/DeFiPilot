@@ -163,17 +163,27 @@ def executer_action_reelle(
             slippage_pct = float(params.get("max_slippage_pct", 0.5))
             default_dex = str(params.get("dex") or "sushiswap")
 
-            selected_dex, best_quote, built_tx = _resolve_multi_dex_swap(
-                token_in=tokenA,
-                token_out=tokenB,
-                amount_in=amount_a,
-                slippage_pct=slippage_pct,
-                dex_router=dex_router,
-                web3_client=web3_client,
-                feature_multi_dex=feature_multi_dex,
-                recipient=params.get("recipient"),
-                default_dex=default_dex,
+            already_routed = (
+                "dex" in params
+                and "expected_amount_out" in params
+                and "tx" in params
             )
+            if already_routed:
+                selected_dex = str(params["dex"])
+                best_quote = None
+                built_tx = params["tx"]
+            else:
+                selected_dex, best_quote, built_tx = _resolve_multi_dex_swap(
+                    token_in=tokenA,
+                    token_out=tokenB,
+                    amount_in=amount_a,
+                    slippage_pct=slippage_pct,
+                    dex_router=dex_router,
+                    web3_client=web3_client,
+                    feature_multi_dex=feature_multi_dex,
+                    recipient=params.get("recipient"),
+                    default_dex=default_dex,
+                )
 
             is_dry = action.get("dry_run") is True or is_dry_run_enabled()
             if is_dry:
@@ -189,6 +199,15 @@ def executer_action_reelle(
                     )
                     sim_details["min_amount_out"] = str(best_quote.min_amount_out)
                     sim_details["estimated_gas"] = best_quote.estimated_gas
+                    sim_details["multi_dex"] = True
+                elif already_routed:
+                    sim_details["expected_amount_out"] = str(
+                        params["expected_amount_out"]
+                    )
+                    if "min_amount_out" in params:
+                        sim_details["min_amount_out"] = str(params["min_amount_out"])
+                    if "estimated_gas" in params:
+                        sim_details["estimated_gas"] = params["estimated_gas"]
                     sim_details["multi_dex"] = True
                 if built_tx is not None:
                     sim_details["tx"] = built_tx
