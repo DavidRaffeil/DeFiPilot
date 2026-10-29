@@ -1,23 +1,38 @@
-# core/strategy_engine.py – V6.0
-"""Moteur de stratégie DeFiPilot V6.0.
+# core/strategy_engine.py – V6.5
+"""Moteur de stratégie DeFiPilot V6.0 / V6.5.
 
 Centralise l'analyse des opportunités (DeFiLlama), le calcul du score
-effectif selon le profil de risque et le contexte IA, et génère le plan d'action.
+effectif selon le profil de risque et le contexte IA, et génère le plan d'action
+avec support optionnel du routage Multi-DEX (DEXRouter).
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Protocol
-import json
-import time
 from datetime import datetime
+from decimal import Decimal
+from enum import Enum
+import json
+import logging
+import os
+from pathlib import Path
+import time
+from typing import Any, Dict, List, Optional, Protocol
 
-from .strategy_context import StrategyContext
+import core.config as app_config
 from core.defi_sources.defillama import recuperer_pools
-from core.wallet_reader import verifier_fonds_disponibles, lire_soldes_depuis_env
+from core.dex.factory import create_default_dex_router
+from core.dex.router import DEXRouter
+from core.swap_reel import (
+    DEFAULT_SWAP_RECIPIENT,
+    _run_coro_sync,
+    resolve_token_address,
+)
+from core.wallet_reader import lire_soldes_depuis_env, verifier_fonds_disponibles
+from .strategy_context import StrategyContext
+
+_module_logger = logging.getLogger("core.strategy_engine")
+
 
 class MarketState(Enum):
     FAVORABLE = "FAVORABLE"
@@ -102,42 +117,84 @@ class _DefaultPoolSource:
                 )
             )
         return pools
-       
+
 
 class _DefaultExecutor:
+    def __init__(
+        self,
+        dex_router: Optional[DEXRouter] = None,
+        web3_client: Optional[Any] = None,
+        feature_multi_dex: Optional[bool] = None,
+    ) -> None:
+        self.dex_router = dex_router
+        self.web3_client = web3_client
+        self.feature_multi_dex = feature_multi_dex
+
     def execute(self, actions: List[Action]) -> Dict[str, Any]:
         from core.executor_real import executer_action_reelle
+
         results = []
         for action in actions:
             result = executer_action_reelle(
-                {"kind": action.kind, "params": action.params},
-                run_id="defipilot_run"
+                {"kind": action.kind, "params": action.params, "dry_run": action.dry_run},
+                run_id="defipilot_run",
+                dex_router=self.dex_router,
+                web3_client=self.web3_client,
+                feature_multi_dex=self.feature_multi_dex,
             )
             results.append(result)
         return {"status": "executed", "executed": True, "results": results}
 
 
 class StrategyEngine:
-    """Moteur de stratégie DeFiPilot V6.0."""
+    """Moteur de stratégie DeFiPilot V6.0 / V6.5."""
 
     def __init__(
         self,
         config_path: str | Path,
         dry_run: bool = True,
         logger: Optional[Any] = None,
+        dex_router: Optional[DEXRouter] = None,
+        web3_client: Optional[Any] = None,
+        feature_multi_dex: Optional[bool] = None,
     ) -> None:
         self.config_path = Path(config_path)
         self.dry_run = dry_run
         self.logger = logger
+        self.web3_client = web3_client
+        self._feature_multi_dex_override = feature_multi_dex
         self.market_watcher: MarketWatcher = _DefaultMarketWatcher()
-        self.executor: Executor = _DefaultExecutor()
 
         self.cfg = self.load_config()
+
+        self.dex_router: Optional[DEXRouter] = dex_router
+        if self.dex_router is None and self.is_multi_dex_enabled() and self.web3_client is not None:
+            try:
+                self.dex_router = create_default_dex_router(self.web3_client)
+            except Exception as exc:
+                self._log_warn(
+                    f"[MULTI-DEX] Impossible d'initialiser le DEXRouter par défaut : {exc}"
+                )
+                self.dex_router = None
+
+        self.executor: Executor = _DefaultExecutor(
+            dex_router=self.dex_router,
+            web3_client=self.web3_client,
+            feature_multi_dex=self._feature_multi_dex_override,
+        )
 
         min_tvl = self.cfg.get("market_guardrails", {}).get("min_tvl_usd", 100000)
         self.pool_source: PoolSource = _DefaultPoolSource(min_tvl=min_tvl)
         self.profile = self.cfg.get("profile_default", "prudent")
         self._log_info(f"StrategyEngine V6.0 initialisé avec le profil '{self.profile}'")
+
+    def is_multi_dex_enabled(self) -> bool:
+        """Indique si le routage Multi-DEX est actif."""
+        if self._feature_multi_dex_override is not None:
+            return bool(self._feature_multi_dex_override)
+        if isinstance(getattr(self, "cfg", None), dict) and "feature_multi_dex" in self.cfg:
+            return bool(self.cfg["feature_multi_dex"])
+        return bool(app_config.FEATURE_MULTI_DEX)
 
     def load_config(self) -> Dict[str, Any]:
         if not self.config_path.exists():
@@ -343,6 +400,79 @@ class StrategyEngine:
 
         return allocations
 
+    def prepare_swap_action(
+        self,
+        token_a: str,
+        token_b: str,
+        swap_amount: float | Decimal,
+        max_slippage: float = 1.0,
+        dry_run: bool = True,
+        recipient: Optional[str] = None,
+    ) -> Action:
+        """
+        Prépare une action de swap.
+
+        Si `FEATURE_MULTI_DEX` est actif et que `dex_router` est disponible :
+        - interroge `dex_router.get_best_quote(...)`
+        - journalise le DEX retenu et le montant espéré
+        - construit la transaction avec l'adaptateur sélectionné.
+        En cas d'exception ou si le feature flag est désactivé, bascule de manière
+        transparente sur le comportement unitaire préexistant.
+        """
+        params: Dict[str, Any] = {
+            "tokenA": token_a,
+            "tokenB": token_b,
+            "amountA": float(swap_amount),
+            "max_slippage_pct": max_slippage,
+        }
+
+        if self.is_multi_dex_enabled() and self.dex_router is not None:
+            try:
+                token_in_addr = resolve_token_address(token_a)
+                token_out_addr = resolve_token_address(token_b)
+                amount_in_dec = Decimal(str(swap_amount))
+                slippage_dec = Decimal(str(max_slippage)) / Decimal("100")
+
+                best_quote = _run_coro_sync(
+                    self.dex_router.get_best_quote(
+                        token_in=token_in_addr,
+                        token_out=token_out_addr,
+                        amount_in=amount_in_dec,
+                        slippage_tolerance=slippage_dec,
+                    )
+                )
+                log_msg = (
+                    f"[MULTI-DEX] DEX retenu : {best_quote.dex_name} | "
+                    f"Montant espéré : {best_quote.expected_amount_out} {token_b} "
+                    f"(min: {best_quote.min_amount_out}, gas: {best_quote.estimated_gas})"
+                )
+                self._log_info(log_msg)
+                _module_logger.info(log_msg)
+
+                target_recipient = (
+                    recipient
+                    or os.environ.get("WALLET_ADDRESS")
+                    or DEFAULT_SWAP_RECIPIENT
+                )
+                tx = _run_coro_sync(
+                    self.dex_router.build_swap_transaction(best_quote, target_recipient)
+                )
+
+                params["dex"] = best_quote.dex_name
+                params["expected_amount_out"] = str(best_quote.expected_amount_out)
+                params["min_amount_out"] = str(best_quote.min_amount_out)
+                params["estimated_gas"] = best_quote.estimated_gas
+                params["tx"] = tx
+            except Exception as exc:
+                warn_msg = (
+                    f"[MULTI-DEX] Échec du routage multi-DEX ({exc}), "
+                    "repli sur le comportement de swap unitaire par défaut"
+                )
+                self._log_warn(warn_msg)
+                _module_logger.warning(warn_msg)
+
+        return Action(kind="swap", params=params, dry_run=dry_run)
+
     def build_actions(self, allocs: List[Allocation], snapshot: PortfolioSnapshot) -> List[Action]:
         actions: List[Action] = []
         max_slippage = float(self.cfg.get("max_slippage_pct", 1.0))
@@ -351,7 +481,7 @@ class StrategyEngine:
             if invest_amount < 0.5:
                 self._log_warn("Capital trop faible pour investir")
                 return []
-            
+
             swap_amount = invest_amount / 2
             tokens = allocation.pool_id.split("-")
             if len(tokens) != 2:
@@ -364,7 +494,7 @@ class StrategyEngine:
                 tokens={
                     "USDC": {
                         "address": "0x3c499c542cEF5E3811e1192ce70d8cc03d5c3359",
-                        "decimals": 6
+                        "decimals": 6,
                     }
                 }
             )
@@ -374,10 +504,34 @@ class StrategyEngine:
                 self._log_warn(f"Fonds insuffisants pour {token_manquant}")
                 continue
 
-            actions.append(Action(kind="swap", params={"tokenA": token_a, "tokenB": token_b, "amountA": swap_amount, "max_slippage_pct": max_slippage}, dry_run=True))
-            actions.append(Action(kind="add_liquidity", params={"tokenA": token_a, "tokenB": token_b, "amountA": swap_amount, "amountB": 0.0}, dry_run=True))
-            actions.append(Action(kind="stake", params={"pool_id": allocation.pool_id, "amount_lp": invest_amount}, dry_run=True))
-        
+            swap_action = self.prepare_swap_action(
+                token_a=token_a,
+                token_b=token_b,
+                swap_amount=swap_amount,
+                max_slippage=max_slippage,
+                dry_run=True,
+            )
+            actions.append(swap_action)
+            actions.append(
+                Action(
+                    kind="add_liquidity",
+                    params={
+                        "tokenA": token_a,
+                        "tokenB": token_b,
+                        "amountA": swap_amount,
+                        "amountB": 0.0,
+                    },
+                    dry_run=True,
+                )
+            )
+            actions.append(
+                Action(
+                    kind="stake",
+                    params={"pool_id": allocation.pool_id, "amount_lp": invest_amount},
+                    dry_run=True,
+                )
+            )
+
         return actions
 
     def execute(self, actions: List[Action]) -> Dict[str, Any]:
@@ -397,7 +551,7 @@ class StrategyEngine:
         market = self.detect_market_state()
         pool_list = pools if pools is not None else self.pool_source.list_pools()
         candidates = self.select_candidates(pool_list, context=context)
-        
+
         # FIX DU BUG CRITIQUE : Retour propre si aucune pool
         if not candidates:
             self._log_warn("Aucune pool candidate valide, arrêt propre du cycle.")
@@ -407,7 +561,7 @@ class StrategyEngine:
                 "status": "stopped_no_candidates",
                 "actions": [],
                 "dry_run": self.dry_run,
-                "generated_at": datetime.utcnow().isoformat() + "Z"
+                "generated_at": datetime.utcnow().isoformat() + "Z",
             }
 
         allocations = self.compute_allocations(candidates, market, context=context)
@@ -441,7 +595,9 @@ class StrategyEngine:
                 "label": context.label,
                 "ai_score": context.ai_score,
                 "confiance": context.confiance,
-            } if context is not None else None,
+            }
+            if context is not None
+            else None,
         }
         self._log_info("Cycle d'exécution StrategyEngine terminé.")
         return result

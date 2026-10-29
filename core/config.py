@@ -1,4 +1,4 @@
-# core/config.py – V3.8
+# core/config.py – V6.5
 import json
 import os
 from pathlib import Path
@@ -61,6 +61,9 @@ SWAP_REEL = not _config.get("dry_run", True)
 
 # Activation IA – pondération dynamique (désactivée en V3.3)
 AI_PONDERATION_ACTIVE = False
+
+# Feature flag Multi-DEX (V6.5) : activé par défaut
+FEATURE_MULTI_DEX: bool = bool(_config.get("feature_multi_dex", True))
 
 # Journaux spécifiques à l’ajout de liquidité (V3.8)
 JOURNAL_LIQUIDITY_CSV = "logs/liquidity.csv"
