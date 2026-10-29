@@ -14,3 +14,8 @@ class DEXQuoteError(DEXError):
 
 class DEXTransactionError(DEXError):
     """Impossible de construire la transaction de swap."""
+
+
+class NoValidRouteError(DEXError):
+    """Aucune route valide n'a pu être obtenue auprès des adaptateurs DEX."""
+
