@@ -6,9 +6,16 @@ from core.dex.exceptions import (
     DEXTransactionError,
     NoValidRouteError,
 )
+from core.dex.factory import (
+    QuickSwapAdapter,
+    SushiSwapAdapter,
+    UnsupportedChainError,
+    create_default_dex_router,
+)
 from core.dex.quickswap import QuickswapAdapter
 from core.dex.router import DEXRouter, RouteComparisonResult
 from core.dex.sushiswap import SushiswapAdapter
+from core.dex.uniswap_v3 import UniswapV3Adapter
 
 __all__ = [
     "BaseDEXAdapter",
@@ -17,8 +24,13 @@ __all__ = [
     "DEXQuoteError",
     "DEXTransactionError",
     "NoValidRouteError",
+    "UnsupportedChainError",
+    "UniswapV3Adapter",
     "QuickswapAdapter",
+    "QuickSwapAdapter",
     "SushiswapAdapter",
+    "SushiSwapAdapter",
     "DEXRouter",
     "RouteComparisonResult",
+    "create_default_dex_router",
 ]
