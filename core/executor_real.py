@@ -16,6 +16,7 @@ from core.dex.router import DEXRouter
 from core.dry_run_guard import DryRunSafetyViolation, is_dry_run_enabled
 from core.swap_reel import (
     DEFAULT_SWAP_RECIPIENT,
+    _decimal_to_amount_wei,
     _run_coro_sync,
     executer_swap_reel,
     resolve_token_address,
@@ -149,16 +150,11 @@ def executer_action_reelle(
 
         if kind == "swap":
             params = action.get("params", {})
-            TOKENS = {
-                "USDC": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
-                "ETH": "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
-                "WETH": "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
-            }
 
-            raw_token_a = params.get("tokenA", "USDC")
-            raw_token_b = params.get("tokenB", "ETH")
-            tokenA = TOKENS.get(raw_token_a, resolve_token_address(str(raw_token_a)))
-            tokenB = TOKENS.get(raw_token_b, resolve_token_address(str(raw_token_b)))
+            raw_token_a = str(params.get("tokenA", "USDC"))
+            raw_token_b = str(params.get("tokenB", "ETH"))
+            tokenA = resolve_token_address(raw_token_a)
+            tokenB = resolve_token_address(raw_token_b)
             amount_a = params.get("amountA", 0)
             slippage_pct = float(params.get("max_slippage_pct", 0.5))
             default_dex = str(params.get("dex") or "sushiswap")
@@ -221,27 +217,45 @@ def executer_action_reelle(
                 }
 
             try:
+                amount_in_wei = _decimal_to_amount_wei(raw_token_a, amount_a)
                 result = executer_swap_reel(
                     dex=selected_dex,
                     token_in=tokenA,
                     token_out=tokenB,
-                    amount_in_wei=int(float(amount_a) * 10**6),
+                    amount_in_wei=amount_in_wei,
                     confirm=True,
                     dry_run=is_dry,
                     slippage_pct=slippage_pct,
-                    dex_router=dex_router if best_quote is None else None,
-                    web3_client=web3_client if best_quote is None else None,
-                    feature_multi_dex=(
-                        False if best_quote is not None else feature_multi_dex
-                    ),
+                    dex_router=dex_router,
+                    web3_client=web3_client,
+                    feature_multi_dex=feature_multi_dex,
+                    prebuilt_quote=best_quote,
+                    prebuilt_tx=built_tx,
+                    recipient=params.get("recipient"),
+                    amount_in=amount_a,
                 )
                 if best_quote is not None:
                     result["dex"] = selected_dex
                     result["expected_amount_out"] = str(best_quote.expected_amount_out)
                     result["min_amount_out"] = str(best_quote.min_amount_out)
                     result["estimated_gas"] = best_quote.estimated_gas
+                elif already_routed:
+                    result["dex"] = selected_dex
+                    result["expected_amount_out"] = str(params["expected_amount_out"])
+                    if "min_amount_out" in params:
+                        result["min_amount_out"] = str(params["min_amount_out"])
+                    if "estimated_gas" in params:
+                        result["estimated_gas"] = params["estimated_gas"]
                 if built_tx is not None:
                     result["tx"] = built_tx
+
+                swap_status = result.get("status")
+                if swap_status in {"BLOCKED", "CRITICAL"}:
+                    return {
+                        "status": swap_status,
+                        "tx_hash": None,
+                        "details": result,
+                    }
 
                 return {
                     "status": "EXECUTED",

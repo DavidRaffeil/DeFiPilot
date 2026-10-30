@@ -26,7 +26,10 @@ from core.strategy_engine import (
     PortfolioSnapshot,
     StrategyEngine,
 )
-from core.swap_reel import effectuer_swap_reel
+from core.swap_reel import (
+    _decimal_to_amount_wei,
+    effectuer_swap_reel,
+)
 
 TOKEN_USDC = "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"
 TOKEN_WETH = "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619"
@@ -363,3 +366,201 @@ def test_executor_real_with_multi_dex_and_fallback() -> None:
         )
         assert res_fallback["status"] == "EXECUTED"
         assert res_fallback["details"]["dex"] == "sushiswap"
+
+
+# ------------------------------------------------------------------ 4. Jalon 3.3 : Unification exécution réelle (dry_run=False mocké)
+
+
+def _build_mock_web3_for_live_swap(allowance_wei: int = 0) -> MagicMock:
+    """Construit un client Web3 entièrement mocké pour tester l'exécution réelle sans réseau."""
+    mock_w3 = MagicMock()
+    mock_w3.eth.chain_id = 137
+    mock_w3.eth.get_block.return_value = {"baseFeePerGas": 100 * 10**9}
+    mock_w3.eth.max_priority_fee = 30 * 10**9
+    mock_w3.eth.get_transaction_count.side_effect = [10, 11]
+    mock_w3.eth.estimate_gas.return_value = 150_000
+
+    mock_contract = MagicMock()
+    mock_contract.functions.allowance.return_value.call.return_value = allowance_wei
+    mock_contract.functions.approve.return_value.build_transaction.return_value = {
+        "to": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+        "data": "0x095ea7b3",
+    }
+    mock_w3.eth.contract.return_value = mock_contract
+
+    signed_approve = MagicMock()
+    signed_approve.raw_transaction = b"\x01" * 32
+    signed_swap = MagicMock()
+    signed_swap.raw_transaction = b"\x02" * 32
+    mock_w3.eth.account.sign_transaction.side_effect = [signed_approve, signed_swap]
+
+    mock_w3.eth.send_raw_transaction.side_effect = [
+        bytes.fromhex("aa" * 32),
+        bytes.fromhex("bb" * 32),
+    ]
+
+    receipt_ok = MagicMock()
+    receipt_ok.status = 1
+    receipt_ok.blockNumber = 96432559
+    receipt_ok.gasUsed = 173992
+    mock_w3.eth.wait_for_transaction_receipt.return_value = receipt_ok
+
+    return mock_w3
+
+
+def test_decimal_to_amount_wei_dynamic_decimals() -> None:
+    assert _decimal_to_amount_wei("USDC", 1.5) == 1_500_000
+    assert _decimal_to_amount_wei("USDT", Decimal("2.25")) == 2_250_000
+    assert _decimal_to_amount_wei("POL", 1.0) == 10**18
+    assert _decimal_to_amount_wei("WPOL", Decimal("10.5")) == 10_500_000_000_000_000_000
+    assert _decimal_to_amount_wei("WETH", 0.5) == 500_000_000_000_000_000
+
+
+def test_live_execution_multi_dex_approve_and_swap_broadcast() -> None:
+    """
+    Teste l'exécution réelle complète (dry_run=False) avec FEATURE_MULTI_DEX=True :
+    - Sélectionne la meilleure route via DEXRouter (sushiswap)
+    - Exécute l'Approve ERC-20 car allowance=0
+    - Signe et diffuse la transaction de swap construite par l'adaptateur
+    - Sans refaire de double cotation si appelé depuis executor_real.
+    """
+    set_dry_run_mode(False)
+    try:
+        mock_w3 = _build_mock_web3_for_live_swap(allowance_wei=0)
+
+        class ChecksumStub(StubDEXAdapter):
+            async def build_swap_transaction(
+                self, quote: DEXQuote, recipient: str
+            ) -> dict[str, Any]:
+                self.tx_calls += 1
+                return {
+                    "to": "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506",
+                    "data": "0x38ed1739abcdef",
+                    "value": 0,
+                    "chainId": 137,
+                    "gas": quote.estimated_gas,
+                }
+
+        a_sushi = ChecksumStub(
+            "sushiswap", expected_out=Decimal("10.679262"), estimated_gas=150_000
+        )
+        a_quick = ChecksumStub(
+            "quickswap", expected_out=Decimal("10.510000"), estimated_gas=180_000
+        )
+        router = DEXRouter([a_sushi, a_quick])
+
+        action = {
+            "kind": "swap",
+            "dry_run": False,
+            "params": {
+                "tokenA": "USDC",
+                "tokenB": "POL",
+                "amountA": 1.0,
+                "max_slippage_pct": 1.0,
+                "recipient": "0xe4C8e186697e2FBa2fA43Ec6B020B203bDb87812",
+            },
+        }
+
+        with (
+            patch(
+                "core.guardrails.verifier_action_reelle",
+                return_value={"status": "EXECUTED", "details": {"reason": "ok"}},
+            ),
+            patch(
+                "core.swap_reel.get_wallet_address",
+                return_value="0xe4C8e186697e2FBa2fA43Ec6B020B203bDb87812",
+            ),
+            patch(
+                "core.swap_reel.get_private_key",
+                return_value="0x" + "11" * 32,
+            ),
+        ):
+            res = executer_action_reelle(
+                action,
+                run_id="run_live_j33",
+                dex_router=router,
+                web3_client=mock_w3,
+                feature_multi_dex=True,
+            )
+
+        assert res["status"] == "EXECUTED"
+        assert res["tx_hash"] == "0x" + "bb" * 32
+        details = res["details"]
+        assert details["status"] == "confirmed"
+        assert details["dex"] == "sushiswap"
+        assert details["approve_tx_hash"] == "0x" + "aa" * 32
+        assert details["expected_amount_out"] == "10.679262"
+        assert details["block_number"] == 96432559
+        # Vérifie que prebuilt_quote / prebuilt_tx ont évité un 2e appel au routeur dans swap_reel
+        assert a_sushi.quote_calls == 1
+        assert a_sushi.tx_calls == 1
+        assert mock_w3.eth.send_raw_transaction.call_count == 2
+    finally:
+        set_dry_run_mode(True)
+
+
+def test_live_execution_fallback_when_feature_multi_dex_disabled() -> None:
+    """
+    Teste le mode fallback (FEATURE_MULTI_DEX=False) en exécution réelle (dry_run=False) :
+    - N'interroge pas le DEXRouter multi-DEX
+    - Utilise l'adaptateur nominal demandé (ex: sushiswap) avec allowance déjà suffisante.
+    """
+    set_dry_run_mode(False)
+    try:
+        mock_w3 = _build_mock_web3_for_live_swap(allowance_wei=10_000_000)
+        # Une seule signature (pas d'approve nécessaire)
+        signed_swap = MagicMock()
+        signed_swap.raw_transaction = b"\x02" * 32
+        mock_w3.eth.account.sign_transaction.side_effect = [signed_swap]
+        mock_w3.eth.send_raw_transaction.side_effect = [bytes.fromhex("cc" * 32)]
+        mock_w3.eth.get_transaction_count.side_effect = [15]
+
+        class SingleSushiStub(StubDEXAdapter):
+            async def build_swap_transaction(
+                self, quote: DEXQuote, recipient: str
+            ) -> dict[str, Any]:
+                self.tx_calls += 1
+                return {
+                    "to": "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506",
+                    "data": "0x38ed17390000",
+                    "value": 0,
+                    "chainId": 137,
+                    "gas": quote.estimated_gas,
+                }
+
+        single_stub = SingleSushiStub("sushiswap", expected_out=Decimal("10.55"))
+
+        with (
+            patch(
+                "core.swap_reel._create_single_dex_adapter",
+                return_value=single_stub,
+            ),
+            patch(
+                "core.swap_reel.get_wallet_address",
+                return_value="0xe4C8e186697e2FBa2fA43Ec6B020B203bDb87812",
+            ),
+            patch(
+                "core.swap_reel.get_private_key",
+                return_value="0x" + "22" * 32,
+            ),
+        ):
+            res = effectuer_swap_reel(
+                dex="sushiswap",
+                token_in="USDC",
+                token_out="POL",
+                amount_in_wei=1_000_000,
+                confirm=True,
+                dry_run=False,
+                web3_client=mock_w3,
+                feature_multi_dex=False,
+            )
+
+        assert res["status"] == "confirmed"
+        assert res["dex"] == "sushiswap"
+        assert res["tx_hash"] == "0x" + "cc" * 32
+        assert "approve_tx_hash" not in res
+        assert single_stub.quote_calls == 1
+        assert single_stub.tx_calls == 1
+        assert mock_w3.eth.send_raw_transaction.call_count == 1
+    finally:
+        set_dry_run_mode(True)
