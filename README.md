@@ -3,7 +3,7 @@
 > 🗣️ **Langue / Language :** le bot fonctionne uniquement en **français** pour le moment.  
 > The bot currently works **in French only** for the moment.
 
-![Version](https://img.shields.io/badge/Version-V6.4.0%20Stable-blue)
+![Version](https://img.shields.io/badge/Version-V6.5.0%20Stable-blue)
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
 ![Made in France](https://img.shields.io/badge/Made%20in-France-lightgrey)
 ![Developed with Antigravity & Gemini](https://img.shields.io/badge/Developed%20with-Antigravity%20%26%20Gemini-purple)
@@ -16,7 +16,7 @@
 1. [Introduction / Introduction](#1-introduction--introduction)  
 2. [Fonctionnalités principales / Key Features](#2-fonctionnalites-principales--key-features)  
 3. [Aperçu visuel / Visual Overview](#3-apercu-visuel--visual-overview)  
-4. [Nouveautés / What's New — Version 6.4.0](#4-nouveautes--whats-new--version-640)  
+4. [Nouveautés / What's New — Version 6.5.0](#4-nouveautes--whats-new--version-650)  
 5. [Historique des versions / Past Versions](#5-historique-des-versions--past-versions)  
 6. [Caractéristiques techniques / Technical Highlights](#6-caracteristiques-techniques--technical-highlights)  
 7. [Prérequis / Requirements](#7-prerequis--requirements)  
@@ -38,21 +38,21 @@
 DeFiPilot est un bot DeFi autonome conçu pour analyser en continu les opportunités disponibles sur les échanges décentralisés (DEX), calculer la rentabilité réelle des pools, puis sélectionner les meilleures options en fonction d’un profil d’investissement configurable. Le système fonctionne aussi bien en mode simulation qu’en mode réel selon la configuration utilisateur.
 
 Son architecture repose sur quatre principes :  
-- **Robustesse** : tolérance aux erreurs réseau, redondances, vérifications multiples.  
-- **Modularité** : possibilité d’étendre facilement les fonctionnalités via modules.  
+- **Robustesse** : tolérance aux erreurs réseau, redondances RPC, vérifications multiples et garde-fous on-chain.  
+- **Modularité** : possibilité d’étendre facilement les fonctionnalités via des adaptateurs et modules spécialisés.  
 - **Transparence** : journalisation complète (CSV + JSONL), état sauvegardé, historique visible.  
-- **Automatisation** : analyse continue, décisions guidées par les profils, reprise automatique.
+- **Automatisation** : analyse continue, décisions guidées par les profils, routage optimal et reprise automatique.
 
-DeFiPilot vise à constituer une base sérieuse et pérenne pour gérer des investissements DeFi automatisés, tout en intégrant des mécanismes de sécurité pour réduire les risques opérationnels.
+DeFiPilot vise à constituer une base sérieuse et pérenne pour gérer des investissements DeFi automatisés, tout en intégrant des mécanismes de sécurité rigoureux pour réduire les risques opérationnels.
 
 ## EN
 DeFiPilot is an autonomous DeFi bot designed to continuously analyze opportunities across decentralized exchanges (DEX), compute real profitability for liquidity pools, and select the best options according to a configurable investment profile. The system runs in both simulation and real execution modes depending on user configuration.
 
 Its architecture relies on four core principles:  
-- **Robustness**: tolerance to network failures, redundancy, multiple safety checks.  
-- **Modularity**: easily extendable through additional modules.  
+- **Robustness**: tolerance to network failures, RPC redundancy, multiple safety checks, and on-chain guardrails.  
+- **Modularity**: easily extendable through specialized adapters and modular components.  
 - **Transparency**: full logging (CSV + JSONL), state storage, visible history.  
-- **Automation**: continuous analysis, profile‑driven decisions, automatic state recovery.
+- **Automation**: continuous analysis, profile‑driven decisions, optimal routing, and automatic state recovery.
 
 DeFiPilot aims to be a serious and sustainable foundation for automated DeFi investment management while embedding safety mechanisms to minimize operational risks.
 
@@ -63,9 +63,10 @@ DeFiPilot aims to be a serious and sustainable foundation for automated DeFi inv
 ## FR
 - Analyse automatique des pools (APR, TVL, volume, volatilité, slippage).  
 - Scoring pondéré basé sur plusieurs profils (Prudent, Modéré, Risque).  
-- Mode simulation complet avec garde-fou (`DryRunGuard`) pour tests sécurisés sans risque.  
-- Mode réel avec moteur d'exécution Web3, gestion EIP-1559, slippage guard et confirmations on-chain.  
-- **Gestion active du capital (Phase 2 achevée)** : sécurisation automatique des profits (`ProfitSweeper`), réinvestissement dégressif (`TimeDecayCompounder`), et callbacks d'arbitrage sécurisés avec injection de dépendances.  
+- **Routage Multi-DEX dynamique (Nouveau v6.5.0)** : interrogation concurrente et arbitrage de cotation en direct entre Uniswap V3, QuickSwap V3 et SushiSwap V2 sur Polygon Mainnet.  
+- Mode simulation complet avec garde-fou (`DryRunGuard`) pour tests sécurisés sans risque financier.  
+- Mode réel unifié avec moteur d'exécution Web3, gestion EIP-1559, slippage guard, normalisation automatique des décimales ERC-20 (6 vs 18 décimales) et confirmations on-chain.  
+- **Gestion active du capital** : sécurisation automatique des profits (`ProfitSweeper`), réinvestissement dégressif (`TimeDecayCompounder`), et callbacks d'arbitrage sécurisés avec injection de dépendances.  
 - Interface graphique Tkinter avec rafraîchissement automatique.  
 - Multi-wallets avec séparation des usages.  
 - Supervision IA via ControlPilot (signaux contextuels).  
@@ -76,9 +77,10 @@ DeFiPilot aims to be a serious and sustainable foundation for automated DeFi inv
 ## EN
 - Automatic pool analysis (APR, TVL, volume, volatility, slippage).  
 - Weighted scoring based on multiple profiles (Conservative, Moderate, Risk).  
+- **Dynamic Multi-DEX Routing (New v6.5.0)**: concurrent quoting and route comparison across Uniswap V3, QuickSwap V3, and SushiSwap V2 on Polygon Mainnet.  
 - Full simulation mode with safety guard (`DryRunGuard`) for zero-risk testing.  
-- Real mode powered by Web3 execution engine, EIP-1559 gas estimation, slippage guard, and on-chain confirmations.  
-- **Active capital management (Phase 2 completed)**: automated profit sweeping (`ProfitSweeper`), dynamic time-decay compounding (`TimeDecayCompounder`), and secured routing callbacks with dependency injection.  
+- Unified real execution engine with Web3 broadcast, EIP-1559 gas calibration, slippage protection, dynamic ERC-20 decimal handling (6 vs 18 decimals), and on-chain confirmations.  
+- **Active capital management**: automated profit sweeping (`ProfitSweeper`), dynamic time-decay compounding (`TimeDecayCompounder`), and secured routing callbacks with dependency injection.  
 - Tkinter GUI with automatic refresh.  
 - Multi‑wallet support.  
 - AI supervision via ControlPilot (context signals).  
@@ -100,33 +102,44 @@ DeFiPilot’s graphical interface displays key metrics, bot status, ControlPilot
 
 ---
 
-# 4. 🆕 Nouveautés / What's New — Version 6.4.0
+# 4. 🆕 Nouveautés / What's New — Version 6.5.0
 
 ## 📘 Fr
-- **Cycle du capital & Articulation Option B (Phase 2.3) :** Intégration unifiée du cycle du capital reliant `TimeDecayCompounder` et `ProfitSweeper` dans `main_v6_core.py`.
-- **Callbacks d'exécution sécurisés (`reinvest_action` & `secure_action`) :**
-  - **Mode simulation (`dry_run=True`) :** Journalisation formelle des arbitrages (`[PROFIT_SWEEPER]` / `[COMPOUNDING]`) et suivi d'état simulé en mémoire sans interaction blockchain.
-  - **Mode réel sécurisé (`dry_run=False`) :** Injection de dépendances (`transfer_executor`, `liquidity_executor`), validation stricte de l'adresse de réserve (`RESERVE_WALLET_ADDRESS` / `SAFE_WALLET_ADDRESS` au format hexadécimal checksum 0x) et garde-fou bloquant toute exécution en cas d'adresse invalide ou manquante (`CapitalActionError`).
-- **Résilience financière :** Capture locale des incidents non bloquante, préservation intégrale de la réserve en cas d'échec de balayage, et mise en file d'attente automatique (`pending_reinvest`) pour prévenir toute perte de capital.
-- **Calculs haute précision :** Arithmétique financière en `Decimal` avec stockage textuel des positions simulées afin de proscrire toute dérive de virgule flottante.
-- **Suite de tests étendue :** Couverture portée à **93 tests unitaires et E2E au vert** sans régression.
+- **Agrégateur & Routeur Multi-DEX (`FEATURE_MULTI_DEX=True`) :**
+  - Architecture modulaire avec interface unifiée `BaseDEXAdapter` et implémentation de 3 adaptateurs natifs Polygon Mainnet : **Uniswap V3** (QuoterV2 multi-tiers), **QuickSwap V3** (Algebra Quoter), et **SushiSwap V2** (UniswapV2Router02).
+  - Moteur de comparaison parallèle `DEXRouter` sélectionnant automatiquement la route optimale maximisant le montant net reçu avec isolation des timeouts réseau.
+- **Unification du Moteur d'Exécution Réelle (`swap_reel.py` & `executor_real.py`) :**
+  - Passage direct des blueprints de cotation et de transaction (`prebuilt_quote`, `prebuilt_tx`) sans double appel RPC.
+  - Gestion dynamique et automatique des décimales ERC-20 (`6` décimales pour `USDC`/`USDT`, `18` décimales pour `POL`/`WPOL`/`WETH`).
+  - Pipeline Web3 complet et sécurisé : failover RPC (`RPCManager`), approbation conditionnelle (`approve`), frais dynamiques EIP-1559 (`GasEstimator`), et contrôle strict du verrou `DryRunGuard`.
+  - Repli automatique (fallback) transparent vers l'adaptateur nominal en cas de désactivation du mode multi-DEX.
+- **Validation On-Chain réelle sur Polygon Mainnet :**
+  - Micro-swap réel exécuté et validé avec succès (1.0 USDC -> 10.679262 WPOL sur SushiSwap V2, bloc #96432559).
+  - Script dédié d'audit et d'exécution sécurisée `execute_multidex_real_swap.py` avec diagnostic comptable précis (USDC, gaz natif POL et crédit WPOL).
+- **Suite de tests automatisés :** Portée à **190 tests unitaires et d'intégration validés à 100 %**.
 
 ---
 
 ## 📗 En
-- **Capital Cycle & Option B Articulation (Phase 2.3):** Unified capital flow orchestration linking `TimeDecayCompounder` and `ProfitSweeper` within `main_v6_core.py`.
-- **Secured Execution Callbacks (`reinvest_action` & `secure_action`):**
-  - **Simulation mode (`dry_run=True`):** Standardized audit logging (`[PROFIT_SWEEPER]` / `[COMPOUNDING]`) and in-memory simulated tracking with zero blockchain interaction.
-  - **Secured real mode (`dry_run=False`):** Dependency injection (`transfer_executor`, `liquidity_executor`), strict reserve wallet validation (`RESERVE_WALLET_ADDRESS` / `SAFE_WALLET_ADDRESS` checksum hex format), and blocking guards on missing or invalid configurations (`CapitalActionError`).
-- **Financial Resilience:** Non-blocking error handling, full reserve retention on failed sweep, and automated queuing (`pending_reinvest`) preventing capital loss.
-- **High-Precision Arithmetic:** Strict `Decimal` calculations and string-serialized position persistence eliminating floating-point drift.
-- **Expanded Test Suite:** Full test suite upgraded to **93 unit and E2E tests passing green** with zero regressions.
+- **Multi-DEX Aggregator & Router (`FEATURE_MULTI_DEX=True`):**
+  - Modular architecture built on unified `BaseDEXAdapter` with 3 production adapters for Polygon Mainnet: **Uniswap V3** (QuoterV2 dynamic fee tiers), **QuickSwap V3** (Algebra Quoter), and **SushiSwap V2** (UniswapV2Router02).
+  - Parallel routing engine `DEXRouter` with isolated timeouts, automatically executing on the highest yielding route.
+- **Real Execution Engine Unification (`swap_reel.py` & `executor_real.py`):**
+  - Direct pipeline forwarding of transaction blueprints (`prebuilt_quote`, `prebuilt_tx`), avoiding duplicate RPC roundtrips.
+  - Dynamic ERC-20 decimal parsing (`6` decimals for `USDC`/`USDT`, `18` decimals for `POL`/`WPOL`/`WETH`).
+  - Hardened Web3 pipeline: multi-node failover (`RPCManager`), conditional ERC-20 allowances (`approve`), EIP-1559 dynamic gas estimation (`GasEstimator`), and strict safety checks (`DryRunGuard`).
+  - Transparent single-DEX fallback when multi-DEX routing is disabled or unavailable.
+- **Live On-Chain Polygon Mainnet Validation:**
+  - Real micro-swap executed and confirmed (1.0 USDC -> 10.679262 WPOL on SushiSwap V2, block #96432559).
+  - Dedicated diagnostic execution script `execute_multidex_real_swap.py` providing detailed balance deltas (USDC, POL gas, WPOL credited).
+- **Automated Test Suite:** Upgraded to **190 passing unit and integration tests (100% green)**.
 
 ---
 
 # 5. 🕓 Historique des versions / Past Versions
 
 ## 📘 Fr
+- **V6.5.0 :** Architecture de routage Multi-DEX (Uniswap V3, QuickSwap V3, SushiSwap V2), validation réelle on-chain sur Polygon Mainnet (1.0 USDC -> 10.68 WPOL), unification complète du moteur d'exécution réelle et 190 tests au vert.  
 - **V6.4.0 :** Finalisation Phase 2.3 (articulation Option B du capital, callbacks sécurisés simulation/réel avec injection d'exécuteurs, garde-fous stricts sur l'adresse de réserve, 93 tests au vert).  
 - **V6.3.0 :** Couche de gestion active du capital (`ProfitSweeper` + `TimeDecayCompounder`), orchestration `CapitalCycleManager` dans `main_v6_core.py` et validation de 72 tests au vert.  
 - **V6.2.0 :** Moteur d'exécution on-chain réel validé sur Polygon Mainnet, intégration PoA Bor, GasEstimator EIP-1559 calibré, SlippageGuard, script de swap sécurisé et 45 tests unitaires au vert.  
@@ -148,6 +161,7 @@ DeFiPilot’s graphical interface displays key metrics, bot status, ControlPilot
 ---
 
 ## 📗 En
+- **V6.5.0:** Multi-DEX routing architecture (Uniswap V3, QuickSwap V3, SushiSwap V2), live on-chain validation on Polygon Mainnet (1.0 USDC -> 10.68 WPOL), unified real execution engine, and 190 passing tests.  
 - **V6.4.0:** Completed Phase 2.3 (Option B capital flow articulation, secured simulation/real callbacks with executor injection, strict reserve wallet safeguards, 93 passing tests).  
 - **V6.3.0:** Active capital management layer (`ProfitSweeper` + `TimeDecayCompounder`), `CapitalCycleManager` orchestration in `main_v6_core.py`, and 72 passing tests.  
 - **V6.2.0:** Validated live on-chain execution engine on Polygon Mainnet, Bor PoA middleware integration, calibrated EIP-1559 GasEstimator, SlippageGuard, guarded test swap script, and 45 passing unit tests.  
@@ -174,11 +188,12 @@ DeFiPilot’s graphical interface displays key metrics, bot status, ControlPilot
 DeFiPilot repose sur une architecture modulaire, pensée pour garantir évolutivité et stabilité :
 
 - **`main_v6_core.py` / `run_defipilot_v6.py`** — Points d'entrée principaux du moteur V6, orchestration unifiée du capital (`CapitalCycleManager`) et callbacks d'exécution (`reinvest_action`, `secure_action`).  
-- **`core/`** — Analyse, scoring des pools, gestion active du capital (`capital/` avec `profit_sweeper.py`, `compounding.py`), garde-fous (`guardrails.py`, `dry_run_guard.py`), suivi de santé système (`system_health.py`), validation d'environnement (`env_validator.py`), CLI (`cli.py`), exécution on-chain sécurisée (`execution/` avec `rpc_manager.py`, `gas_estimator.py`, `slippage_guard.py`).  
-- **`scripts/`** — Outils opérationnels contrôlés (`execute_controlled_test_swap.py`, `preflight_check.py`).  
+- **`core/dex/`** — Couche de routage Multi-DEX : adaptateur de base (`base.py`), adaptateurs DEX (`uniswap_v3.py`, `quickswap.py`, `sushiswap.py`), comparateur parallèle (`router.py`) et factory d'initialisation (`factory.py`).  
+- **`core/`** — Analyse, scoring des pools, gestion active du capital (`capital/`), garde-fous (`guardrails.py`, `dry_run_guard.py`), suivi de santé système (`system_health.py`), validation d'environnement (`env_validator.py`), moteur d'exécution unifié (`swap_reel.py`, `executor_real.py`) et connecteurs Web3 (`execution/` avec `rpc_manager.py`, `gas_estimator.py`, `slippage_guard.py`).  
+- **`scripts/`** — Outils opérationnels contrôlés (`execute_multidex_real_swap.py`, `execute_controlled_test_swap.py`, `preflight_check.py`).  
 - **`config/`** — Configurations stratégiques (`strategy_v6_0.json`, `strategy_v5_5.json`), paramètres de seuil et de compounding.  
 - **`journal_daemon_v6_secure.py` / `analyser_logs.py`** — Daemon de suivi de stratégie et utilitaire d'analyse des journaux.  
-- **`tests/`** — Suite de 93 tests automatisés couvrant les simulations E2E, le scoring, la résilience, la gestion du gaz EIP-1559, le slippage, le mode dry-run, le balayage de profits, le compounding dégressif et les callbacks avec garde-fous.  
+- **`tests/`** — Suite de 190 tests automatisés couvrant les adaptateurs multi-DEX, la sélection de route, la résilience, le gaz EIP-1559, le slippage, le mode dry-run, le balayage de profits, le compounding et l'exécution réelle mockée.  
 - **`data/`** — État persistant du bot (`state.json`, `health.json`).
 
 Le bot utilise principalement **Python 3.11**, **Web3.py**, **Tkinter**, **Pandas**, et l’API **DefiLlama**.
@@ -187,11 +202,12 @@ Le bot utilise principalement **Python 3.11**, **Web3.py**, **Tkinter**, **Panda
 DeFiPilot is built on a modular architecture designed for scalability and stability:
 
 - **`main_v6_core.py` / `run_defipilot_v6.py`** — Core entry points for the V6 engine execution, unified capital orchestration (`CapitalCycleManager`), and execution callbacks (`reinvest_action`, `secure_action`).  
-- **`core/`** — Analysis, pool scoring, active capital management (`capital/` with `profit_sweeper.py`, `compounding.py`), safety guards (`guardrails.py`, `dry_run_guard.py`), system health management (`system_health.py`), environment validation (`env_validator.py`), CLI (`cli.py`), secure on-chain execution (`execution/` with `rpc_manager.py`, `gas_estimator.py`, `slippage_guard.py`).  
-- **`scripts/`** — Controlled operational tools (`execute_controlled_test_swap.py`, `preflight_check.py`).  
-- **`config/`** — Strategic configurations (`strategy_v6_0.json`, `strategy_v5_5.json`), sweeping thresholds and compounding parameters.  
+- **`core/dex/`** — Multi-DEX routing layer: base adapter (`base.py`), DEX adapters (`uniswap_v3.py`, `quickswap.py`, `sushiswap.py`), parallel comparison router (`router.py`), and factory (`factory.py`).  
+- **`core/`** — Analysis, pool scoring, active capital management (`capital/`), safety guards (`guardrails.py`, `dry_run_guard.py`), system health management (`system_health.py`), environment validation (`env_validator.py`), unified execution engine (`swap_reel.py`, `executor_real.py`), and Web3 toolset (`execution/` with `rpc_manager.py`, `gas_estimator.py`, `slippage_guard.py`).  
+- **`scripts/`** — Controlled operational tools (`execute_multidex_real_swap.py`, `execute_controlled_test_swap.py`, `preflight_check.py`).  
+- **`config/`** — Strategic configurations (`strategy_v6_0.json`, `strategy_v5_5.json`), sweeping thresholds, and compounding parameters.  
 - **`journal_daemon_v6_secure.py` / `analyser_logs.py`** — Secure background strategy daemon and log analytics tool.  
-- **`tests/`** — Automated test suite with 93 tests covering E2E simulations, scoring, resilience, EIP-1559 gas estimation, slippage, dry-run safety, profit sweeping, time-decay compounding, and guarded execution callbacks.  
+- **`tests/`** — Automated test suite with 190 tests covering multi-DEX adapters, routing selection, resilience, EIP-1559 gas estimation, slippage, dry-run safety, profit sweeping, dynamic compounding, and mocked live execution.  
 - **`data/`** — State persistence engine (`state.json`, `health.json`).
 
 The bot relies mainly on **Python 3.11**, **Web3.py**, **Tkinter**, **Pandas**, and the **DefiLlama** API.
@@ -264,17 +280,19 @@ The bot relies mainly on **Python 3.11**, **Web3.py**, **Tkinter**, **Pandas**, 
 
 ## FR
 - **Lancement V6 Core (Mode principal) :** `python run_defipilot_v6.py`
-- **Exécution des tests automatisés (93 tests) :** `pytest`
+- **Exécution de la suite de tests automatisés (190 tests) :** `pytest`
 - **Test de pré-vol environnement :** `python scripts/preflight_check.py`
-- **Test de swap contrôlé (Dry-Run) :** `python scripts/execute_controlled_test_swap.py --dry-run`
+- **Diagnostic de routage Multi-DEX (Simulation Dry-Run) :** `python scripts/execute_multidex_real_swap.py`
+- **Test de swap contrôlé (Dry-Run historique) :** `python scripts/execute_controlled_test_swap.py --dry-run`
 - **Lancement du Daemon de Journalisation :** `python journal_daemon_v6_secure.py`
 - **Analyse des journaux d'exécution :** `python analyser_logs.py`
 
 ## EN
 - **Launch V6 Core Engine (Main mode):** `python run_defipilot_v6.py`
-- **Run automated test suite (93 tests):** `pytest`
+- **Run automated test suite (190 tests):** `pytest`
 - **Environment preflight check:** `python scripts/preflight_check.py`
-- **Controlled test swap (Dry-Run):** `python scripts/execute_controlled_test_swap.py --dry-run`
+- **Multi-DEX Routing Diagnostic (Simulation Dry-Run):** `python scripts/execute_multidex_real_swap.py`
+- **Controlled test swap (Legacy Dry-Run):** `python scripts/execute_controlled_test_swap.py --dry-run`
 - **Launch Secure Background Logging Daemon:** `python journal_daemon_v6_secure.py`
 - **Analyze execution logs:** `python analyser_logs.py`
 
@@ -285,10 +303,12 @@ The bot relies mainly on **Python 3.11**, **Web3.py**, **Tkinter**, **Pandas**, 
 ## 📘 Fr
 
 ### Prochaines versions
-- **V6.5 :** Synchronisation multi-bots (DeFiPilot + ControlPilot + ArbiPilot).  
-- **V6.6 :** Déploiement sur Orange Pi / infrastructure SBC.  
+- **V6.6 :** Gestion automatisée du wrap/unwrap de tokens natifs (WPOL <-> POL) et gestion dynamique des réserves de gaz.  
+- **V6.7 :** Extension multi-chain (Arbitrum, Optimism, Base).  
+- **V7.0 :** Synchronisation multi-bots (DeFiPilot + ControlPilot).  
 
 ### Versions finalisées
+- **V6.5.0 :** Routage Multi-DEX (Uniswap V3, QuickSwap V3, SushiSwap V2), micro-swap réel validé on-chain sur Polygon Mainnet, unification du moteur d'exécution et 190 tests unitaires/E2E passants.  
 - **V6.4.0 :** Finalisation Phase 2.3 (articulation Option B du capital, callbacks sécurisés simulation/réel avec injection d'exécuteurs, garde-fous stricts sur l'adresse de réserve, 93 tests au vert).  
 - **V6.3.0 :** Gestion du capital (`ProfitSweeper`, `TimeDecayCompounder`), orchestration `CapitalCycleManager` et 72 tests automatisés validés.  
 - **V6.2.0 :** Moteur d'exécution on-chain validé en direct sur Polygon, intégration PoA Bor, gestion EIP-1559, SlippageGuard et 45 tests unitaires.  
@@ -305,10 +325,12 @@ The bot relies mainly on **Python 3.11**, **Web3.py**, **Tkinter**, **Pandas**, 
 ## 📗 En
 
 ### Upcoming Versions
-- **V6.5:** Multi-bot synchronization (DeFiPilot + ControlPilot + ArbiPilot).  
-- **V6.6:** Deployment on Orange Pi / SBC architecture.  
+- **V6.6:** Automated native token wrapping/unwrapping (WPOL <-> POL) and dynamic gas reserve management.  
+- **V6.7:** Multi-chain expansion (Arbitrum, Optimism, Base).  
+- **V7.0:** Multi-bot orchestration and synchronization (DeFiPilot + ControlPilot).  
 
 ### Completed Versions
+- **V6.5.0:** Multi-DEX routing (Uniswap V3, QuickSwap V3, SushiSwap V2), live on-chain micro-swap validation on Polygon Mainnet, unified execution engine, and 190 unit/E2E tests passing.  
 - **V6.4.0:** Completed Phase 2.3 (Option B capital flow articulation, secured simulation/real callbacks with executor injection, strict reserve wallet safeguards, 93 passing tests).  
 - **V6.3.0:** Capital management layer (`ProfitSweeper`, `TimeDecayCompounder`), `CapitalCycleManager` orchestration, and 72 validated automated tests.  
 - **V6.2.0:** Validated live on-chain execution on Polygon Mainnet, Bor PoA integration, EIP-1559 handling, SlippageGuard, and 45 unit tests.  
@@ -328,14 +350,14 @@ The bot relies mainly on **Python 3.11**, **Web3.py**, **Tkinter**, **Pandas**, 
 DeFiPilot vise à devenir une plateforme de gestion automatisée complète regroupant :  
 - Analyse multi‑DEX, multi‑blockchains.  
 - Stratégies dynamiques ajustées selon le marché.  
-- Modules complémentaires (ControlPilot, ArbiPilot, LabPilot).  
+- Modules complémentaires (ControlPilot, LabPilot).  
 - Architecture transparente et robuste centrée sur la sécurité et la pédagogie.
 
 ## EN
 DeFiPilot aims to evolve into a complete automated management platform including:  
 - Multi‑DEX, multi‑chain analysis.  
 - Dynamic strategies adjusted to market conditions.  
-- Complementary modules (ControlPilot, ArbiPilot, LabPilot).  
+- Complementary modules (ControlPilot, LabPilot).  
 - Transparent and robust architecture focused on safety and clarity.
 
 ---
@@ -346,31 +368,34 @@ DeFiPilot aims to evolve into a complete automated management platform including
 **1. DeFiPilot effectue‑t‑il des transactions automatiquement ?**  
 Oui, si le mode réel est activé et confirmé via l'environnement d'exécution. En mode simulation, aucune transaction blockchain n’est envoyée grâce au garde-fou `DryRunGuard`.
 
-**2. Puis‑je utiliser DeFiPilot sans interface graphique ?**  
+**2. Comment fonctionne le routage Multi-DEX ?**  
+Le routeur interroge en parallèle les cotations de plusieurs DEX (Uniswap V3, QuickSwap V3, SushiSwap V2) et sélectionne dynamiquement l'échange offrant le meilleur rendement net après déduction des frais de gaz estimés.
+
+**3. Puis‑je utiliser DeFiPilot sans interface graphique ?**  
 Oui, le bot fonctionne en ligne de commande de façon optimale avec `run_defipilot_v6.py`.
 
-**3. Quels réseaux sont supportés ?**  
+**4. Quels réseaux sont supportés ?**  
 Polygon est supporté en natif avec gestion des spécificités Bor PoA. D’autres blockchains seront ajoutées progressivement.
 
-**4. Les clés privées sont‑elles stockées en clair ?**  
+**5. Les clés privées sont‑elles stockées en clair ?**  
 Elles sont chargées via `.env` et jamais écrites dans les journaux.
 
-**5. Quelle est la fréquence d’analyse ?**  
+**6. Quelle est la fréquence d’analyse ?**  
 Elle dépend de la configuration, généralement quelques secondes.
 
-**6. Comment fonctionne la reprise automatique ?**  
+**7. Comment fonctionne la reprise automatique ?**  
 L’état est stocké dans le dossier `data/` (`state.json` et `health.json`), permettant au bot de reprendre après une coupure.
 
-**7. Comment fonctionne la supervision IA ?**  
+**8. Comment fonctionne la supervision IA ?**  
 ControlPilot fournit des signaux contextuels (favorable, neutre, défavorable) influençant la stratégie.
 
-**8. Les données de marché proviennent d’où ?**  
-Principalement de DefiLlama, des Quoters de DEX et des RPC blockchain.
+**9. Les données de marché proviennent d’où ?**  
+Principalement de DefiLlama, des Quoters on-chain des DEX et des RPC blockchain.
 
-**9. Puis‑je ajouter mes propres stratégies ?**  
+**10. Puis‑je ajouter mes propres stratégies ?**  
 Oui, l’architecture modulaire permet d’étendre facilement les stratégies via le dossier `config/`.
 
-**10. Le projet est‑il open source ?**  
+**11. Le projet est‑il open source ?**  
 Oui, sous licence CC‑BY‑NC‑SA 4.0.
 
 ---
@@ -385,6 +410,7 @@ Il développe DeFiPilot depuis 2023 avec l’objectif de construire un écosyst�
 Issu d’un parcours autodidacte, il a progressivement acquis des compétences en :
 - architecture logicielle (Python 3.11, modules multi-couches)
 - analyse on-chain et extraction de signaux DeFi
+- routage multi-DEX et optimisation d'exécution Web3
 - automatisation, gestion d’état et reprise après coupure
 - intégration Web3 et interactions blockchain sécurisées
 - conception d’interfaces graphiques (Tkinter)
@@ -398,7 +424,7 @@ Son approche se caractérise par :
 - un usage pragmatique de l’IA (**Antigravity avec Gemini** et **ChatGPT**) comme copilotes de développement
 
 DeFiPilot est conçu comme un projet de long terme :  
-une plateforme modulaire, extensible, méthodologiquement propre, pouvant évoluer vers un cluster multi-bots (DeFiPilot, ControlPilot, ArbiPilot, LabPilot).
+une plateforme modulaire, extensible, méthodologiquement propre, pouvant évoluer vers un ensemble multi-modules coordonnés (DeFiPilot, ControlPilot, LabPilot).
 
 David souhaite également partager son expérience pour inspirer d’autres autodidactes à se lancer dans des projets techniques ambitieux, même en partant de zéro.
 
@@ -412,6 +438,7 @@ He has been developing DeFiPilot since 2023 with the goal of building a complete
 Coming from a fully self-taught path, he progressively developed skills in:
 - software architecture (Python 3.11, multi-layer modules)
 - on-chain analysis and DeFi signal extraction
+- multi-DEX routing and Web3 execution optimization
 - automation, state management and crash-safe recovery
 - Web3 integration and secure blockchain interactions
 - graphical interface design (Tkinter)
@@ -425,7 +452,7 @@ His approach is guided by:
 - pragmatic use of AI (**Antigravity with Gemini** and **ChatGPT**) as development copilots
 
 DeFiPilot is intended as a long-term project:  
-a modular, scalable platform that will evolve into a multi-bot cluster (DeFiPilot, ControlPilot, ArbiPilot, LabPilot).
+a modular, scalable platform that will evolve into a coordinated multi-module setup (DeFiPilot, ControlPilot, LabPilot).
 
 David also hopes to share his journey to inspire other self-taught developers to tackle ambitious technical projects, even starting from scratch.
 
@@ -517,8 +544,8 @@ The user acknowledges that they use DeFiPilot **at their own risk**, understandi
 
 # 16. 🔍 Dernière révision / Last Review
 
-**README V6.4.0 — mis à jour et consolidé.**  
-**README V6.4.0 — updated and consolidated.**
+**README V6.5.0 — mis à jour et consolidé.**  
+**README V6.5.0 — updated and consolidated.**
 
 ---
 
