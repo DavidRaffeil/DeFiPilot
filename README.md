@@ -189,7 +189,8 @@ DeFiPilot repose sur une architecture modulaire, pensée pour garantir évolutiv
 
 - **`main_v6_core.py` / `run_defipilot_v6.py`** — Points d'entrée principaux du moteur V6, orchestration unifiée du capital (`CapitalCycleManager`) et callbacks d'exécution (`reinvest_action`, `secure_action`).  
 - **`core/dex/`** — Couche de routage Multi-DEX : adaptateur de base (`base.py`), adaptateurs DEX (`uniswap_v3.py`, `quickswap.py`, `sushiswap.py`), comparateur parallèle (`router.py`) et factory d'initialisation (`factory.py`).  
-- **`core/`** — Analyse, scoring des pools, gestion active du capital (`capital/`), garde-fous (`guardrails.py`, `dry_run_guard.py`), suivi de santé système (`system_health.py`), validation d'environnement (`env_validator.py`), moteur d'exécution unifié (`swap_reel.py`, `executor_real.py`) et connecteurs Web3 (`execution/` avec `rpc_manager.py`, `gas_estimator.py`, `slippage_guard.py`).  
+- **`core/`** — Analyse, scoring des pools, gestion active du capital (`capital/`), garde-fous (`guardrails.py`, `dry_run_guard.py`), suivi de santé système (`system_health.py`), validation d'environnement (`env_validator.py`), moteur d'exécution unifié (`swap_reel.py`, `executor_real.py`) et connecteurs Web3 (`execution/` avec `rpc_manager.py`, `gas_estimator.py`, `slippage_guard.py`, `gas_tank.py`, `executor_real.py`).  
+- **`GasTankManager` (`core/execution/gas_tank.py`)** — Gestion automatisée du carburant POL natif et wrapping/unwrapping WPOL (`0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270`) sur Polygon : ravitaillement pré-swap (`check_and_refuel`), détection de seuil critique bloquant (`is_gas_critical`), et conversion automatique de l'excédent en fin de cycle (`check_and_sweep_excess_gas`).  
 - **`scripts/`** — Outils opérationnels contrôlés (`execute_multidex_real_swap.py`, `execute_controlled_test_swap.py`, `preflight_check.py`).  
 - **`config/`** — Configurations stratégiques (`strategy_v6_0.json`, `strategy_v5_5.json`), paramètres de seuil et de compounding.  
 - **`journal_daemon_v6_secure.py` / `analyser_logs.py`** — Daemon de suivi de stratégie et utilitaire d'analyse des journaux.  
@@ -203,7 +204,8 @@ DeFiPilot is built on a modular architecture designed for scalability and stabil
 
 - **`main_v6_core.py` / `run_defipilot_v6.py`** — Core entry points for the V6 engine execution, unified capital orchestration (`CapitalCycleManager`), and execution callbacks (`reinvest_action`, `secure_action`).  
 - **`core/dex/`** — Multi-DEX routing layer: base adapter (`base.py`), DEX adapters (`uniswap_v3.py`, `quickswap.py`, `sushiswap.py`), parallel comparison router (`router.py`), and factory (`factory.py`).  
-- **`core/`** — Analysis, pool scoring, active capital management (`capital/`), safety guards (`guardrails.py`, `dry_run_guard.py`), system health management (`system_health.py`), environment validation (`env_validator.py`), unified execution engine (`swap_reel.py`, `executor_real.py`), and Web3 toolset (`execution/` with `rpc_manager.py`, `gas_estimator.py`, `slippage_guard.py`).  
+- **`core/`** — Analysis, pool scoring, active capital management (`capital/`), safety guards (`guardrails.py`, `dry_run_guard.py`), system health management (`system_health.py`), environment validation (`env_validator.py`), unified execution engine (`swap_reel.py`, `executor_real.py`), and Web3 toolset (`execution/` with `rpc_manager.py`, `gas_estimator.py`, `slippage_guard.py`, `gas_tank.py`, `executor_real.py`).  
+- **`GasTankManager` (`core/execution/gas_tank.py`)** — Automated native POL gas reserve management and WPOL wrapping/unwrapping on Polygon: pre-swap refueling (`check_and_refuel`), blocking critical threshold detection (`is_gas_critical`), and end-of-cycle excess POL auto-wrapping (`check_and_sweep_excess_gas`).  
 - **`scripts/`** — Controlled operational tools (`execute_multidex_real_swap.py`, `execute_controlled_test_swap.py`, `preflight_check.py`).  
 - **`config/`** — Strategic configurations (`strategy_v6_0.json`, `strategy_v5_5.json`), sweeping thresholds, and compounding parameters.  
 - **`journal_daemon_v6_secure.py` / `analyser_logs.py`** — Secure background strategy daemon and log analytics tool.  
@@ -249,7 +251,14 @@ The bot relies mainly on **Python 3.11**, **Web3.py**, **Tkinter**, **Pandas**, 
 `NETWORK=polygon`  
 `POLYGON_RPC_URL=https://polygon-mainnet.infura.io/v3/YOUR_PROJECT_ID`  
 `WALLET_ADDRESS=YOUR_WALLET_ADDRESS`  
-`LOG_LEVEL=INFO`
+`LOG_LEVEL=INFO`  
+
+   *Variables optionnelles de gestion du carburant (`GasTankManager`) :*  
+   - `GAS_MIN_POL_RESERVE=5.0` *(seuil bas en POL natif déclenchant un unwrap WPOL → POL)*  
+   - `GAS_TARGET_POL_RESERVE=10.0` *(cible de recharge en POL natif)*  
+   - `GAS_CRITICAL_THRESHOLD=1.0` *(seuil critique bloquant les transactions en l'absence de réserve)*  
+   - `GAS_MAX_POL_RESERVE=25.0` *(plafond de POL natif au-delà duquel l'excédent est enveloppé en WPOL)*  
+   - `GAS_AUTO_WRAP_ENABLED=true` *(activation de l'auto-wrap du surplus de POL en fin de cycle)*
 
 4. **Vérifier l’installation :**  
 `python scripts/preflight_check.py`
@@ -269,7 +278,14 @@ The bot relies mainly on **Python 3.11**, **Web3.py**, **Tkinter**, **Pandas**, 
 `NETWORK=polygon`  
 `POLYGON_RPC_URL=https://polygon-mainnet.infura.io/v3/YOUR_PROJECT_ID`  
 `WALLET_ADDRESS=YOUR_WALLET_ADDRESS`  
-`LOG_LEVEL=INFO`
+`LOG_LEVEL=INFO`  
+
+   *Optional gas reserve management variables (`GasTankManager`):*  
+   - `GAS_MIN_POL_RESERVE=5.0` *(minimum native POL reserve triggering WPOL → POL unwrap)*  
+   - `GAS_TARGET_POL_RESERVE=10.0` *(target native POL reserve level)*  
+   - `GAS_CRITICAL_THRESHOLD=1.0` *(critical native POL threshold blocking execution if unrefueled)*  
+   - `GAS_MAX_POL_RESERVE=25.0` *(maximum native POL reserve above which excess is wrapped into WPOL)*  
+   - `GAS_AUTO_WRAP_ENABLED=true` *(enable automatic wrapping of excess POL at cycle end)*
 
 4. **Verify installation:**  
 `python scripts/preflight_check.py`

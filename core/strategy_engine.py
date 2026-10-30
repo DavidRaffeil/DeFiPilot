@@ -23,6 +23,8 @@ import core.config as app_config
 from core.defi_sources.defillama import recuperer_pools
 from core.dex.factory import create_default_dex_router
 from core.dex.router import DEXRouter
+from core.execution.gas_tank import GasTankManager
+from core.real_wallet import get_wallet_address
 from core.swap_reel import (
     DEFAULT_SWAP_RECIPIENT,
     _run_coro_sync,
@@ -157,6 +159,8 @@ class StrategyEngine:
         dex_router: Optional[DEXRouter] = None,
         web3_client: Optional[Any] = None,
         feature_multi_dex: Optional[bool] = None,
+        gas_tank: Optional[GasTankManager] = None,
+        wallet_address: Optional[str] = None,
     ) -> None:
         self.config_path = Path(config_path)
         self.dry_run = dry_run
@@ -166,6 +170,37 @@ class StrategyEngine:
         self.market_watcher: MarketWatcher = _DefaultMarketWatcher()
 
         self.cfg = self.load_config()
+
+        self.gas_tank: Optional[GasTankManager] = gas_tank
+        if self.gas_tank is None and self.web3_client is not None:
+            has_numeric_balance = False
+            if hasattr(self.web3_client, "eth"):
+                try:
+                    probe = (
+                        wallet_address
+                        or get_wallet_address()
+                        or os.environ.get("WALLET_ADDRESS")
+                        or DEFAULT_SWAP_RECIPIENT
+                    )
+                    bal = self.web3_client.eth.get_balance(probe)
+                    has_numeric_balance = isinstance(bal, (int, float, Decimal))
+                except Exception:
+                    has_numeric_balance = False
+            elif hasattr(self.web3_client, "execute_call"):
+                has_numeric_balance = True
+
+            if has_numeric_balance:
+                target_wallet = (
+                    wallet_address
+                    or get_wallet_address()
+                    or os.environ.get("WALLET_ADDRESS")
+                    or DEFAULT_SWAP_RECIPIENT
+                )
+                self.gas_tank = GasTankManager(
+                    web3_client=self.web3_client,
+                    wallet_address=target_wallet,
+                    dry_run=self.dry_run,
+                )
 
         self.dex_router: Optional[DEXRouter] = dex_router
         if self.dex_router is None and self.is_multi_dex_enabled() and self.web3_client is not None:
@@ -549,6 +584,40 @@ class StrategyEngine:
         snapshot = self.snapshot_portfolio()
 
         market = self.detect_market_state()
+
+        # =====================================================================
+        # CONTRÔLE DE CARBURANT PRÉ-CYCLE (GasTank - Phase 4 / V6.6)
+        # =====================================================================
+        gas_refuel_status: Optional[Dict[str, Any]] = None
+        if self.gas_tank is not None:
+            try:
+                gas_refuel_status = self.gas_tank.check_and_refuel()
+            except Exception as exc:
+                self._log_warn(f"[GAS TANK] Échec de check_and_refuel pré-cycle : {exc}")
+
+            simulated_refuel_ok = (
+                self.dry_run
+                and isinstance(gas_refuel_status, dict)
+                and gas_refuel_status.get("action") == "simulated_unwrap"
+            )
+            if not simulated_refuel_ok and self.gas_tank.is_gas_critical():
+                warn_msg = (
+                    "[GAS CRITICAL] Solde de gas natif (POL) sous le seuil critique : "
+                    "suspension de la génération de nouveaux signaux d'action pour ce cycle."
+                )
+                self._log_warn(warn_msg)
+                _module_logger.warning(warn_msg)
+                return {
+                    "profile": self.profile,
+                    "market": market.value,
+                    "status": "suspended_gas_critical",
+                    "reason": "gas_critical",
+                    "actions": [],
+                    "dry_run": self.dry_run,
+                    "gas_refuel": gas_refuel_status,
+                    "generated_at": datetime.utcnow().isoformat() + "Z",
+                }
+
         pool_list = pools if pools is not None else self.pool_source.list_pools()
         candidates = self.select_candidates(pool_list, context=context)
 
@@ -573,6 +642,25 @@ class StrategyEngine:
                 action.dry_run = False
 
         execution_result = self.execute(actions)
+
+        # =====================================================================
+        # GESTION DU SURPLUS DE GAS EN FIN DE CYCLE (Auto-Wrap POL -> WPOL)
+        # =====================================================================
+        excess_gas_sweep: Optional[Dict[str, Any]] = None
+        if self.gas_tank is not None:
+            try:
+                excess_gas_sweep = self.gas_tank.check_and_sweep_excess_gas()
+                if excess_gas_sweep.get("action") == "WRAPPED_EXCESS":
+                    sweep_msg = (
+                        f"[GAS TANK] Excédent de POL converti en WPOL en fin de cycle : "
+                        f"amount={excess_gas_sweep.get('amount')} POL (tx={excess_gas_sweep.get('tx_hash')})"
+                    )
+                    self._log_info(sweep_msg)
+                    _module_logger.info(sweep_msg)
+            except Exception as exc:
+                self._log_warn(
+                    f"[GAS TANK] Échec de check_and_sweep_excess_gas en fin de cycle : {exc}"
+                )
 
         result: Dict[str, Any] = {
             "profile": self.profile,
@@ -599,6 +687,10 @@ class StrategyEngine:
             if context is not None
             else None,
         }
+        if gas_refuel_status is not None:
+            result["gas_refuel"] = gas_refuel_status
+        if excess_gas_sweep is not None:
+            result["excess_gas_sweep"] = excess_gas_sweep
         self._log_info("Cycle d'exécution StrategyEngine terminé.")
         return result
 

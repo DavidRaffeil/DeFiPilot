@@ -25,6 +25,7 @@ from core.dry_run_guard import (
     is_dry_run_enabled,
 )
 from core.execution.gas_estimator import GasEstimator
+from core.execution.gas_tank import GasCriticalError, GasTankManager
 from core.execution.rpc_manager import RPCManager
 from core.real_wallet import get_private_key, get_wallet_address
 
@@ -198,6 +199,7 @@ def effectuer_swap_reel(
     prebuilt_tx: Optional[Dict[str, Any]] = None,
     rpc_manager: Optional[RPCManager] = None,
     gas_estimator: Optional[GasEstimator] = None,
+    gas_tank: Optional[GasTankManager] = None,
     max_gas_price_gwei: float = 650.0,
     min_priority_fee_gwei: float = 30.0,
     **kwargs: Any,
@@ -236,6 +238,72 @@ def effectuer_swap_reel(
             logger.warning(
                 "Impossible d'auto-initialiser Web3 via RPCManager (%s)", exc
             )
+
+    # =========================================================================
+    # CONTRÔLE ET RAVITAILLEMENT DU GAS TANK (PRÉ-SWAP V6.6)
+    # =========================================================================
+    gas_tank_refuel_info: Optional[Dict[str, Any]] = None
+    skip_gas_tank_check = bool(kwargs.pop("_skip_gas_tank_check", False))
+    active_gas_tank = gas_tank
+    if (
+        not skip_gas_tank_check
+        and active_gas_tank is None
+        and (active_w3 is not None or active_rpc_manager is not None)
+    ):
+        has_real_balance = False
+        if active_w3 is not None and hasattr(active_w3, "eth"):
+            try:
+                bal_candidate = active_w3.eth.get_balance(DEFAULT_SWAP_RECIPIENT)
+                has_real_balance = isinstance(bal_candidate, (int, float, Decimal))
+            except Exception:
+                has_real_balance = False
+        if has_real_balance:
+            wallet_candidate = (
+                recipient
+                or get_wallet_address()
+                or os.environ.get("WALLET_ADDRESS")
+                or DEFAULT_SWAP_RECIPIENT
+            )
+            active_gas_tank = GasTankManager(
+                web3_client=active_w3 or active_rpc_manager,
+                wallet_address=wallet_candidate,
+                dry_run=cfg_dry_run,
+            )
+
+    if active_gas_tank is not None and not skip_gas_tank_check:
+        gas_tank_refuel_info = active_gas_tank.check_and_refuel()
+        if gas_tank_refuel_info.get("action") in {"unwrap", "simulated_unwrap"}:
+            logger.info(
+                "[GAS TANK] Ravitaillement pré-swap exécuté : status=%s, action=%s, montant=%s POL, tx_hash=%s",
+                gas_tank_refuel_info.get("status"),
+                gas_tank_refuel_info.get("action"),
+                gas_tank_refuel_info.get("amount_unwrapped"),
+                gas_tank_refuel_info.get("tx_hash"),
+            )
+
+        # Contrôle critique bloquant (en mode dry_run, un simulated_unwrap comble virtuellement le déficit)
+        simulated_refuel_done = (
+            cfg_dry_run
+            and gas_tank_refuel_info.get("action") == "simulated_unwrap"
+        )
+        if not simulated_refuel_done and active_gas_tank.is_gas_critical():
+            crit_msg = (
+                f"[GAS CRITICAL] Swap interrompu : réserve de POL natif sous le seuil critique "
+                f"({gas_tank_refuel_info.get('native_pol')} POL <= {active_gas_tank.critical_gas_threshold} POL) "
+                f"et ravitaillement WPOL impossible."
+            )
+            logger.critical(crit_msg)
+            return {
+                "status": "BLOCKED",
+                "tx_hash": None,
+                "reason": "gas_critical",
+                "msg": crit_msg,
+                "details": {
+                    "reason": "gas_critical",
+                    "error": crit_msg,
+                    "gas_tank": gas_tank_refuel_info,
+                },
+            }
 
     # =========================================================================
     # AIGUILLAGE MULTI-DEX (AVEC REPLI TRANSPARENT EN CAS D'ERREUR)
@@ -334,6 +402,8 @@ def effectuer_swap_reel(
             details["multi_dex"] = True
         if built_tx is not None:
             details["tx"] = built_tx
+        if gas_tank_refuel_info is not None:
+            details["gas_tank"] = gas_tank_refuel_info
 
         return {
             "status": "SUCCESS",
@@ -401,6 +471,8 @@ def effectuer_swap_reel(
             result["estimated_gas"] = best_quote.estimated_gas
         if built_tx is not None:
             result["tx"] = built_tx
+        if gas_tank_refuel_info is not None:
+            result["gas_tank"] = gas_tank_refuel_info
 
         pool_liquidite_valide = built_tx is not None
 

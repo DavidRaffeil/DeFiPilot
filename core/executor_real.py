@@ -14,6 +14,8 @@ from core.dex.base import DEXQuote
 from core.dex.factory import create_default_dex_router
 from core.dex.router import DEXRouter
 from core.dry_run_guard import DryRunSafetyViolation, is_dry_run_enabled
+from core.execution.gas_tank import GasCriticalError, GasTankManager
+from core.real_wallet import get_wallet_address
 from core.swap_reel import (
     DEFAULT_SWAP_RECIPIENT,
     _decimal_to_amount_wei,
@@ -118,12 +120,64 @@ def _resolve_multi_dex_swap(
         return default_dex, None, None
 
 
+def _resolve_gas_tank(
+    gas_tank: Optional[GasTankManager],
+    web3_client: Optional[Any],
+    rpc_manager: Optional[Any],
+    wallet_address: Optional[str],
+    dry_run: bool,
+) -> Optional[GasTankManager]:
+    """Résout ou instancie un `GasTankManager` si un client Web3 / RPC valide est fourni."""
+    if gas_tank is not None:
+        return gas_tank
+
+    client = web3_client or rpc_manager
+    if client is None:
+        return None
+
+    # Vérifie que le client Web3/RPC expose des soldes numériques exploitables
+    # (évite de perturber les tests historiques où `web3_client = MagicMock()` générique).
+    has_numeric_balances = False
+    if hasattr(client, "eth"):
+        try:
+            probe_addr = (
+                wallet_address
+                or get_wallet_address()
+                or os.environ.get("WALLET_ADDRESS")
+                or DEFAULT_SWAP_RECIPIENT
+            )
+            bal = client.eth.get_balance(probe_addr)
+            has_numeric_balances = isinstance(bal, (int, float, Decimal))
+        except Exception:
+            has_numeric_balances = False
+    elif hasattr(client, "execute_call"):
+        has_numeric_balances = True
+
+    if not has_numeric_balances:
+        return None
+
+    target_wallet = (
+        wallet_address
+        or get_wallet_address()
+        or os.environ.get("WALLET_ADDRESS")
+        or DEFAULT_SWAP_RECIPIENT
+    )
+    return GasTankManager(
+        web3_client=client,
+        wallet_address=target_wallet,
+        dry_run=dry_run,
+    )
+
+
 def executer_action_reelle(
     action: dict,
     run_id: str,
     dex_router: Optional[DEXRouter] = None,
     web3_client: Optional[Any] = None,
     feature_multi_dex: Optional[bool] = None,
+    gas_tank: Optional[GasTankManager] = None,
+    rpc_manager: Optional[Any] = None,
+    wallet_address: Optional[str] = None,
 ) -> dict:
     """Execute a real action through guardrails or mock it if dry_run is True."""
     try:
@@ -150,6 +204,60 @@ def executer_action_reelle(
 
         if kind == "swap":
             params = action.get("params", {})
+            is_dry = action.get("dry_run") is True or is_dry_run_enabled()
+
+            # =================================================================
+            # ÉTAPE PRÉ-SWAP : CONTRÔLE & RAVITAILLEMENT DU GAS TANK (V6.6)
+            # =================================================================
+            active_gas_tank = _resolve_gas_tank(
+                gas_tank=gas_tank,
+                web3_client=web3_client,
+                rpc_manager=rpc_manager,
+                wallet_address=wallet_address or params.get("recipient"),
+                dry_run=is_dry,
+            )
+            gas_tank_refuel_info: Optional[Dict[str, Any]] = None
+
+            if active_gas_tank is not None:
+                try:
+                    gas_tank_refuel_info = active_gas_tank.check_and_refuel()
+                    if gas_tank_refuel_info.get("action") in {
+                        "unwrap",
+                        "simulated_unwrap",
+                    }:
+                        logger.info(
+                            "[GAS TANK] Ravitaillement pré-swap effectué : status=%s, action=%s, "
+                            "montant=%s POL, tx_hash=%s",
+                            gas_tank_refuel_info.get("status"),
+                            gas_tank_refuel_info.get("action"),
+                            gas_tank_refuel_info.get("amount_unwrapped"),
+                            gas_tank_refuel_info.get("tx_hash"),
+                        )
+
+                    # Contrôle critique bloquant (en mode dry_run, un simulated_unwrap comble virtuellement le déficit)
+                    simulated_refuel_done = (
+                        is_dry
+                        and gas_tank_refuel_info.get("action") == "simulated_unwrap"
+                    )
+                    if not simulated_refuel_done and active_gas_tank.is_gas_critical():
+                        crit_msg = (
+                            f"[GAS CRITICAL] Swap bloqué préventivement : réserve POL natif critique "
+                            f"({gas_tank_refuel_info.get('native_pol')} POL <= "
+                            f"{active_gas_tank.critical_gas_threshold} POL) et WPOL insuffisant."
+                        )
+                        logger.critical(crit_msg)
+                        raise GasCriticalError(crit_msg)
+                except GasCriticalError as crit_err:
+                    return {
+                        "status": "BLOCKED",
+                        "tx_hash": None,
+                        "details": {
+                            "status": "BLOCKED",
+                            "reason": "gas_critical",
+                            "error": str(crit_err),
+                            "gas_tank": gas_tank_refuel_info,
+                        },
+                    }
 
             raw_token_a = str(params.get("tokenA", "USDC"))
             raw_token_b = str(params.get("tokenB", "ETH"))
@@ -181,7 +289,6 @@ def executer_action_reelle(
                     default_dex=default_dex,
                 )
 
-            is_dry = action.get("dry_run") is True or is_dry_run_enabled()
             if is_dry:
                 sim_details: Dict[str, Any] = {
                     "status": "SUCCESS",
@@ -189,6 +296,8 @@ def executer_action_reelle(
                     "mode": "[SIMULATION / DRY-RUN]",
                     "dex": selected_dex,
                 }
+                if gas_tank_refuel_info is not None:
+                    sim_details["gas_tank"] = gas_tank_refuel_info
                 if best_quote is not None:
                     sim_details["expected_amount_out"] = str(
                         best_quote.expected_amount_out
@@ -218,6 +327,7 @@ def executer_action_reelle(
 
             try:
                 amount_in_wei = _decimal_to_amount_wei(raw_token_a, amount_a)
+                # NB: _skip_gas_tank_check=True car le contrôle/ravitaillement pré-swap vient d'être exécuté ci-dessus
                 result = executer_swap_reel(
                     dex=selected_dex,
                     token_in=tokenA,
@@ -233,7 +343,10 @@ def executer_action_reelle(
                     prebuilt_tx=built_tx,
                     recipient=params.get("recipient"),
                     amount_in=amount_a,
+                    _skip_gas_tank_check=True,
                 )
+                if gas_tank_refuel_info is not None:
+                    result["gas_tank"] = gas_tank_refuel_info
                 if best_quote is not None:
                     result["dex"] = selected_dex
                     result["expected_amount_out"] = str(best_quote.expected_amount_out)
@@ -291,3 +404,100 @@ def executer_action_reelle(
         }
 
     return _normalize_verdict(verdict)
+
+
+class RealExecutor:
+    """
+    Exécuteur orienté objet (V6.6) intégrant `GasTankManager`, `DEXRouter` et `DryRunGuard`
+    dans le pipeline de pré-exécution des swaps réels et simulés.
+    """
+
+    def __init__(
+        self,
+        web3_client: Optional[Any] = None,
+        rpc_manager: Optional[Any] = None,
+        wallet_address: Optional[str] = None,
+        dry_run: Optional[bool] = None,
+        gas_tank: Optional[GasTankManager] = None,
+        dex_router: Optional[DEXRouter] = None,
+        feature_multi_dex: Optional[bool] = None,
+        min_pol_reserve: float = 5.0,
+        target_pol_reserve: float = 10.0,
+        critical_gas_threshold: float = 1.0,
+        private_key: Optional[str] = None,
+    ) -> None:
+        self.web3_client = web3_client
+        self.rpc_manager = rpc_manager
+        self.dry_run = is_dry_run_enabled() if dry_run is None else bool(dry_run)
+        self.wallet_address = (
+            wallet_address
+            or get_wallet_address()
+            or os.environ.get("WALLET_ADDRESS")
+            or DEFAULT_SWAP_RECIPIENT
+        )
+        self.dex_router = dex_router
+        self.feature_multi_dex = feature_multi_dex
+
+        client = self.web3_client or self.rpc_manager
+        if gas_tank is not None:
+            self.gas_tank: Optional[GasTankManager] = gas_tank
+        elif client is not None:
+            self.gas_tank = GasTankManager(
+                web3_client=client,
+                wallet_address=self.wallet_address,
+                min_pol_reserve=min_pol_reserve,
+                target_pol_reserve=target_pol_reserve,
+                critical_gas_threshold=critical_gas_threshold,
+                dry_run=self.dry_run,
+                private_key=private_key,
+            )
+        else:
+            self.gas_tank = None
+
+    def pre_swap_gas_check(self) -> Optional[Dict[str, Any]]:
+        """
+        Exécute le contrôle de pré-swap sur le réservoir de carburant :
+        1. Appelle `gas_tank.check_and_refuel()` et journalise toute action de ravitaillement.
+        2. Appelle `gas_tank.is_gas_critical()` et lève `GasCriticalError` si le solde est critique.
+        """
+        if self.gas_tank is None:
+            return None
+
+        refuel_info = self.gas_tank.check_and_refuel()
+        if refuel_info.get("action") in {"unwrap", "simulated_unwrap"}:
+            logger.info(
+                "[GAS TANK] Ravitaillement pré-swap exécuté : status=%s, action=%s, montant=%s POL, tx_hash=%s",
+                refuel_info.get("status"),
+                refuel_info.get("action"),
+                refuel_info.get("amount_unwrapped"),
+                refuel_info.get("tx_hash"),
+            )
+
+        simulated_refuel_done = (
+            self.dry_run and refuel_info.get("action") == "simulated_unwrap"
+        )
+        if not simulated_refuel_done and self.gas_tank.is_gas_critical():
+            crit_msg = (
+                f"[GAS CRITICAL] Swap interrompu : solde POL natif critique "
+                f"({refuel_info.get('native_pol')} POL <= {self.gas_tank.critical_gas_threshold} POL)."
+            )
+            logger.critical(crit_msg)
+            raise GasCriticalError(crit_msg)
+
+        return refuel_info
+
+    def execute_action(self, action: dict, run_id: str = "defipilot_run") -> dict:
+        """Exécute une action unitaire en injectant le `GasTankManager` configuré."""
+        action_copy = dict(action)
+        if "dry_run" not in action_copy:
+            action_copy["dry_run"] = self.dry_run
+        return executer_action_reelle(
+            action=action_copy,
+            run_id=run_id,
+            dex_router=self.dex_router,
+            web3_client=self.web3_client,
+            feature_multi_dex=self.feature_multi_dex,
+            gas_tank=self.gas_tank,
+            rpc_manager=self.rpc_manager,
+            wallet_address=self.wallet_address,
+        )
